@@ -5,7 +5,7 @@ import { startScreen, liveScreen, recapScreen, primingScreen } from './session.j
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
-import { historyScreen, detailScreen } from './history.js';
+import { historyScreen, detailScreen, settingsScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as steps from './steps.js';
 
@@ -31,6 +31,7 @@ const SCREENS = {
   share: { build: (c) => shareScreen(c, c.arg), bloom: 'none' },
   history: { build: historyScreen, bloom: 'hero' },
   detail: { build: (c) => detailScreen(c, c.arg), bloom: 'hero' },
+  settings: { build: settingsScreen, bloom: 'hero' },
 };
 
 function go(screen, arg = null) {

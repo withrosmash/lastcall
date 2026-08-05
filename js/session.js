@@ -52,7 +52,10 @@ export function liveScreen(ctx) {
   ctx.tick = () => { clock.textContent = hms(S.elapsedMs(s)); };
 
   const since = S.drinksSinceWater(s);
-  const behind = since >= ctx.state.prefs.hydrationEvery && !ctx.nudgeDismissed;
+  const every = ctx.state.prefs.hydrationEvery;
+  // every === 0 means reminders are off — without this guard the >= test is
+  // always true and the banner would never leave the screen.
+  const behind = every > 0 && since >= every && !ctx.nudgeDismissed;
 
   const gpsNote = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported'
     ? 'Location is off, so there’s no map tonight. Drinks, water and time are all still being tracked.'

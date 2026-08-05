@@ -58,6 +58,45 @@ export function historyScreen(ctx) {
     spacer(),
     foot(
       btn('Export history', 'btn--sec', () => exportData(), { iconName: 'download' }),
+      btn('Settings', 'btn--sec', () => ctx.go('settings')),
+    ),
+  ];
+}
+
+/* ---------- settings ---------- */
+
+const THRESHOLDS = [3, 4, 5, 6, 8];
+
+export function settingsScreen(ctx) {
+  const p = ctx.state.prefs;
+
+  // Chips rather than a number field: this gets used one-handed, and Chip
+  // already carries the system's selected state. Re-render the whole screen on
+  // change so the explanatory line below tracks the choice.
+  const pick = (n) => { p.hydrationEvery = n; ctx.save(); ctx.render(); };
+  const choice = (label, n) => el('button', {
+    class: 'chip press', type: 'button',
+    'aria-pressed': p.hydrationEvery === n ? 'true' : 'false',
+    onclick: () => pick(n),
+  }, label);
+
+  const row = el('div', { class: 'chips' },
+    THRESHOLDS.map((n) => choice(String(n), n)),
+    choice('Never', 0),
+  );
+
+  return [
+    head({ eyebrow: 'Settings', title: 'Reminders', back: () => ctx.go('history') }),
+
+    el('div', { class: 'eb', text: 'Remind me to drink water after' }),
+    row,
+    el('p', { class: 'body', style: 'margin:0' },
+      p.hydrationEvery
+        ? `The nudge shows on the session screen once you’re ${p.hydrationEvery} drinks past your last water.`
+        : 'No water reminders. Everything else is tracked the same.'),
+
+    spacer(),
+    foot(
       btn('Import history', 'btn--sec', () => importData(ctx)),
     ),
   ];
