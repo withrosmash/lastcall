@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- The background-geolocation plugin's own manifest already declares the
+         foreground service (type "location") plus ACCESS_FINE_LOCATION,
+         ACCESS_COARSE_LOCATION, FOREGROUND_SERVICE, FOREGROUND_SERVICE_LOCATION,
+         POST_NOTIFICATIONS and WAKE_LOCK; manifest merging pulls those in.
+
+         ACCESS_BACKGROUND_LOCATION is the one it deliberately leaves to the
+         app, because it is the heavier ask. Strictly, a foreground service
+         started while the app is visible can keep reading location with only
+         "While using the app" — which covers the normal flow of tapping Start
+         night and pocketing the phone. This is here as belt and braces for the
+         cases that flow doesn't cover, such as the service being restarted by
+         the system while the app is backgrounded, and it is what screen 13's
+         "Allow all the time" priming exists for.
+
+         Dropping this one line reverts to the lighter permission model and
+         avoids a Play Store background-location declaration, at the cost of
+         those edge cases. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+</manifest>

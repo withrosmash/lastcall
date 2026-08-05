@@ -1,0 +1,21 @@
+{
+  "name": "lastcall",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Track the night. Piece it together later.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "sync": "npm run build && cap sync android",
+    "open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/local-notifications": "^8.2.1",
+    "@capgo/background-geolocation": "^8.3.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0"
+  }
+}

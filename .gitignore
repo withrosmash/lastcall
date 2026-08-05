@@ -1,5 +1,19 @@
 node_modules/
 .DS_Store
+
+# Built from the source tree by scripts/build.mjs — never edited by hand.
+www/
+
+# Android build output. The android/ project itself IS committed, so CI can
+# build the APK without needing `cap add android`.
 android/app/build/
+android/build/
 android/.gradle/
+android/captures/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
 *.apk
+*.aab
+*.keystore

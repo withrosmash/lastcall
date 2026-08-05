@@ -1,0 +1,18 @@
+{
+  "appId": "com.withrosmash.lastcall",
+  "appName": "Last Call",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#000000",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_lastcall",
+      "iconColor": "#7EE0C0"
+    }
+  }
+}

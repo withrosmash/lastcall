@@ -8,6 +8,7 @@ import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as steps from './steps.js';
+import * as notify from './notify.js';
 
 const ctx = {
   state: store.load(),
@@ -64,9 +65,12 @@ function beginNight() {
   else startNight();
 }
 
-function grantThenStart() {
+async function grantThenStart() {
   ctx.state.prefs.locationPrimed = true;
   save();
+  // Send them straight to the settings page Android insists on for "Allow all
+  // the time", rather than leaving them to find it.
+  await geo.openSettings();
   startNight();
 }
 
@@ -102,6 +106,10 @@ function logDrink(kind) {
   save();
   render();
   toast(`${kind} logged.`);
+
+  const every = ctx.state.prefs.hydrationEvery;
+  const since = S.drinksSinceWater(s);
+  if (every > 0 && since >= every) notify.hydrationNudge(since);
 }
 
 function logWater() {
@@ -111,6 +119,7 @@ function logWater() {
   ctx.nudgeDismissed = false;
   save();
   render();
+  notify.clearHydration();
   toast('Water logged.');
 }
 
@@ -141,6 +150,7 @@ async function startTracking() {
     },
   });
   startSteps();
+  notify.init();
   requestWakeLock();
 }
 
@@ -157,6 +167,7 @@ async function startSteps() {
 function stopTracking() {
   geo.stop();
   steps.stop();
+  notify.clearHydration();
   ctx.geoStatus = 'idle';
   releaseWakeLock();
 }

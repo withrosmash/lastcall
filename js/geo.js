@@ -1,22 +1,22 @@
 // Location behind one interface. The web path uses navigator.geolocation and
-// stops the moment the screen locks; the native path (added with Capacitor)
-// keeps running with the phone in a pocket, which is the whole point of
-// shipping this as an Android app. Nothing outside this file knows which is in
-// play — that is what keeps the eventual iOS port a config exercise.
+// stops the moment the screen locks; the native path runs in an Android
+// foreground service and keeps going with the phone in a pocket, which is the
+// whole reason this ships as an app rather than a website. Nothing outside
+// this file knows which is in play — that is what keeps an eventual iOS port a
+// config exercise rather than a rewrite.
+
+import { registerPlugin, Capacitor } from '../vendor/capacitor-core.js';
+
+// registerPlugin only builds a bridge proxy; the implementation is the native
+// code compiled into the APK. No bundler involved.
+const BackgroundGeolocation = registerPlugin('BackgroundGeolocation');
 
 let watchId = null;
-let nativePlugin = null;
+let native = false;
 let listeners = { fix: () => {}, status: () => {} };
 
 export function isNative() {
-  return !!(globalThis.Capacitor?.isNativePlatform?.());
-}
-
-async function loadNative() {
-  if (nativePlugin) return nativePlugin;
-  const mod = await import('@capgo/background-geolocation');
-  nativePlugin = mod.BackgroundGeolocation;
-  return nativePlugin;
+  try { return Capacitor.isNativePlatform(); } catch { return false; }
 }
 
 export async function start({ onFix, onStatus }) {
@@ -25,13 +25,12 @@ export async function start({ onFix, onStatus }) {
 
   if (isNative()) {
     try {
-      const plugin = await loadNative();
-      watchId = await plugin.addWatcher(
+      await BackgroundGeolocation.start(
         {
-          // Shown in the permanent Android notification. Required by the OS:
-          // background location is only granted to a foreground service.
-          backgroundMessage: 'Last Call is tracking your night.',
+          // Shown in the permanent Android notification. Not optional: the OS
+          // only grants background location to a foreground service.
           backgroundTitle: 'Last Call',
+          backgroundMessage: 'Last Call is tracking your night.',
           requestPermissions: true,
           stale: false,
           distanceFilter: 25,
@@ -41,10 +40,13 @@ export async function start({ onFix, onStatus }) {
             listeners.status(error.code === 'NOT_AUTHORIZED' ? 'denied' : 'error');
             return;
           }
+          if (!location) return;
           listeners.status('live');
           listeners.fix({ lat: location.latitude, lng: location.longitude, t: Date.now() });
         },
       );
+      native = true;
+      watchId = 'native';
       return true;
     } catch {
       listeners.status('error');
@@ -67,8 +69,9 @@ export async function start({ onFix, onStatus }) {
 
 export async function stop() {
   if (watchId == null) return;
-  if (isNative() && nativePlugin) {
-    try { await nativePlugin.removeWatcher({ id: watchId }); } catch { /* already gone */ }
+  if (native) {
+    try { await BackgroundGeolocation.stop(); } catch { /* already stopped */ }
+    native = false;
   } else {
     navigator.geolocation.clearWatch(watchId);
   }
@@ -76,6 +79,14 @@ export async function stop() {
 }
 
 export function running() { return watchId != null; }
+
+// Android makes background location a separate trip to system settings, so the
+// priming screen sends people straight there rather than leaving them hunting.
+export async function openSettings() {
+  if (!isNative()) return false;
+  try { await BackgroundGeolocation.openSettings(); return true; }
+  catch { return false; }
+}
 
 // One-shot fix, used to centre the map before the first watch update lands.
 export function current() {

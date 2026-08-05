@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Last Call</string>
+    <string name="title_activity_main">Last Call</string>
+    <string name="package_name">com.withrosmash.lastcall</string>
+    <string name="custom_url_scheme">com.withrosmash.lastcall</string>
+</resources>

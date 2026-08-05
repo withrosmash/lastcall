@@ -22,9 +22,16 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Serve the same www/ the Android app bundles, so the web preview can
+      # never drift from what ships on the phone. No npm install needed — the
+      # build falls back to the committed vendor/capacitor-core.js.
+      - run: node scripts/build.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: www
       - id: deployment
         uses: actions/deploy-pages@v4
