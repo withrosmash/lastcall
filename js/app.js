@@ -1,12 +1,12 @@
 import * as store from './storage.js';
 import * as S from './state.js';
-import { mount, toast, dismissSheet } from './ui.js';
-import { startScreen, liveScreen, recapScreen } from './session.js';
+import { mount, toast, dismissSheet, serviceNotice } from './ui.js';
+import { startScreen, liveScreen, recapScreen, primingScreen } from './session.js';
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
-import { historyScreen, detailScreen, settingsScreen } from './history.js';
-import { cardScreen } from './card.js';
+import { historyScreen, detailScreen } from './history.js';
+import { cardScreen, shareScreen } from './card.js';
 import * as steps from './steps.js';
 
 const ctx = {
@@ -16,22 +16,22 @@ const ctx = {
   lastSession: null,
   geoStatus: 'idle',
   stepsAvailable: false,
+  nudgeDismissed: false,
   tick: null,
-  go, save, startNight, endNight, logDrink, logWater, addPin,
+  go, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, addPin,
 };
 
 const SCREENS = {
-  start: startScreen,
-  live: liveScreen,
-  map: mapScreen,
-  recap: (c) => recapScreen(c, c.arg),
-  card: (c) => cardScreen(c, c.arg),
-  history: historyScreen,
-  detail: (c) => detailScreen(c, c.arg),
-  settings: settingsScreen,
+  start: { build: startScreen, bloom: 'hero' },
+  priming: { build: primingScreen, bloom: 'hero' },
+  live: { build: liveScreen, bloom: 'hero', tracking: true },
+  map: { build: mapScreen, bloom: 'none', tracking: true },
+  recap: { build: (c) => recapScreen(c, c.arg), bloom: 'foot' },
+  card: { build: (c) => cardScreen(c, c.arg), bloom: 'none' },
+  share: { build: (c) => shareScreen(c, c.arg), bloom: 'none' },
+  history: { build: historyScreen, bloom: 'hero' },
+  detail: { build: (c) => detailScreen(c, c.arg), bloom: 'hero' },
 };
-
-const FLUSH_SCREENS = new Set(['map']);
 
 function go(screen, arg = null) {
   if (ctx.screen === 'map' && screen !== 'map') teardownMap();
@@ -43,21 +43,40 @@ function go(screen, arg = null) {
 
 function render() {
   ctx.tick = null;
-  const build = SCREENS[ctx.screen] || startScreen;
-  mount(build(ctx), { flush: FLUSH_SCREENS.has(ctx.screen) });
+  const def = SCREENS[ctx.screen] || SCREENS.start;
+  const tracking = def.tracking && !!ctx.state.active;
+  mount(def.build(ctx), {
+    bloom: def.bloom,
+    chrome: tracking ? serviceNotice() : null,
+  });
 }
 
-function save() {
-  store.save(ctx.state);
-}
+function save() { store.save(ctx.state); }
 
 /* ---------- session actions ---------- */
 
-function startNight() {
+// Android makes background location a separate trip to system settings, so the
+// priming screen runs first — otherwise people deny it and the app silently
+// fails at its one job.
+function beginNight() {
+  if (geo.isNative() && !ctx.state.prefs.locationPrimed) go('priming');
+  else startNight();
+}
+
+function grantThenStart() {
+  ctx.state.prefs.locationPrimed = true;
+  save();
+  startNight();
+}
+
+function startNight({ skipLocation = false } = {}) {
+  if (skipLocation) { ctx.state.prefs.locationPrimed = true; save(); }
   ctx.state.active = S.newSession();
+  ctx.nudgeDismissed = false;
   save();
   go('live');
-  startTracking();
+  if (!skipLocation) startTracking();
+  else startSteps();
 }
 
 function endNight() {
@@ -78,6 +97,7 @@ function logDrink(kind) {
   if (!s) return;
   S.addDrink(s, kind);
   ctx.state.prefs.recentDrinks = remember(ctx.state.prefs.recentDrinks, kind);
+  ctx.nudgeDismissed = false;
   save();
   render();
   toast(`${kind} logged.`);
@@ -87,9 +107,10 @@ function logWater() {
   const s = ctx.state.active;
   if (!s) return;
   S.addWater(s);
+  ctx.nudgeDismissed = false;
   save();
   render();
-  toast('Water logged. Good.');
+  toast('Water logged.');
 }
 
 function addPin(pin) {
@@ -118,7 +139,11 @@ async function startTracking() {
       if (ctx.screen === 'live' || ctx.screen === 'map') render();
     },
   });
+  startSteps();
+  requestWakeLock();
+}
 
+async function startSteps() {
   ctx.stepsAvailable = await steps.start((count) => {
     const s = ctx.state.active;
     if (!s) return;
@@ -126,8 +151,6 @@ async function startTracking() {
     save();
   });
   if (ctx.stepsAvailable && ctx.screen === 'live') render();
-
-  requestWakeLock();
 }
 
 function stopTracking() {
@@ -155,8 +178,9 @@ function releaseWakeLock() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    if (ctx.state.active) { requestWakeLock(); render(); }
+  if (document.visibilityState === 'visible' && ctx.state.active) {
+    requestWakeLock();
+    render();
   }
 });
 

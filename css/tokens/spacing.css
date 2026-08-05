@@ -1,0 +1,27 @@
+/* Last Call — spacing, shape, tap targets. Base unit 4px. Portrait only, 9:19.5. */
+:root{
+  --u:4px; /* @kind spacing */
+  --gap:9px;         /* between stacked blocks */
+  --gap-tight:7px;   /* tile grids, button pairs */
+  --gap-loose:16px;  /* between sections */
+  --pad-screen-y:16px;
+  --pad-screen-x:14px;
+  --pad-tile:12px;
+  --pad-sheet:16px 14px 20px; /* @kind spacing */
+
+  --r-chip:9px;
+  --r-tile:11px;
+  --r-sheet:16px;
+  --r-card:20px;     /* forest-glass cards in marketing + share surfaces */
+  --r-pill:999px;
+
+  --tap:44px; /* @kind spacing */
+  --tap-lg:52px; /* @kind spacing */
+  --hairline:1px; /* @kind spacing */
+
+  /* Safe areas — Android gesture nav sits where the primary action wants to be */
+  --safe-top:env(safe-area-inset-top,0px); /* @kind spacing */
+  --safe-bottom:env(safe-area-inset-bottom,0px); /* @kind spacing */
+  --screen-w:390px; /* @kind spacing */
+  --screen-h:845px; /* @kind spacing */
+}

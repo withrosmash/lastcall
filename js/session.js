@@ -1,4 +1,5 @@
-import { el, btn, tile, spacer, sheet, toast, hhmm, longDuration, clockTime, shortDate, longDate, km, words } from './ui.js';
+import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast, icon,
+         hms, hm, longDuration, clockTime, upperDate, km, words } from './ui.js';
 import * as S from './state.js';
 import { pickDrink, remember } from './drinks.js';
 
@@ -8,87 +9,104 @@ export function startScreen(ctx) {
   const hasHistory = ctx.state.sessions.some((s) => s.endedAt);
   return [
     spacer(),
-    el('div', { class: 'center' },
-      el('div', { class: 'wordmark' }, 'LAST', el('br'), el('span', {}, 'CALL')),
-      el('div', { class: 'cap', style: 'margin-top:10px;line-height:1.6' },
-        'Track the night.', el('br'), 'Piece it together later.'),
+    el('div', { class: 'eb eb--mint-dim', text: 'Last Call' }),
+    el('h1', { class: 'display', style: 'margin-top:10px' },
+      'Track the night.', el('br'), 'Piece it together later.'),
+    el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
+      text: 'Steps, stops, drinks and water — kept on this phone, nowhere else.' }),
+    el('div', { style: 'height:20px' }),
+    foot(
+      btn('Start night', 'btn--pri', () => ctx.beginNight(), { lg: true }),
+      hasHistory ? btn('History', 'btn--sec', () => ctx.go('history')) : null,
     ),
-    spacer(),
-    btn('Start night', 'btn--pri', () => ctx.startNight()),
-    hasHistory ? btn('History', 'btn--sec', () => ctx.go('history')) : null,
-    btn('Settings', 'btn--ghost btn--sm', () => ctx.go('settings')),
   ];
 }
 
-/* ---------- 02 live session ---------- */
+/* ---------- 13 permission priming ---------- */
+
+export function primingScreen(ctx) {
+  return [
+    spacer(),
+    icon('map-pin', { size: 26, color: 'var(--mint)' }),
+    el('h1', { class: 'display', style: 'margin-top:14px' },
+      'Your phone will be in your pocket'),
+    el('p', { class: 'body', style: 'margin:12px 0 0' },
+      'Android opens its settings screen for this one — pick “Allow all the time”, then come back.'),
+    el('p', { class: 'cap', style: 'color:var(--mint);margin:10px 0 0',
+      text: 'Your location never leaves the phone.' }),
+    spacer(),
+    foot(
+      btn('Open settings', 'btn--pri', () => ctx.grantThenStart(), { lg: true }),
+      btn('Skip — track without the map', 'btn--sec', () => ctx.startNight({ skipLocation: true })),
+    ),
+  ];
+}
+
+/* ---------- 02 live session (06 renders inside it) ---------- */
 
 export function liveScreen(ctx) {
   const s = ctx.state.active;
   if (!s) { ctx.go('start'); return []; }
 
-  const clock = el('div', { class: 'timer', text: hhmm(S.elapsedMs(s)) });
-  ctx.tick = () => { clock.textContent = hhmm(S.elapsedMs(s)); };
+  const clock = el('div', { class: 'timer', text: hms(S.elapsedMs(s)) });
+  ctx.tick = () => { clock.textContent = hms(S.elapsedMs(s)); };
 
   const since = S.drinksSinceWater(s);
-  const behind = since >= ctx.state.prefs.hydrationEvery;
+  const behind = since >= ctx.state.prefs.hydrationEvery && !ctx.nudgeDismissed;
 
-  const gpsNote = ctx.geoStatus === 'denied'
-    ? 'Location is off, so there is no map tonight. Everything else is still tracked.'
-    : ctx.geoStatus === 'waiting' && !s.trail.length
-      ? 'Waiting for GPS. Everything else still works.'
-      : null;
+  const gpsNote = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported'
+    ? 'Location is off, so there’s no map tonight. Drinks, water and time are all still being tracked.'
+    : null;
 
   return [
-    el('div', { class: 'row' },
-      el('div', { class: 'eb mint', text: 'On the night' }),
-      el('div', { class: 'eb', text: shortDate(s.startedAt) }),
-    ),
+    head({ eyebrow: 'On the night' }),
     clock,
     el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` }),
 
-    el('div', { class: 'tiles' },
-      tile('Drinks', s.drinks.length, { mod: 'tile__v--pink' }),
+    tiles(
+      tile('Drinks', s.drinks.length, { tone: 'drinks' }),
       tile('Water', s.waters.length),
-    ),
-    el('div', { class: 'tiles' },
-      ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString(), { mod: 'tile__v--sm' }) : tile('Stops', s.pins.length, { mod: 'tile__v--sm' }),
-      tile('Distance', km(s.distanceM), { unit: 'km', mod: 'tile__v--sm' }),
+      ctx.stepsAvailable
+        ? tile('Steps', s.steps.toLocaleString())
+        : tile('Stops', s.pins.length),
+      tile('Distance', km(s.distanceM), { unit: 'km' }),
     ),
 
     behind ? el('div', { class: 'warn' },
-      el('div', { class: 'eb amber', text: 'Hydration' }),
-      el('div', { class: 'title', text: `${cap(words(since))} drinks since your last water.` }),
-      btn('Log water', 'btn--pri btn--sm', () => ctx.logWater()),
+      el('div', { class: 'warn__h', text: `${words(since)} drinks since your last water.` }),
+      el('div', { class: 'cap cap--up', text: 'Takes ten seconds. Tomorrow says thanks.' }),
+      el('div', { class: 'btn-pair' },
+        btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
+        btn('Later', 'btn--sec', () => { ctx.nudgeDismissed = true; ctx.render(); }),
+      ),
     ) : null,
 
-    gpsNote ? el('div', { class: 'cap', text: gpsNote }) : null,
+    gpsNote ? el('p', { class: 'cap cap--up', text: gpsNote }) : null,
 
     spacer(),
 
-    btn('Add drink', 'btn--pri', () => {
-      pickDrink(ctx.state.prefs, (kind) => ctx.logDrink(kind));
-    }),
-    btn('Hydrate', 'btn--pink', () => ctx.logWater()),
-    el('div', { class: 'btn-pair' },
-      btn('Map', 'btn--sec btn--sm', () => ctx.go('map')),
-      btn('End', 'btn--sec btn--sm', () => confirmEnd(ctx)),
+    foot(
+      btn('Add drink', 'btn--pri', () => pickDrink(ctx.state.prefs, (kind) => ctx.logDrink(kind)),
+        { iconName: 'plus', lg: true }),
+      btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
+      navPair([['Map', () => ctx.go('map')], ['End night', () => confirmEnd(ctx)]]),
     ),
   ];
 }
 
-const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
-
-/* ---------- 07 end confirm ---------- */
+/* ---------- 07 end night ---------- */
 
 export function confirmEnd(ctx) {
   const s = ctx.state.active;
   if (!s) return;
   sheet((close) => [
-    el('div', { class: 'title', style: 'font-size:21px', text: 'Call it a night?' }),
-    el('div', { class: 'body' },
-      `You've been out ${longDuration(S.elapsedMs(s))}. This stops tracking and builds your recap. You can't reopen a session once it's closed.`),
-    btn('End and see recap', 'btn--pri', () => { close(); ctx.endNight(); }),
-    btn('Keep going', 'btn--sec btn--sm', close),
+    el('h2', { class: 'title', text: 'Call it a night?' }),
+    el('p', { class: 'body', style: 'margin:0' },
+      `You’ve been out ${longDuration(S.elapsedMs(s))}. This stops tracking and builds your recap. You can’t reopen a session once it’s closed.`),
+    foot(
+      btn('End night', 'btn--pri', () => { close(); ctx.endNight(); }),
+      btn('Keep tracking', 'btn--sec', close),
+    ),
   ]);
 }
 
@@ -100,48 +118,67 @@ export function recapScreen(ctx, session) {
   const sum = S.summarise(s);
 
   return [
-    el('div', { class: 'eb pink', text: longDate(s.startedAt) }),
-    el('div', { class: 'title', style: 'font-size:23px;letter-spacing:-.03em', text: 'That was a night.' }),
+    el('div', { class: 'eb', text: 'Last night' }),
+    el('h1', { class: 'display', style: 'margin-top:7px', text: 'That was a night.' }),
 
-    el('div', { class: 'tile', style: 'padding:12px' }, routeSvg(s, 108)),
+    el('div', { style: 'display:flex;align-items:baseline;gap:10px;flex-wrap:wrap' },
+      el('div', { class: 'timer timer--ended', text: hms(sum.ms) }),
+      el('div', { class: 'cap', text: `${clockTime(s.startedAt)} — ${clockTime(s.endedAt)}` }),
+    ),
 
-    el('div', { class: 'tiles' },
-      tile('Duration', hhmm(sum.ms), { mod: 'tile__v--sm' }),
-      tile('Drinks', sum.drinks, { mod: 'tile__v--sm tile__v--pink' }),
+    glass(routeSvg(s, 190)),
+
+    tiles(
+      tile('Drinks', sum.drinks, { tone: 'drinks' }),
+      tile('Water', sum.waters),
+      ctx.stepsAvailable ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
+      tile('Stops', sum.stops),
     ),
-    el('div', { class: 'tiles' },
-      tile('Stops', sum.stops, { mod: 'tile__v--sm' }),
-      tile('Distance', km(sum.distanceM), { unit: 'km', mod: 'tile__v--sm' }),
-    ),
-    sum.kind ? el('div', { class: 'cap', text: `Mostly ${sum.kind.toLowerCase()}.` }) : null,
 
     spacer(),
-    btn('Make a card', 'btn--pri', () => ctx.go('card', s)),
-    btn('Just save it', 'btn--sec btn--sm', () => { toast('Saved to history.'); ctx.go('start'); }),
+    foot(
+      btn('Make a card', 'btn--pri', () => ctx.go('card', s), { lg: true }),
+      btn('Just save it', 'btn--sec', () => { toast('Saved to history.'); ctx.go('start'); }),
+    ),
   ];
 }
 
-/* Route drawn as an SVG polyline rather than a map screenshot — same reason the
-   share card is canvas-drawn: cross-origin tiles would taint any export. */
-export function routeSvg(s, height = 108) {
+/* ---------- route ----------
+   An SVG polyline rather than a map screenshot: cross-origin tiles would taint
+   any canvas export, and the share card has to be exportable. */
+
+export function routeSvg(s, height = 190) {
   const pts = s.trail;
-  const svg = el('svg', {
-    viewBox: '0 0 100 50', style: `width:100%;height:${height}px;display:block`,
-    'aria-hidden': 'true', preserveAspectRatio: 'xMidYMid meet',
-  });
+  // Built as markup on a plain div: document.createElement('svg') produces an
+  // HTML unknown element, not an SVG one, so it parses but never paints.
+  // innerHTML on an HTML parent puts <svg> into the right namespace.
+  const wrap = el('div', { style: `height:${height}px`, 'aria-hidden': 'true' });
+  const open = `<svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">`;
+
   if (pts.length < 2) {
-    svg.innerHTML = '<text x="50" y="27" text-anchor="middle" fill="#4D4D4D" font-size="5" font-family="system-ui">No route recorded</text>';
-    return svg;
+    wrap.innerHTML = `${open}<text x="50" y="32" text-anchor="middle" fill="#4D4D4D" font-size="4.5" font-family="system-ui">No route recorded</text></svg>`;
+    return wrap;
   }
-  const fitted = fitPoints(pts, 100, 50, 8);
-  const d = fitted.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const first = fitted[0];
+
+  const fitted = fitPoints(pts, 100, 60, 9);
+  const line = fitted.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  // Stops land on whichever recorded fix they were closest to in time.
+  const stops = s.pins.map((pin) => {
+    let best = 0;
+    for (let i = 1; i < pts.length; i++) {
+      if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
+    }
+    return fitted[best];
+  });
   const last = fitted[fitted.length - 1];
-  svg.innerHTML =
-    `<polyline points="${d}" fill="none" stroke="#7EE0C0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>` +
-    `<circle cx="${first.x.toFixed(1)}" cy="${first.y.toFixed(1)}" r="3" fill="#7EE0C0"/>` +
-    `<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="3" fill="#F06C9B"/>`;
-  return svg;
+
+  wrap.innerHTML = open +
+    `<polyline points="${line}" fill="none" stroke="#7EE0C0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>` +
+    stops.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="1.9" fill="#F06C9B"/>`).join('') +
+    `<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.2" fill="#fff"/>` +
+    `</svg>`;
+  return wrap;
 }
 
 // Project lat/lng into a box, preserving aspect so the route isn't stretched.
@@ -165,4 +202,4 @@ export function fitPoints(pts, w, h, pad = 8) {
   }));
 }
 
-export { remember };
+export { remember, hm, upperDate };

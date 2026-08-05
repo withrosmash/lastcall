@@ -1,0 +1,32 @@
+/* Last Call — depth, blur, motion. */
+:root{
+  /* Shadows. On true black, outer shadow does almost nothing: depth comes from
+     glow and hairlines. Reserve real shadow for sheets and floating actions. */
+  --shadow-none:none; /* @kind shadow */
+  --shadow-sheet:0 -12px 32px rgba(0,0,0,.72);
+  --shadow-float:0 6px 20px rgba(0,0,0,.60);
+  --shadow-inset-glass:inset 0 1px 0 rgba(255,255,255,.06); /* @kind shadow */
+  --glow-mint:0 0 24px rgba(126,224,192,.30); /* @kind shadow */
+  --glow-mint-strong:0 0 40px rgba(126,224,192,.45); /* @kind shadow */
+  --glow-forest:0 0 60px rgba(33,118,79,.45); /* @kind shadow */
+
+  /* Blur — only over bloom or imagery, never over flat black */
+  --blur-glass:18px; /* @kind other */
+  --blur-sheet:24px; /* @kind other */
+  --blur-chrome:12px; /* @kind other */
+
+  /* Motion */
+  --dur-instant:80ms; /* @kind other */
+  --dur-press:120ms; /* @kind other */
+  --dur-fast:180ms; /* @kind other */
+  --dur-base:240ms; /* @kind other */
+  --dur-sheet:280ms; /* @kind other */
+  --ease-out:cubic-bezier(.16,.84,.44,1); /* @kind other */
+  --ease-in-out:cubic-bezier(.4,0,.2,1); /* @kind other */
+  --ease-sheet:cubic-bezier(.2,.9,.25,1); /* @kind other */
+  --press-scale:.98; /* @kind other */
+
+  /* Texture: fine grain over bloom, keeps large green fields from banding */
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E"); /* @kind other */
+  --grain-opacity:.055; /* @kind other */
+}

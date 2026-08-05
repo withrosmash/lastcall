@@ -1,183 +1,238 @@
-:root{
-  --bg:#000;
-  --surface:#141414;
-  --surface-2:#0D0D0D;
-  --line:#262626;
-  --text:#fff;
-  --muted:#6B6B6B;
-  --muted-sm:#8A8A8A;
-  --faint:#4D4D4D;
-  --mint:#7EE0C0;
-  --mint-ink:#04342C;
-  --pink:#F06C9B;
-  --amber:#EF9F27;
+/* Last Call — the one stylesheet index.html links.
+   tokens/ are copied verbatim from the design system so a design update is a
+   file swap, not a merge. Everything below is the app's component layer, built
+   only from those tokens. */
+@import url("./tokens/colors.css");
+@import url("./tokens/typography.css");
+@import url("./tokens/spacing.css");
+@import url("./tokens/effects.css");
 
-  --gap:9px;
-  --gap-tight:7px;
-  --pad-x:14px;
-  --pad-y:16px;
-  --r-tile:11px;
-  --r-sheet:16px;
-  --tap:44px;
+/* ---------- ground ---------- */
 
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
-  --safe-t:env(safe-area-inset-top,0px);
-  --safe-b:env(safe-area-inset-bottom,0px);
-  --safe-l:env(safe-area-inset-left,0px);
-  --safe-r:env(safe-area-inset-right,0px);
-}
-
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:var(--sans);line-height:1.5;
-  overscroll-behavior:none;
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
+  margin:0;background:var(--bg);color:var(--text);font:var(--type-body);
+  text-wrap:pretty;overscroll-behavior:none;-webkit-font-smoothing:antialiased;
 }
-button{font:inherit;color:inherit;background:none;border:0;margin:0;cursor:pointer}
-input{font:inherit;color:inherit;background:none;border:0;width:100%}
-input::placeholder{color:#3A3A3A}
+button,input{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input{background:none;border:0;width:100%}
+input::placeholder{color:var(--placeholder)}
 :focus-visible{outline:2px solid var(--mint);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* No hover state anywhere: this is a touch app, hover is dead weight.
+   Press is scale(.98) and nothing else — no colour shift, no opacity dip. */
+.press{transition:transform var(--dur-press) var(--ease-out)}
+.press:active{transform:scale(var(--press-scale))}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+
+/* Bloom is the ambient green light the whole identity rests on; grain sits over
+   it so large green fields don't band on OLED. Both are inert. */
+.bloom,.grain{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bloom{background:var(--bloom-hero);transition:background var(--dur-base) var(--ease-out)}
+.bloom[data-bloom="foot"]{background:var(--bloom-foot)}
+.bloom[data-bloom="none"]{background:none}
+.grain{background-image:var(--grain);opacity:var(--grain-opacity);mix-blend-mode:overlay}
+
+.frame{
+  position:relative;z-index:1;min-height:100%;
+  display:flex;flex-direction:column;
+  max-width:var(--screen-w);margin:0 auto;width:100%;
+  padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);
+}
 
 #app{
-  min-height:100%;display:flex;flex-direction:column;
-  padding:calc(var(--pad-y) + var(--safe-t)) calc(var(--pad-x) + var(--safe-r)) calc(var(--pad-y) + var(--safe-b)) calc(var(--pad-x) + var(--safe-l));
-  gap:var(--gap);
-  max-width:520px;margin:0 auto;width:100%;
+  flex:1;min-height:0;display:flex;flex-direction:column;gap:var(--gap);
+  padding:var(--pad-screen-y) var(--pad-screen-x);
 }
 #app.flush{padding:0}
 
-.spacer{flex:1;min-height:0}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.stack{display:flex;flex-direction:column;gap:var(--gap)}
+/* ---------- type ---------- */
 
-/* ---- type ---- */
-.eb{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);font-weight:600}
-.eb.mint{color:var(--mint)}
-.eb.pink{color:var(--pink)}
-.eb.amber{color:var(--amber)}
-.title{font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
-.body{font-size:14px;line-height:1.55;color:var(--muted-sm)}
-.cap{font-size:11.5px;color:var(--muted)}
-.tnum{font-variant-numeric:tabular-nums}
+.eb{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--faint)}
+.eb--mint{color:var(--mint)}
+.eb--mint-dim{color:var(--mint-dim)}
+.eb--pink{color:var(--pink)}
+.eb--amber{color:var(--amber)}
+.title{font:var(--type-title);letter-spacing:var(--tr-title);margin:0}
+.display{font:var(--type-display);letter-spacing:var(--tr-display);margin:0}
+.body{font:var(--type-body);color:var(--muted-up)}
+.cap{font:var(--type-caption);color:var(--faint)}
+.cap--up{color:var(--muted-up)}
+.num{font-variant-numeric:tabular-nums}
+.timer{font:var(--type-timer);letter-spacing:var(--tr-timer);font-variant-numeric:tabular-nums}
+.timer--ended{color:var(--muted)}
 
-.timer{font-size:44px;font-weight:700;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+/* ---------- chrome ---------- */
 
-/* ---- buttons ---- */
-.btn{
-  display:flex;align-items:center;justify-content:center;
-  min-height:var(--tap);padding:13px 12px;border-radius:var(--r-tile);
-  font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  text-align:center;transition:transform .08s ease,opacity .12s ease;
-  width:100%;
+/* Android draws this notification itself while the foreground service runs; it
+   is mirrored here so the tracking state is legible without pulling the shade. */
+.service{
+  margin:0 10px 4px;padding:7px 10px;border-radius:var(--r-chip);
+  background:rgba(20,20,20,.72);backdrop-filter:blur(var(--blur-chrome));
+  border:var(--hairline) solid var(--line);
+  display:flex;align-items:center;gap:8px;
+  font:var(--type-caption);color:var(--muted-up);
 }
-.btn:active{transform:scale(.98)}
-.btn--pri{background:var(--mint);color:var(--mint-ink)}
-.btn--sec{border:1px solid var(--line);color:var(--text)}
-.btn--pink{border:1px solid var(--pink);color:var(--pink)}
-.btn--ghost{border:1px solid var(--line);color:var(--muted);font-weight:600;letter-spacing:.06em}
-.btn--sm{min-height:40px;padding:10px;font-size:11.5px}
-.btn[disabled]{background:var(--surface);color:var(--faint);border-color:transparent;pointer-events:none}
-.btn-pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-tight)}
 
-/* ---- tiles ---- */
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.head__title{margin:7px 0 0}
+.back{
+  display:inline-flex;align-items:center;gap:4px;
+  min-height:36px;padding:0 12px 0 8px;border-radius:var(--r-chip);
+  border:var(--hairline) solid var(--line);
+  font:var(--type-button);letter-spacing:var(--tr-button);text-transform:uppercase;
+}
+
+/* ---------- buttons ---------- */
+
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--tap);padding:0 12px;width:100%;
+  border-radius:var(--r-tile);
+  font:var(--type-button);letter-spacing:var(--tr-button);text-transform:uppercase;
+  text-align:center;
+}
+.btn--lg{min-height:var(--tap-lg)}
+.btn--pri{background:var(--mint);color:var(--mint-ink);box-shadow:var(--glow-mint)}
+.btn--sec{border:var(--hairline) solid var(--line);color:var(--text)}
+.btn--pink{border:var(--hairline) solid var(--pink);color:var(--pink)}
+.btn[disabled]{opacity:.38;pointer-events:none}
+.btn-pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-tight)}
+.foot{display:flex;flex-direction:column;gap:var(--gap-tight)}
+
+/* ---------- surfaces ----------
+   Two kinds, and they don't mix. Neutral tile is the working surface; forest
+   glass only ever sits over bloom or imagery. */
+
+.tile{background:var(--surface-tile);border-radius:var(--r-tile);padding:var(--pad-tile)}
+.tile__k{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--muted)}
+.tile__v{font:var(--type-stat);letter-spacing:var(--tr-stat);font-variant-numeric:tabular-nums;margin-top:2px}
+.tile__v--drinks{color:var(--pink)}
+.tile__v--hydration{color:var(--amber)}
+.tile__u{font:var(--type-caption);color:var(--muted);letter-spacing:0}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-tight)}
 .tiles--3{grid-template-columns:repeat(3,1fr)}
-.tile{background:var(--surface);border-radius:var(--r-tile);padding:10px 9px}
-.tile__k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.tile__v{font-size:22px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:1px}
-.tile__v--sm{font-size:17px}
-.tile__v--pink{color:var(--pink)}
-.tile__u{font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0}
 
-/* ---- sheets ---- */
+.glass{
+  background:var(--surface-card);border:var(--hairline) solid var(--glass-line);
+  border-radius:var(--r-card);backdrop-filter:blur(var(--blur-glass));
+  box-shadow:var(--shadow-inset-glass);padding:14px;
+}
+
+/* ---------- sheets ---------- */
+
 #sheet-root:empty{display:none}
 .scrim{
-  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;
+  position:fixed;inset:0;z-index:40;background:var(--scrim);
   display:flex;flex-direction:column;justify-content:flex-end;
-  animation:fade .16s ease;
+  animation:fade var(--dur-sheet) var(--ease-sheet);
 }
-@keyframes fade{from{opacity:0}to{opacity:1}}
-@keyframes rise{from{transform:translateY(14px)}to{transform:translateY(0)}}
 .sheet{
-  background:var(--surface-2);border:1px solid var(--line);border-bottom:0;
+  background:var(--surface-sheet);
   border-radius:var(--r-sheet) var(--r-sheet) 0 0;
-  padding:10px calc(var(--pad-x) + var(--safe-l)) calc(14px + var(--safe-b)) calc(var(--pad-x) + var(--safe-r));
+  /* No backdrop-filter here despite --blur-sheet: the panel fill is opaque, so
+     the blur has nothing to act on, and it forces a compositing layer that
+     lets the screen beneath bleed through. Matches the system's own rule —
+     blur only where something is genuinely behind it. */
+  box-shadow:var(--shadow-sheet);
+  padding:var(--pad-sheet);padding-bottom:calc(20px + var(--safe-bottom));
   display:flex;flex-direction:column;gap:var(--gap);
-  max-width:520px;width:100%;margin:0 auto;
+  width:100%;max-width:var(--screen-w);margin:0 auto;
   max-height:88vh;overflow-y:auto;
-  animation:rise .18s ease;
+  animation:rise var(--dur-sheet) var(--ease-sheet);
 }
-.sheet__grip{width:34px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 4px}
+.sheet__grip{width:108px;height:4px;border-radius:var(--r-pill);background:var(--line);margin:0 auto 6px;flex:0 0 auto}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{transform:translateY(18px)}to{transform:translateY(0)}}
 
-/* ---- chips ---- */
-.chips{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+/* ---------- chips + fields ---------- */
+
+.chips{display:flex;flex-wrap:wrap;gap:var(--gap-tight)}
 .chip{
-  border:1px solid var(--line);border-radius:9px;padding:0 8px;
-  min-height:var(--tap);display:flex;align-items:center;justify-content:center;
-  font-size:12.5px;color:#D8D8D8;text-align:center;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:var(--tap);padding:0 14px;border-radius:var(--r-chip);
+  border:var(--hairline) solid var(--line);color:var(--text);font-size:12px;
 }
-.chip[aria-pressed="true"]{border-color:var(--mint);color:var(--mint)}
+.chip[aria-pressed="true"],.chip[aria-selected="true"]{border-color:var(--mint);color:var(--mint)}
 
-/* ---- fields ---- */
-.field{border-bottom:1px solid var(--line);padding-bottom:6px}
+.field{border-bottom:var(--hairline) solid var(--line);padding-bottom:6px;transition:border-color var(--dur-fast) var(--ease-out)}
 .field:focus-within{border-color:var(--mint)}
-.field__k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.field input{font-size:16px;padding:6px 0 2px}
+.field__k{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--muted)}
+.field input{font-size:16px;padding:7px 0 2px}
 
-/* ---- warning ---- */
-.warn{border:1px solid var(--amber);border-radius:var(--r-tile);padding:12px 11px;display:flex;flex-direction:column;gap:var(--gap)}
+/* ---------- warning ---------- */
 
-/* ---- list ---- */
+.warn{border:var(--hairline) solid var(--amber);border-radius:var(--r-tile);padding:12px;display:flex;flex-direction:column;gap:var(--gap)}
+.warn__h{font-size:var(--fs-body);font-weight:var(--fw-bold);color:var(--amber);letter-spacing:var(--tr-title)}
+
+/* ---------- list + chart ---------- */
+
 .listrow{
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-  background:var(--surface);border-radius:9px;padding:11px 12px;min-height:var(--tap);
-  width:100%;text-align:left;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;min-height:var(--tap);padding:0 12px;
+  background:var(--surface-tile);border-radius:var(--r-chip);text-align:left;
 }
-.listrow__d{font-size:13px;font-weight:600}
-.listrow__m{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.listrow__d{font-size:13px;font-weight:var(--fw-bold)}
+.listrow__m{display:flex;gap:10px;font:var(--type-caption);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.listrow__m b{color:var(--pink);font-weight:var(--fw-regular)}
 
-/* ---- bars ---- */
-.bars{display:flex;align-items:flex-end;gap:5px;height:48px}
-.bars i{flex:1;background:var(--line);border-radius:2px;min-height:2px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:96px}
+.bars i{flex:1;background:var(--mint-dim);border-radius:3px 3px 0 0;min-height:3px;display:block}
 .bars i.on{background:var(--mint)}
+.bars-x{display:flex;gap:6px;margin-top:6px}
+.bars-x span{flex:1;text-align:center;font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums}
 
-/* ---- timeline ---- */
-.tl{display:flex;flex-direction:column;gap:6px}
-.tl__i{display:flex;gap:9px;font-size:12.5px;color:#C9C9C9;align-items:baseline}
-.tl__t{font-size:11px;color:var(--faint);min-width:44px;font-variant-numeric:tabular-nums}
+/* ---------- timeline ---------- */
 
-/* ---- wordmark ---- */
-.wordmark{font-size:30px;font-weight:700;letter-spacing:-.04em;line-height:1;text-align:center}
-.wordmark span{color:var(--mint)}
+.tl{display:flex;flex-direction:column;gap:9px}
+.tl__i{display:flex;align-items:center;gap:8px;font-size:13px}
+.tl__i svg{color:var(--pink)}
+.tl__n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl__t{font:var(--type-caption);color:var(--muted);font-variant-numeric:tabular-nums}
 
-/* ---- map ---- */
-#map{flex:1;min-height:200px;background:#0E1412}
-.leaflet-container{background:#0E1412;font-family:var(--sans)}
-.leaflet-control-attribution{background:rgba(0,0,0,.6)!important;color:#5A625F!important;font-size:9px}
-.leaflet-control-attribution a{color:#7A827F!important}
+/* ---------- map ---------- */
+
+.map-wrap{flex:1;min-height:200px;position:relative;border-radius:var(--r-card);overflow:hidden;border:var(--hairline) solid var(--glass-line)}
+#map{position:absolute;inset:0;background:var(--forest-950)}
+.leaflet-container{background:var(--forest-950);font:var(--type-caption)}
+.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:var(--faint)!important;font-size:9px}
+.leaflet-control-attribution a{color:var(--muted)!important}
 .leaflet-bar,.leaflet-bar a{background:var(--surface);color:var(--text);border-color:var(--line)}
-.map-pane{display:flex;flex-direction:column;gap:var(--gap);padding:11px calc(var(--pad-x) + var(--safe-r)) calc(var(--pad-y) + var(--safe-b)) calc(var(--pad-x) + var(--safe-l))}
-.dot-me{border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.22)}
-.dot-stop{border-radius:50%;background:var(--pink);box-shadow:0 0 0 3px rgba(240,108,155,.2)}
-
-/* ---- card builder ---- */
-.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;background:#0B0B0B;border:1px solid var(--line);border-radius:var(--r-tile);overflow:hidden}
-#card-canvas{max-width:100%;max-height:100%;touch-action:none;display:block}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-tight)}
-
-/* ---- toast ---- */
-.toast{
-  position:fixed;left:50%;transform:translateX(-50%);
-  bottom:calc(18px + var(--safe-b));z-index:60;
-  background:var(--surface);border:1px solid var(--line);border-radius:999px;
-  padding:10px 18px;font-size:13px;max-width:88vw;text-align:center;
-  animation:fade .16s ease;
+.dot-me{width:14px;height:14px;border-radius:var(--r-pill);background:var(--text);box-shadow:0 0 0 4px rgba(255,255,255,.18)}
+.dot-stop{width:11px;height:11px;border-radius:var(--r-pill);background:var(--pink);box-shadow:0 0 0 4px rgba(240,108,155,.18)}
+/* Chrome over the map sits on a protection gradient, never a capsule. */
+.map-foot{
+  position:absolute;left:0;right:0;bottom:0;z-index:500;
+  /* Deep enough that the labels clear the map detail behind them — chrome over
+     the map sits on a protection gradient, never a capsule. */
+  padding:64px 14px 14px;background:var(--protect-bottom);
+  display:flex;gap:18px;
 }
+.map-foot .tile__k{color:var(--muted-up)}
+.map-wrap .leaflet-control-attribution{margin-bottom:2px}
+
+/* ---------- card builder ---------- */
+
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+#card-canvas{max-width:100%;max-height:100%;touch-action:none;display:block;border-radius:6px}
 
 .center{text-align:center}
+.spacer{flex:1;min-height:0}
 .hidden{display:none!important}
-.mt-auto{margin-top:auto}
+.stack{display:flex;flex-direction:column;gap:var(--gap)}
+
+/* ---------- toast ---------- */
+
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(20px + var(--safe-bottom));z-index:60;
+  background:rgba(20,20,20,.92);backdrop-filter:blur(var(--blur-chrome));
+  border:var(--hairline) solid var(--line);border-radius:var(--r-pill);
+  padding:10px 18px;font:var(--type-caption);color:var(--text);
+  max-width:86vw;text-align:center;animation:fade var(--dur-fast) var(--ease-out);
+}

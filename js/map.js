@@ -1,51 +1,74 @@
-import { el, btn, tile, sheet, toast, hhmm, km } from './ui.js';
+import { el, btn, spacer, foot, head, sheet, toast, hms, km } from './ui.js';
 import * as S from './state.js';
 import * as geo from './geo.js';
 
-const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const ATTRIB = '&copy; OpenStreetMap';
+// Dark basemap: the standard OSM raster is light, which fights a true-black
+// night app and leaves the stats strip unreadable. CARTO's dark_all is free
+// with attribution. The design brief asks for genuinely offline tiles — that
+// needs bundled map data and is still open.
+const TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const SUBDOMAINS = 'abcd';
+const ATTRIB = '&copy; OpenStreetMap, &copy; CARTO';
 
 let map = null;
 let layers = { trail: null, me: null, pins: [] };
 let onFix = null;
 let centred = false;
 
+/* ---------- 04 map ---------- */
+
 export function mapScreen(ctx) {
   const s = ctx.state.active;
   if (!s) { ctx.go('start'); return []; }
 
   const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Your route tonight' });
+  const denied = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported';
+  const waiting = !denied && !s.trail.length;
 
   // Leaflet needs the container in the document with a real size before init.
-  queueMicrotask(() => initMap(ctx, host, s));
+  if (!denied) queueMicrotask(() => initMap(host, s));
 
-  const denied = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported';
+  const stat = (k, v, tone) =>
+    el('div', {},
+      el('div', { class: 'tile__k', text: k }),
+      el('div', { class: `tile__v${tone ? ' tile__v--' + tone : ''}`, text: v }));
 
   return [
-    host,
-    el('div', { class: 'map-pane' },
+    head({ title: 'Tonight', back: () => ctx.go('live') }),
+
+    denied
+      ? el('div', { class: 'glass', style: 'flex:1;display:flex;align-items:center' },
+          el('p', { class: 'body', style: 'margin:0',
+            text: 'Location is off, so there’s no map tonight. Drinks, water and time are all still being tracked.' }))
+      : el('div', { class: 'map-wrap' },
+          host,
+          // Chrome over the map sits on a protection gradient, not a capsule.
+          el('div', { class: 'map-foot' },
+            stat('Stops', String(s.pins.length)),
+            stat('Drinks', String(s.drinks.length), 'drinks'),
+            stat('Distance', `${km(s.distanceM)} km`),
+          )),
+
+    waiting ? el('p', { class: 'cap cap--up', text: 'Waiting for GPS. Everything else still works.' }) : null,
+
+    denied ? spacer() : null,
+    foot(
       denied
-        ? el('div', { class: 'cap', text: 'Location is off, so there is no map tonight. Drinks, water and time are all still being tracked.' })
-        : el('div', { class: 'tiles tiles--3' },
-            tile('Dist', km(s.distanceM), { mod: 'tile__v--sm' }),
-            tile('Stops', s.pins.length, { mod: 'tile__v--sm' }),
-            tile('Time', hhmm(S.elapsedMs(s)), { mod: 'tile__v--sm' }),
-          ),
-      denied ? null : btn('Drop pin here', 'btn--pri', () => dropPin(ctx, s)),
-      btn('Back to session', 'btn--sec btn--sm', () => ctx.go('live')),
+        ? btn('Back to session', 'btn--sec', () => ctx.go('live'))
+        : btn('Drop pin', 'btn--pri', () => dropPin(ctx, s), { iconName: 'map-pin', lg: true }),
     ),
   ];
 }
 
-function initMap(ctx, host, s) {
+function initMap(host, s) {
   if (!globalThis.L || !host.isConnected) return;
   teardownMap();
 
-  map = L.map(host, { zoomControl: true, attributionControl: true, preferCanvas: true });
-  L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIB, crossOrigin: true }).addTo(map);
+  map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
+  L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIB, subdomains: SUBDOMAINS, crossOrigin: true }).addTo(map);
 
   layers.trail = L.polyline(s.trail.map((p) => [p.lat, p.lng]), {
-    color: '#7EE0C0', weight: 5, lineCap: 'round', lineJoin: 'round',
+    color: '#7EE0C0', weight: 4, lineCap: 'round', lineJoin: 'round',
   }).addTo(map);
 
   for (const pin of s.pins) addPinMarker(pin);
@@ -81,65 +104,69 @@ function setMe(fix) {
   const pos = [fix.lat, fix.lng];
   if (layers.me) { layers.me.setLatLng(pos); return; }
   layers.me = L.marker(pos, {
-    icon: L.divIcon({ className: '', html: '<div class="dot-me" style="width:16px;height:16px"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
+    icon: L.divIcon({ className: '', html: '<div class="dot-me"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }),
     keyboard: false,
     interactive: false,
   }).addTo(map);
 }
 
 function addPinMarker(pin) {
+  const label = escapeHtml(pin.name);
   const marker = L.marker([pin.lat, pin.lng], {
-    icon: L.divIcon({ className: '', html: '<div class="dot-stop" style="width:14px;height:14px"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }),
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+               <div class="dot-stop"></div>
+               <span style="font:600 11px system-ui;color:#F06C9B">${label}</span>
+             </div>`,
+      iconSize: [11, 11],
+      iconAnchor: [5, 5],
+    }),
   }).addTo(map);
-  marker.bindPopup(`<b>${escapeHtml(pin.name)}</b>${pin.note ? '<br>' + escapeHtml(pin.note) : ''}`);
   layers.pins.push(marker);
 }
 
 function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return String(str).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+/* ---------- 05 drop pin ---------- */
+
 function dropPin(ctx, s) {
-  const here = s.trail[s.trail.length - 1] || (map && { lat: map.getCenter().lat, lng: map.getCenter().lng });
+  const here = s.trail[s.trail.length - 1]
+    || (map && { lat: map.getCenter().lat, lng: map.getCenter().lng });
   if (!here) { toast('No position yet. Give GPS a moment.'); return; }
 
   let name = '';
   let note = '';
 
-  sheet((close) => {
-    const save = btn('Save stop', 'btn--pri', () => {
-      const trimmed = name.trim();
-      if (!trimmed) return;
+  sheet((close) => [
+    el('h2', { class: 'title', text: 'Name this stop' }),
+    el('label', { class: 'field' },
+      el('div', { class: 'field__k', text: 'Name this stop' }),
+      el('input', {
+        type: 'text', placeholder: 'The Grapes', autocapitalize: 'words', enterkeyhint: 'done',
+        oninput: (e) => { name = e.target.value; },
+      }),
+    ),
+    el('label', { class: 'field' },
+      el('div', { class: 'field__k', text: 'Anything worth remembering' }),
+      el('input', {
+        type: 'text', placeholder: 'Met Tom outside',
+        oninput: (e) => { note = e.target.value; },
+      }),
+    ),
+    foot(btn('Drop pin', 'btn--pri', () => {
       close();
-      const pin = { lat: here.lat, lng: here.lng, name: trimmed, note: note.trim() };
+      // Empty name falls back rather than blocking the save.
+      const pin = { lat: here.lat, lng: here.lng, name: name.trim() || 'Unnamed stop', note: note.trim() };
       ctx.addPin(pin);
       if (map) addPinMarker({ ...pin, t: Date.now() });
-      ctx.go('map');
+      ctx.render();
       toast('Stop saved.');
-    });
-    save.disabled = true;
-
-    return [
-      el('div', { class: 'title', text: 'Name this stop' }),
-      el('label', { class: 'field' },
-        el('div', { class: 'field__k', text: 'Venue' }),
-        el('input', {
-          type: 'text', autocapitalize: 'words', enterkeyhint: 'done', placeholder: 'The Fox and Hounds',
-          oninput: (e) => { name = e.target.value; save.disabled = !name.trim(); },
-          onkeydown: (e) => { if (e.key === 'Enter' && !save.disabled) save.click(); },
-        }),
-      ),
-      el('label', { class: 'field' },
-        el('div', { class: 'field__k', text: 'Note · optional' }),
-        el('input', {
-          type: 'text', placeholder: 'Anything worth remembering',
-          oninput: (e) => { note = e.target.value; },
-        }),
-      ),
-      save,
-      btn('Cancel', 'btn--ghost btn--sm', close),
-    ];
-  });
+    })),
+  ]);
 }
 
 export function teardownMap() {
@@ -148,3 +175,5 @@ export function teardownMap() {
   layers = { trail: null, me: null, pins: [] };
   centred = false;
 }
+
+export { hms };

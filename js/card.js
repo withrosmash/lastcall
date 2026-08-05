@@ -1,19 +1,104 @@
-import { el, btn, spacer, toast, hhmm, shortDate, clockTime, km } from './ui.js';
+import { el, btn, foot, head, spacer, toast, icon, hms, km } from './ui.js';
 import * as S from './state.js';
 import { fitPoints } from './session.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
-const C = { bg: '#000', text: '#fff', mint: '#7EE0C0', pink: '#F06C9B', faint: '#4D4D4D', line: '#1F1F1F' };
-const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const C = {
+  bg: '#000', text: '#fff', mint: '#7EE0C0', pink: '#F06C9B',
+  faint: '#4D4D4D', muted: '#8A8A8A', forest: '33,118,79',
+};
+const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 let ui = null;
+
+/* ---------- 09 card builder ---------- */
 
 export function cardScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
+  if (!ui || ui.session !== s) ui = makeState(s);
 
-  ui = {
+  const canvas = el('canvas', { id: 'card-canvas' });
+  bindCanvas(canvas);
+
+  const tabs = el('div', { class: 'chips' },
+    tab('Preset', () => setMode('preset'), ui.mode === 'preset'),
+    tab('Your photo', () => pickPhoto(), ui.mode === 'photo'),
+  );
+
+  const toggles = el('div', { class: 'chips' });
+  const togglesLabel = el('div', { class: 'eb', text: 'Elements' });
+
+  // Element toggles gate content in both modes: preset stacks whatever is on,
+  // photo mode makes the same pieces draggable.
+  ui.refreshChrome = () => {
+    const preset = ui.mode === 'preset';
+    tabs.children[0].setAttribute('aria-pressed', preset ? 'true' : 'false');
+    tabs.children[1].setAttribute('aria-pressed', preset ? 'false' : 'true');
+    toggles.replaceChildren(...elementToggles());
+  };
+  ui.refreshChrome();
+  draw();
+
+  return [
+    head({ title: 'Your card', back: () => ctx.go(ctx.state.active ? 'live' : 'history') }),
+    tabs,
+    el('div', { class: 'canvas-wrap' }, canvas),
+    togglesLabel,
+    toggles,
+    spacer(),
+    foot(btn('Next', 'btn--pri', () => ctx.go('share', s), { lg: true })),
+  ];
+}
+
+/* ---------- 10 share ---------- */
+
+export function shareScreen(ctx, session) {
+  const s = session || ctx.lastSession;
+  if (!s) { ctx.go('start'); return []; }
+  if (!ui || ui.session !== s) ui = makeState(s);
+
+  const canvas = el('canvas', { id: 'card-canvas' });
+  bindCanvas(canvas);
+
+  const ratios = el('div', { class: 'chips' },
+    tab('Feed 4:5', () => { setRatio('feed'); syncRatios(); }, ui.ratio === 'feed'),
+    tab('Story 9:16', () => { setRatio('story'); syncRatios(); }, ui.ratio === 'story'),
+  );
+  const syncRatios = () => {
+    ratios.children[0].setAttribute('aria-pressed', ui.ratio === 'feed' ? 'true' : 'false');
+    ratios.children[1].setAttribute('aria-pressed', ui.ratio === 'story' ? 'true' : 'false');
+  };
+  draw();
+
+  return [
+    head({ title: 'Share', back: () => ctx.go('card', s) }),
+    ratios,
+    el('div', { class: 'canvas-wrap' }, canvas),
+    spacer(),
+    foot(
+      btn('Share', 'btn--pri', () => shareCard(), { iconName: 'share-2', lg: true }),
+      btn('Save to photos', 'btn--sec', () => saveCard(), { iconName: 'download' }),
+    ),
+  ];
+}
+
+const tab = (label, onclick, on) =>
+  el('button', { class: 'chip press', type: 'button', 'aria-pressed': on ? 'true' : 'false', onclick }, label);
+
+/* ---------- state ---------- */
+
+const TYPES = [
+  { key: 'route', label: 'Route' },
+  { key: 'stats', label: 'Stats' },
+  { key: 'time', label: 'Time' },
+  { key: 'date', label: 'Date + place' },
+  { key: 'stops', label: 'Stops' },
+];
+
+function makeState(s) {
+  return {
     session: s,
     sum: S.summarise(s),
     mode: 'preset',
@@ -21,84 +106,22 @@ export function cardScreen(ctx, session) {
     photo: null,
     selected: null,
     drag: null,
-    elements: defaultElements(),
+    // Defaults reproduce Mode B — the stats bar sitting along the foot.
+    elements: {
+      route: { on: true, x: PAD, y: 300 },
+      time: { on: true, x: PAD, y: 1350 - PAD - 300 },
+      stats: { on: true, x: PAD, y: 1350 - PAD - 190 },
+      date: { on: true, x: PAD, y: 1350 - PAD - 90 },
+      stops: { on: false, x: PAD, y: 200 },
+    },
     bounds: new Map(),
-  };
-
-  const canvas = el('canvas', { id: 'card-canvas' });
-  ui.canvas = canvas;
-  ui.g = canvas.getContext('2d');
-  sizeCanvas();
-
-  attachDrag(canvas);
-
-  const modeRow = el('div', { class: 'seg' },
-    btn('Preset', 'btn--pri btn--sm', () => setMode('preset')),
-    btn('Your photo', 'btn--sec btn--sm', () => pickPhoto()),
-  );
-
-  const toggles = el('div', { class: 'tiles tiles--3', style: 'gap:6px' });
-  const togglesLabel = el('div', { class: 'eb', text: 'Elements · drag to place' });
-  const ratioRow = el('div', { class: 'seg' },
-    btn('Feed 4:5', 'btn--sec btn--sm', () => setRatio('feed')),
-    btn('Story 9:16', 'btn--ghost btn--sm', () => setRatio('story')),
-  );
-
-  ui.refreshChrome = () => {
-    const preset = ui.mode === 'preset';
-    modeRow.children[0].className = `btn btn--sm ${preset ? 'btn--pri' : 'btn--sec'}`;
-    modeRow.children[1].className = `btn btn--sm ${preset ? 'btn--sec' : 'btn--pri'}`;
-    ratioRow.children[0].className = `btn btn--sm ${ui.ratio === 'feed' ? 'btn--sec' : 'btn--ghost'}`;
-    ratioRow.children[1].className = `btn btn--sm ${ui.ratio === 'story' ? 'btn--sec' : 'btn--ghost'}`;
-    toggles.replaceChildren(...elementToggles());
-    toggles.classList.toggle('hidden', preset);
-    togglesLabel.classList.toggle('hidden', preset);
-  };
-  ui.refreshChrome();
-
-  draw();
-
-  return [
-    el('div', { class: 'eb mint', text: 'Make a card' }),
-    modeRow,
-    el('div', { class: 'canvas-wrap' }, canvas),
-    togglesLabel,
-    toggles,
-    ratioRow,
-    btn('Share', 'btn--pri', () => shareCard(ctx)),
-    el('div', { class: 'btn-pair' },
-      btn('Save', 'btn--sec btn--sm', () => saveCard()),
-      btn('Done', 'btn--ghost btn--sm', () => ctx.go(ctx.state.active ? 'live' : 'start')),
-    ),
-  ];
-}
-
-/* ---------- element model ---------- */
-
-const TYPES = [
-  { key: 'stats', label: 'Stats' },
-  { key: 'route', label: 'Route' },
-  { key: 'time', label: 'Time' },
-  { key: 'stops', label: 'Stops' },
-  { key: 'drink', label: 'Drink' },
-  { key: 'mark', label: 'Mark' },
-];
-
-function defaultElements() {
-  return {
-    stats: { on: true, x: PAD, y: 1350 - PAD - 180 },
-    route: { on: true, x: 1080 / 2 - 240, y: 420 },
-    time: { on: true, x: PAD, y: PAD },
-    stops: { on: false, x: PAD, y: 300 },
-    drink: { on: false, x: PAD, y: 240 },
-    mark: { on: true, x: 1080 - PAD - 230, y: 1350 - PAD - 30 },
   };
 }
 
 function elementToggles() {
   return TYPES.map((t) =>
     el('button', {
-      class: 'chip', type: 'button', style: 'font-size:11.5px;min-height:40px',
+      class: 'chip press', type: 'button',
       'aria-pressed': ui.elements[t.key].on ? 'true' : 'false',
       onclick: () => {
         ui.elements[t.key].on = !ui.elements[t.key].on;
@@ -106,23 +129,22 @@ function elementToggles() {
         ui.refreshChrome();
         draw();
       },
-    }, t.label),
-  );
+    }, t.label));
 }
 
-function setMode(mode) {
-  ui.mode = mode;
-  ui.selected = null;
-  ui.refreshChrome();
-  draw();
-}
+function setMode(mode) { ui.mode = mode; ui.selected = null; ui.refreshChrome?.(); draw(); }
 
 function setRatio(ratio) {
   if (ui.ratio === ratio) return;
+  const [, oldH] = RATIOS[ui.ratio];
   ui.ratio = ratio;
+  const [, newH] = RATIOS[ratio];
+  // Keep elements the same distance from whichever edge they were nearest.
+  for (const e of Object.values(ui.elements)) {
+    if (e.y > oldH / 2) e.y += newH - oldH;
+  }
   sizeCanvas();
   clampAll();
-  ui.refreshChrome();
   draw();
 }
 
@@ -136,9 +158,16 @@ function sizeCanvas() {
 function clampAll() {
   const [w, h] = RATIOS[ui.ratio];
   for (const e of Object.values(ui.elements)) {
-    e.x = Math.min(Math.max(e.x, 0), w - 120);
+    e.x = Math.min(Math.max(e.x, 0), w - 140);
     e.y = Math.min(Math.max(e.y, 0), h - 60);
   }
+}
+
+function bindCanvas(canvas) {
+  ui.canvas = canvas;
+  ui.g = canvas.getContext('2d');
+  sizeCanvas();
+  attachDrag(canvas);
 }
 
 /* ---------- photo ---------- */
@@ -151,12 +180,8 @@ function pickPhoto() {
     if (!file) return;
     const img = new Image();
     const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      ui.photo = img;
-      setMode('photo');
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); toast("That image didn't open."); };
+    img.onload = () => { URL.revokeObjectURL(url); ui.photo = img; setMode('photo'); };
+    img.onerror = () => { URL.revokeObjectURL(url); toast('That image didn’t open.'); };
     img.src = url;
   });
   document.body.append(input);
@@ -182,7 +207,7 @@ function attachDrag(canvas) {
     if (hit) {
       const b = ui.bounds.get(hit);
       ui.drag = { key: hit, dx: p.x - b.x, dy: p.y - b.y };
-      canvas.setPointerCapture(e.pointerId);
+      try { canvas.setPointerCapture(e.pointerId); } catch { /* not captured */ }
     }
     draw();
   });
@@ -191,9 +216,9 @@ function attachDrag(canvas) {
     if (!ui.drag) return;
     e.preventDefault();
     const p = toCard(e);
-    const el2 = ui.elements[ui.drag.key];
-    el2.x = p.x - ui.drag.dx;
-    el2.y = p.y - ui.drag.dy;
+    const node = ui.elements[ui.drag.key];
+    node.x = p.x - ui.drag.dx;
+    node.y = p.y - ui.drag.dy;
     clampAll();
     draw();
   });
@@ -209,18 +234,17 @@ function attachDrag(canvas) {
 
 // Topmost first, so the element drawn last wins an overlap.
 function hitTest(p) {
-  const keys = [...ui.bounds.keys()].reverse();
-  for (const k of keys) {
+  for (const k of [...ui.bounds.keys()].reverse()) {
     const b = ui.bounds.get(k);
     if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return k;
   }
   return null;
 }
 
-/* ---------- text helpers ---------- */
+/* ---------- text ----------
+   Manual letter-spacing: ctx.letterSpacing isn't universal, and the labels
+   depend on +0.18em tracking to read as labels at all. */
 
-// Manual letter-spacing: ctx.letterSpacing is not universal, and the labels
-// depend on wide tracking to read as labels at all.
 function drawText(g, str, x, y, { size = 40, weight = 700, color = C.text, spacing = 0, align = 'left' } = {}) {
   g.font = `${weight} ${size}px ${SANS}`;
   g.fillStyle = color;
@@ -241,14 +265,22 @@ function measure(g, chars, spacing) {
   return Math.max(0, w - spacing);
 }
 
-function textWidth(g, str, { size = 40, weight = 700, spacing = 0 } = {}) {
-  g.font = `${weight} ${size}px ${SANS}`;
-  return measure(g, [...str], spacing);
+const abbrev = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+
+// Faint reads fine on the black preset card but disappears over a photograph,
+// so labels step up whenever there's an image behind them.
+const labelInk = () => (ui.photo ? C.muted : C.faint);
+
+function placeLine(s) {
+  const date = new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
+  const place = s.pins[0]?.name;
+  return place ? `${date} · ${place}` : date;
 }
 
 /* ---------- draw ---------- */
 
 function draw({ forExport = false } = {}) {
+  if (!ui?.g) return;
   const g = ui.g;
   const [w, h] = RATIOS[ui.ratio];
   ui.bounds.clear();
@@ -257,10 +289,29 @@ function draw({ forExport = false } = {}) {
   g.fillStyle = C.bg;
   g.fillRect(0, 0, w, h);
 
-  if (ui.photo) drawCover(g, ui.photo, w, h);
+  if (ui.photo) {
+    drawCover(g, ui.photo, w, h);
+    // A 34% wash so white type holds over any picture.
+    g.fillStyle = 'rgba(0,0,0,.34)';
+    g.fillRect(0, 0, w, h);
+  } else {
+    drawBloom(g, w, h);
+  }
 
   if (ui.mode === 'preset') drawPreset(g, w, h);
   else drawFree(g, w, h, forExport);
+
+  // The wordmark is the one fixed element — always mint, always present.
+  drawText(g, 'Last Call', PAD, h - PAD - 26, { size: 26, weight: 700, color: C.mint, spacing: 1 });
+}
+
+function drawBloom(g, w, h) {
+  const grad = g.createRadialGradient(w / 2, 0, 0, w / 2, 0, w * 1.15);
+  grad.addColorStop(0, `rgba(${C.forest},.55)`);
+  grad.addColorStop(0.42, 'rgba(10,36,25,.35)');
+  grad.addColorStop(0.78, 'rgba(0,0,0,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, w, h);
 }
 
 function drawCover(g, img, w, h) {
@@ -270,142 +321,125 @@ function drawCover(g, img, w, h) {
   g.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
 }
 
+// Fixed composition: whichever blocks are enabled stack up from just above the
+// wordmark, and the route takes whatever height is left.
 function drawPreset(g, w, h) {
-  const { session: s, sum } = ui;
+  const on = ui.elements;
+  const blocks = [];
+  if (on.time.on) blocks.push({ h: 118, draw: (y) => drawTime(g, PAD, y) });
+  if (on.stats.on) blocks.push({ h: 100, draw: (y) => drawStats(g, PAD, y) });
+  if (on.stops.on) blocks.push({ h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 14, draw: (y) => DRAW.stops(g, PAD, y, w) });
+  if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: C.muted }) });
 
-  drawText(g, shortDate(s.startedAt).toUpperCase(), PAD, PAD, { size: 30, weight: 700, color: C.pink, spacing: 5 });
-  drawText(g, clockTime(s.startedAt).toUpperCase() + ' — ' + clockTime(s.endedAt ?? Date.now()).toUpperCase(), PAD, PAD + 44, { size: 24, weight: 600, color: C.faint, spacing: 5 });
+  const stackH = blocks.reduce((n, b) => n + b.h, 0);
+  const stackTop = h - PAD - 26 - 30 - stackH;
 
-  // Anchor the stats just above the footer rule and let the route take
-  // whatever height is left, so feed and story ratios both stay balanced
-  // instead of leaving a dead band above the wordmark.
-  const footerY = h - PAD - 62;
-  const statsH = 264;
-  const statsTop = footerY - 80 - statsH;
-  const routeTop = PAD + 150;
-  drawRoute(g, PAD, routeTop, w - PAD * 2, statsTop - 60 - routeTop);
-
-  const cells = [
-    ['DURATION', hhmm(sum.ms), C.text],
-    ['DRINKS', String(sum.drinks), C.pink],
-    ['STOPS', String(sum.stops), C.text],
-    ['DISTANCE', km(sum.distanceM), C.text],
-  ];
-  const colW = (w - PAD * 2) / 2;
-  cells.forEach(([k, v, color], i) => {
-    const x = PAD + (i % 2) * colW;
-    const y = statsTop + Math.floor(i / 2) * 132;
-    drawText(g, k, x, y, { size: 22, weight: 600, color: C.faint, spacing: 4 });
-    drawText(g, v, x, y + 34, { size: 62, weight: 700, color, spacing: -2 });
-  });
-
-  g.fillStyle = C.line;
-  g.fillRect(PAD, footerY, w - PAD * 2, 2);
-  drawText(g, 'LAST CALL', PAD, h - PAD - 40, { size: 24, weight: 700, color: C.mint, spacing: 7 });
-  if (sum.kind) {
-    drawText(g, sum.kind.toUpperCase(), w - PAD, h - PAD - 40, { size: 24, weight: 600, color: C.faint, spacing: 4, align: 'right' });
+  if (on.route.on) {
+    const top = PAD + 60;
+    drawRoute(g, PAD, top, w - PAD * 2, stackTop - top - 40);
   }
+
+  let y = stackTop;
+  for (const b of blocks) { b.draw(y); y += b.h; }
 }
 
 function drawFree(g, w, h, forExport) {
   for (const t of TYPES) {
     const e = ui.elements[t.key];
     if (!e.on) continue;
-    const box = DRAW[t.key](g, e.x, e.y);
+    const box = DRAW[t.key](g, e.x, e.y, w);
     ui.bounds.set(t.key, { x: e.x, y: e.y, w: box.w, h: box.h });
   }
-
   if (!forExport && ui.selected && ui.bounds.has(ui.selected)) {
     const b = ui.bounds.get(ui.selected);
     g.save();
     g.strokeStyle = C.mint;
     g.lineWidth = 3;
-    g.setLineDash([12, 10]);
-    g.strokeRect(b.x - 14, b.y - 14, b.w + 28, b.h + 28);
+    g.setLineDash([14, 10]);
+    g.strokeRect(b.x - 16, b.y - 16, b.w + 32, b.h + 32);
     g.restore();
   }
 }
 
+function drawTime(g, x, y) {
+  const w = drawText(g, hms(ui.sum.ms), x, y, { size: 96, weight: 700, spacing: -4 });
+  return { w, h: 100 };
+}
+
+function drawStats(g, x, y) {
+  const cells = [
+    ['DRINKS', String(ui.sum.drinks), C.pink],
+    ['STOPS', String(ui.sum.stops), C.text],
+    ['STEPS', abbrev(ui.sum.steps), C.text],
+    ['KM', km(ui.sum.distanceM), C.text],
+  ];
+  let cx = x;
+  for (const [k, v, color] of cells) {
+    drawText(g, k, cx, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
+    drawText(g, v, cx, y + 30, { size: 52, weight: 700, color, spacing: -2 });
+    cx += 190;
+  }
+  return { w: 190 * cells.length - 60, h: 92 };
+}
+
 const DRAW = {
-  time(g, x, y) {
-    const { sum } = ui;
-    drawText(g, 'OUT FOR', x, y, { size: 22, weight: 600, color: '#CFD6D3', spacing: 5 });
-    const w = drawText(g, hhmm(sum.ms), x, y + 32, { size: 78, weight: 700, spacing: -3 });
-    return { w: Math.max(w, 150), h: 118 };
+  route(g, x, y, w) {
+    const rw = Math.min(w - x - PAD, 620);
+    const rh = 420;
+    drawRoute(g, x, y, rw, rh);
+    return { w: rw, h: rh };
   },
-  stats(g, x, y) {
-    const { sum } = ui;
-    const cells = [['DRINKS', String(sum.drinks), C.pink], ['STOPS', String(sum.stops), C.text], ['KM', km(sum.distanceM), C.text]];
-    let cx = x;
-    for (const [k, v, color] of cells) {
-      drawText(g, k, cx, y, { size: 20, weight: 600, color: '#CFD6D3', spacing: 4 });
-      drawText(g, v, cx, y + 28, { size: 54, weight: 700, color, spacing: -2 });
-      cx += 190;
-    }
-    return { w: 190 * cells.length - 40, h: 92 };
-  },
-  route(g, x, y) {
-    const w = 480, h = 220;
-    drawRoute(g, x, y, w, h);
-    return { w, h };
+  time: drawTime,
+  stats: drawStats,
+  date(g, x, y) {
+    const w = drawText(g, placeLine(ui.session), x, y, { size: 24, weight: 400, color: C.muted });
+    return { w, h: 30 };
   },
   stops(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);
     if (!names.length) {
-      drawText(g, 'NO STOPS PINNED', x, y, { size: 20, weight: 600, color: '#CFD6D3', spacing: 4 });
-      return { w: 260, h: 24 };
+      const w = drawText(g, 'NO STOPS PINNED', x, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
+      return { w, h: 24 };
     }
-    drawText(g, 'STOPS', x, y, { size: 20, weight: 600, color: '#CFD6D3', spacing: 4 });
+    drawText(g, 'STOPS', x, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
     let widest = 0;
     names.forEach((n, i) => {
-      const w = drawText(g, n, x, y + 34 + i * 42, { size: 34, weight: 700, spacing: -0.5 });
-      widest = Math.max(widest, w);
+      widest = Math.max(widest, drawText(g, n, x, y + 36 + i * 44, { size: 34, weight: 700, spacing: -0.5 }));
     });
-    return { w: Math.max(widest, 200), h: 34 + names.length * 42 };
-  },
-  drink(g, x, y) {
-    const kind = ui.sum.kind || 'Water';
-    drawText(g, 'DRINK OF CHOICE', x, y, { size: 20, weight: 600, color: '#CFD6D3', spacing: 4 });
-    const w = drawText(g, kind.toUpperCase(), x, y + 28, { size: 46, weight: 700, color: C.pink, spacing: -1 });
-    return { w: Math.max(w, 200), h: 80 };
-  },
-  mark(g, x, y) {
-    const w = drawText(g, 'LAST CALL', x, y, { size: 26, weight: 700, color: C.mint, spacing: 7 });
-    return { w, h: 30 };
+    return { w: Math.max(widest, 220), h: 36 + names.length * 44 };
   },
 };
 
 function drawRoute(g, x, y, w, h) {
   const pts = ui.session.trail;
-  if (pts.length < 2) {
-    drawText(g, 'NO ROUTE RECORDED', x, y + h / 2 - 12, { size: 22, weight: 600, color: C.faint, spacing: 4 });
-    return;
-  }
-  const fitted = fitPoints(pts, w, h, 16).map((p) => ({ x: p.x + x, y: p.y + y }));
+  if (pts.length < 2 || w < 40 || h < 40) return;
+  const fitted = fitPoints(pts, w, h, 20).map((p) => ({ x: p.x + x, y: p.y + y }));
+
   g.save();
   g.strokeStyle = C.mint;
-  g.lineWidth = 10;
+  g.lineWidth = 9;
   g.lineCap = 'round';
   g.lineJoin = 'round';
   g.beginPath();
   fitted.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
   g.stroke();
 
-  g.fillStyle = C.mint;
-  g.beginPath();
-  g.arc(fitted[0].x, fitted[0].y, 13, 0, Math.PI * 2);
-  g.fill();
-  g.fillStyle = C.pink;
-  g.beginPath();
-  g.arc(fitted[fitted.length - 1].x, fitted[fitted.length - 1].y, 13, 0, Math.PI * 2);
-  g.fill();
+  for (const pin of ui.session.pins) {
+    let best = 0;
+    for (let i = 1; i < pts.length; i++) {
+      if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
+    }
+    g.fillStyle = C.pink;
+    g.beginPath();
+    g.arc(fitted[best].x, fitted[best].y, 12, 0, Math.PI * 2);
+    g.fill();
+  }
   g.restore();
 }
 
 /* ---------- export ---------- */
 
 function render() {
-  // Redraw without the selection outline, then restore the editing view.
   draw({ forExport: true });
   return new Promise((resolve, reject) => {
     ui.canvas.toBlob((blob) => {
@@ -415,34 +449,24 @@ function render() {
   });
 }
 
-function filename() {
-  return `lastcall-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
-}
+const filename = () =>
+  `lastcall-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
 
 async function shareCard() {
   let blob;
-  try { blob = await render(); } catch { toast("The card didn't render."); return; }
-
+  try { blob = await render(); } catch { toast('The card didn’t render.'); return; }
   const file = new File([blob], filename(), { type: 'image/png' });
   if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] });
-      return;
-    } catch (err) {
-      if (err?.name === 'AbortError') return;
-    }
+    try { await navigator.share({ files: [file] }); return; }
+    catch (err) { if (err?.name === 'AbortError') return; }
   }
   download(blob);
-  toast('Sharing is not available here, so it downloaded instead.');
+  toast('Sharing isn’t available here, so it downloaded instead.');
 }
 
 async function saveCard() {
-  try {
-    download(await render());
-    toast('Saved.');
-  } catch {
-    toast("The card didn't render.");
-  }
+  try { download(await render()); toast('Saved.'); }
+  catch { toast('The card didn’t render.'); }
 }
 
 function download(blob) {
@@ -454,6 +478,7 @@ function download(blob) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Exposed so the browser verification pass can prove toBlob works — the exact
-// thing that would fail if the card were screenshotted from a live map.
+// Exposed so verification can prove toBlob works — the exact thing that fails
+// if a card is composited from a live map instead of drawn.
 export function __renderForTest() { return render(); }
+export { icon, km };

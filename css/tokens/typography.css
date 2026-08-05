@@ -1,0 +1,50 @@
+/* Last Call — type.
+   System sans only: the app boots offline from a service worker, so a webfont
+   that fails to load would silently break every layout. Character comes from
+   weight, tracking and scale. tabular-nums on anything that counts. */
+:root{
+  --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  /* Sizes */
+  --fs-timer:44px;
+  --fs-display:34px;
+  --fs-stat:22px;
+  --fs-title:19px;
+  --fs-body:14px;
+  --fs-button:13px;
+  --fs-caption:11.5px;
+  --fs-label:10px;
+
+  /* Line heights */
+  --lh-timer:1.0; /* @kind other */
+  --lh-display:1.05; /* @kind other */
+  --lh-stat:1.1; /* @kind other */
+  --lh-title:1.25; /* @kind other */
+  --lh-body:1.55; /* @kind other */
+  --lh-flat:1; /* @kind other */
+
+  /* Weights */
+  --fw-regular:400; /* @kind other */
+  --fw-semibold:600; /* @kind other */
+  --fw-bold:700; /* @kind other */
+
+  /* Tracking */
+  --tr-timer:-.045em; /* @kind other */
+  --tr-display:-.035em; /* @kind other */
+  --tr-stat:-.03em; /* @kind other */
+  --tr-title:-.02em; /* @kind other */
+  --tr-body:0; /* @kind other */
+  --tr-button:.1em; /* @kind other */
+  --tr-label:.18em; /* @kind other */
+
+  /* Semantic roles */
+  --type-timer:var(--fw-bold) var(--fs-timer)/var(--lh-timer) var(--font-sans); /* @kind font */
+  --type-display:var(--fw-bold) var(--fs-display)/var(--lh-display) var(--font-sans); /* @kind font */
+  --type-stat:var(--fw-bold) var(--fs-stat)/var(--lh-stat) var(--font-sans); /* @kind font */
+  --type-title:var(--fw-bold) var(--fs-title)/var(--lh-title) var(--font-sans); /* @kind font */
+  --type-body:var(--fw-regular) var(--fs-body)/var(--lh-body) var(--font-sans); /* @kind font */
+  --type-button:var(--fw-bold) var(--fs-button)/var(--lh-flat) var(--font-sans); /* @kind font */
+  --type-caption:var(--fw-regular) var(--fs-caption)/1.35 var(--font-sans); /* @kind font */
+  --type-label:var(--fw-semibold) var(--fs-label)/var(--lh-flat) var(--font-sans); /* @kind font */
+}
