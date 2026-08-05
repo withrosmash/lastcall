@@ -1,0 +1,526 @@
+<meta charset="utf-8">
+<title>Last Call — Design Handoff</title>
+<style>
+:root{
+  --bg:#F5F7F6; --surface:#FFFFFF; --sunk:#EDF0EE;
+  --ink:#141816; --muted:#666E69; --faint:#8F968F;
+  --line:#DDE2DF; --line-soft:#E8ECE9;
+  --accent:#127A5B; --accent-soft:#E4F2EC;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --app-bg:#000; --app-surface:#141414; --app-line:#262626;
+  --app-text:#fff; --app-muted:#6B6B6B; --app-faint:#4D4D4D;
+  --mint:#7EE0C0; --mint-ink:#04342C; --pink:#F06C9B; --amber:#EF9F27;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0E100F;--surface:#171A18;--sunk:#121514;--ink:#E9EDEA;--muted:#949B96;--faint:#6E756F;--line:#272B29;--line-soft:#1F2321;--accent:#7EE0C0;--accent-soft:#152A23;}
+}
+:root[data-theme="dark"]{--bg:#0E100F;--surface:#171A18;--sunk:#121514;--ink:#E9EDEA;--muted:#949B96;--faint:#6E756F;--line:#272B29;--line-soft:#1F2321;--accent:#7EE0C0;--accent-soft:#152A23;}
+:root[data-theme="light"]{--bg:#F5F7F6;--surface:#FFFFFF;--sunk:#EDF0EE;--ink:#141816;--muted:#666E69;--faint:#8F968F;--line:#DDE2DF;--line-soft:#E8ECE9;--accent:#127A5B;--accent-soft:#E4F2EC;}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+a{color:var(--accent)}
+
+nav.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;gap:22px;height:52px;overflow-x:auto}
+nav.top b{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+nav.top a{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-decoration:none;white-space:nowrap}
+nav.top a:hover{color:var(--ink)}
+
+header.hero{padding:72px 0 56px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 18px}
+h1{font-size:clamp(38px,6vw,64px);line-height:1.02;letter-spacing:-.035em;margin:0 0 20px;font-weight:700;text-wrap:balance}
+.lede{font-size:19px;color:var(--muted);max-width:62ch;margin:0}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+.fact{font-family:var(--mono);font-size:12px;letter-spacing:.04em;border:1px solid var(--line);border-radius:999px;padding:6px 13px;color:var(--muted)}
+.fact b{color:var(--ink);font-weight:500}
+
+section{padding:64px 0;border-bottom:1px solid var(--line)}
+h2{font-size:13px;font-family:var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:500}
+h2+.sub{font-size:26px;letter-spacing:-.02em;margin:0 0 8px;font-weight:700;color:var(--ink)}
+.note{color:var(--muted);max-width:66ch;margin:0 0 32px}
+h3{font-size:15px;margin:38px 0 14px;font-weight:600;letter-spacing:-.01em}
+
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
+.sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.sw .chip{height:64px}
+.sw .meta{padding:9px 11px;font-family:var(--mono);font-size:11px;line-height:1.7}
+.sw .meta .n{color:var(--ink);letter-spacing:.02em}
+.sw .meta .h{color:var(--faint);text-transform:uppercase}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code,p code,li code{font-family:var(--mono);font-size:12.5px;background:var(--sunk);padding:2px 6px;border-radius:4px;color:var(--ink)}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:26px}
+figure{margin:0}
+figcaption{margin-top:12px}
+figcaption .id{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+figcaption .nm{font-weight:600;font-size:15px;margin-top:3px;letter-spacing:-.01em}
+figcaption .ds{color:var(--muted);font-size:13.5px;line-height:1.55;margin-top:3px}
+
+.phone{background:var(--app-bg);border:1px solid var(--line);border-radius:22px;padding:16px 14px;aspect-ratio:9/17.5;display:flex;flex-direction:column;gap:9px;font-family:var(--sans);color:var(--app-text);position:relative;overflow:hidden}
+.phone.pad0{padding:0}
+.eb{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--app-faint);font-weight:600}
+.eb.mint{color:var(--mint)} .eb.pink{color:var(--pink)} .eb.amber{color:var(--amber)}
+.timer{font-size:44px;font-weight:700;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.sm{font-size:11.5px;color:var(--app-muted)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tiles.t3{grid-template-columns:1fr 1fr 1fr}
+.tile{background:var(--app-surface);border-radius:11px;padding:10px 9px}
+.tile .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--app-muted);font-weight:600}
+.tile .v{font-size:22px;font-weight:700;letter-spacing:-.03em;margin-top:1px;font-variant-numeric:tabular-nums}
+.tile .v.pink{color:var(--pink)}
+.tile .v.sm{font-size:17px}
+.btn{border-radius:11px;padding:13px 10px;text-align:center;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.btn.pri{background:var(--mint);color:var(--mint-ink)}
+.btn.sec{border:1px solid var(--app-line);color:var(--app-text)}
+.btn.ghost{border:1px solid var(--app-line);color:var(--app-muted);font-weight:600;letter-spacing:.06em}
+.btn.pinkline{border:1px solid var(--pink);color:var(--pink)}
+.btn.sm{padding:10px 8px;font-size:11.5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.push{margin-top:auto}
+.plate{background:var(--app-surface);border-radius:11px;flex:1;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--app-faint);letter-spacing:.1em;text-transform:uppercase;min-height:60px;text-align:center;padding:8px}
+.sheet{background:#0D0D0D;border:1px solid var(--app-line);border-top-left-radius:16px;border-top-right-radius:16px;padding:13px 12px 14px;display:flex;flex-direction:column;gap:8px;margin:0 -14px -16px}
+.scrim{flex:1;background:#0A0A0A}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.chip2{border:1px solid var(--app-line);border-radius:9px;padding:9px 6px;text-align:center;font-size:12px;color:#D8D8D8}
+.chip2.on{border-color:var(--mint);color:var(--mint)}
+.field{border-bottom:1px solid var(--app-line);padding-bottom:6px}
+.field .lbl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--app-muted);font-weight:600}
+.field .val{font-size:14px;color:#fff;margin-top:3px}
+.field .val.ph{color:#3A3A3A}
+.warn{border:1px solid var(--amber);border-radius:11px;padding:11px 10px;display:flex;flex-direction:column;gap:8px}
+.listrow{background:var(--app-surface);border-radius:9px;padding:9px 10px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.listrow .d{color:#fff;font-weight:600} .listrow .m{color:var(--app-muted);font-variant-numeric:tabular-nums}
+.bars{display:flex;align-items:flex-end;gap:5px;height:44px}
+.bars i{flex:1;background:var(--app-line);border-radius:2px;display:block}
+.bars i.on{background:var(--mint)}
+.tl{display:flex;flex-direction:column;gap:5px}
+.tl div{display:flex;gap:7px;font-size:11px;color:#C9C9C9;align-items:baseline}
+.tl span{font-family:var(--mono);font-size:10px;color:var(--app-faint);min-width:38px}
+.hd{display:flex;justify-content:space-between;align-items:center}
+
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:26px}
+.card45{aspect-ratio:4/5;background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative;font-family:var(--sans);color:#fff;display:flex;flex-direction:column;padding:15px}
+.photo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.st .k{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--app-faint);font-weight:600}
+.st .v{font-size:23px;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1.1}
+.wm{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mint);font-weight:700}
+.selbox{position:absolute;border:1px dashed var(--mint);border-radius:7px;padding:6px 8px}
+
+.callout{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);border-radius:12px;padding:18px 20px;margin-top:26px}
+.callout p{margin:0;color:var(--ink);font-size:14.5px}
+.callout p+p{margin-top:9px}
+ul.tight{margin:0;padding-left:20px;color:var(--muted);font-size:14.5px}
+ul.tight li{margin-bottom:7px}
+ul.tight b{color:var(--ink);font-weight:600}
+footer{padding:44px 0 64px;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<nav class="top"><div class="wrap">
+  <b>Last Call</b>
+  <a href="#tokens">Tokens</a><a href="#type">Type</a><a href="#components">Components</a><a href="#screens">Screens</a><a href="#cards">Cards</a><a href="#copy">Copy</a><a href="#brief">Brief</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <p class="eyebrow">Design handoff · v1 · Android</p>
+  <h1>Last Call</h1>
+  <p class="lede">A solo night-out tracker. Start a session, log what you drink, keep water honest, watch the route draw itself across the map, then turn the whole thing into a card worth posting. Runs natively on Android so tracking survives a locked phone in a pocket. No accounts, no server, nothing leaves the device.</p>
+  <div class="facts">
+    <span class="fact"><b>13</b> screens</span>
+    <span class="fact"><b>Dark</b> only</span>
+    <span class="fact">Portrait <b>9:19.5</b></span>
+    <span class="fact">Base unit <b>4px</b></span>
+    <span class="fact">Local-first · <b>0</b> network calls</span>
+  </div>
+</div></header>
+
+<section id="tokens"><div class="wrap">
+  <h2>01 — Foundation</h2>
+  <p class="sub">Color</p>
+  <p class="note">Committed dark. The ground is true black so the screen disappears in a dark room and OLED pixels stay off. Mint is the only affirmative action color and appears exactly once per screen. Pink belongs to drinks and nothing else. Amber is reserved for hydration falling behind — it must never be decorative, or the one moment it matters stops reading as a warning.</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#000"></div><div class="meta"><div class="n">bg</div><div class="h">#000000</div></div></div>
+    <div class="sw"><div class="chip" style="background:#141414"></div><div class="meta"><div class="n">surface</div><div class="h">#141414</div></div></div>
+    <div class="sw"><div class="chip" style="background:#262626"></div><div class="meta"><div class="n">line</div><div class="h">#262626</div></div></div>
+    <div class="sw"><div class="chip" style="background:#fff"></div><div class="meta"><div class="n">text</div><div class="h">#FFFFFF</div></div></div>
+    <div class="sw"><div class="chip" style="background:#6B6B6B"></div><div class="meta"><div class="n">muted</div><div class="h">#6B6B6B</div></div></div>
+    <div class="sw"><div class="chip" style="background:#4D4D4D"></div><div class="meta"><div class="n">faint</div><div class="h">#4D4D4D</div></div></div>
+    <div class="sw"><div class="chip" style="background:#7EE0C0"></div><div class="meta"><div class="n">mint · action</div><div class="h">#7EE0C0</div></div></div>
+    <div class="sw"><div class="chip" style="background:#04342C"></div><div class="meta"><div class="n">on-mint</div><div class="h">#04342C</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F06C9B"></div><div class="meta"><div class="n">pink · drinks</div><div class="h">#F06C9B</div></div></div>
+    <div class="sw"><div class="chip" style="background:#EF9F27"></div><div class="meta"><div class="n">amber · warning</div><div class="h">#EF9F27</div></div></div>
+  </div>
+
+  <h3>Rules that are easy to break by accident</h3>
+  <ul class="tight">
+    <li><b>One mint element per screen.</b> If a screen needs two primary actions, one of them isn't primary.</li>
+    <li><b>Pink is a data color, not an accent.</b> It marks drink counts. It never becomes a button fill or a border for decoration.</li>
+    <li><b>Amber only appears when hydration is actually behind.</b> No amber in a resting state.</li>
+    <li><b>Text on mint is <code>#04342C</code>, never black.</b> Pure black on mint reads harsh and fails the tone of the rest of the palette.</li>
+    <li><b>Never a pure grey for body copy.</b> <code>#6B6B6B</code> on <code>#000</code> is the floor at 14px and above; below that, step up to <code>#8A8A8A</code>.</li>
+  </ul>
+</div></section>
+
+<section id="type"><div class="wrap">
+  <h2>02 — Foundation</h2>
+  <p class="sub">Type and space</p>
+  <p class="note">The system sans, set tight and heavy. Condensed webfonts were considered and rejected: the app has to boot offline from a service worker, and a font that fails to load silently would wreck every layout. Character comes from weight, negative tracking on numerals, and wide letter-spacing on small caps labels instead.</p>
+  <div class="scroller"><table>
+    <thead><tr><th>Role</th><th>Size</th><th>Weight</th><th>Tracking</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td>Timer</td><td class="num">44 / 1.0</td><td class="num">700</td><td class="num">−0.045em</td><td>Elapsed session clock. <code>tabular-nums</code> so it never jitters.</td></tr>
+      <tr><td>Stat value</td><td class="num">22 / 1.1</td><td class="num">700</td><td class="num">−0.03em</td><td>Tile numbers, card stats. Also <code>tabular-nums</code>.</td></tr>
+      <tr><td>Screen title</td><td class="num">19 / 1.25</td><td class="num">700</td><td class="num">−0.02em</td><td>Sheet and dialog headings.</td></tr>
+      <tr><td>Body</td><td class="num">14 / 1.55</td><td class="num">400</td><td class="num">0</td><td>Explanatory copy. Never below 13px.</td></tr>
+      <tr><td>Button</td><td class="num">13</td><td class="num">700</td><td class="num">0.1em</td><td>Uppercase. All primary and secondary actions.</td></tr>
+      <tr><td>Label / eyebrow</td><td class="num">10</td><td class="num">600</td><td class="num">0.18em</td><td>Uppercase. Tile keys, section eyebrows.</td></tr>
+      <tr><td>Caption</td><td class="num">11.5</td><td class="num">400</td><td class="num">0</td><td>Timestamps, secondary detail.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Spacing and shape</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Token</th><th>Value</th><th>Applied to</th></tr></thead>
+    <tbody>
+      <tr><td><code>--gap</code></td><td class="num">9px</td><td>Between stacked blocks in a screen</td></tr>
+      <tr><td><code>--gap-tight</code></td><td class="num">7px</td><td>Inside tile grids and button pairs</td></tr>
+      <tr><td><code>--pad-screen</code></td><td class="num">16px 14px</td><td>Screen edge padding, plus safe-area insets</td></tr>
+      <tr><td><code>--r-tile</code></td><td class="num">11px</td><td>Stat tiles, buttons, list rows</td></tr>
+      <tr><td><code>--r-sheet</code></td><td class="num">16px</td><td>Bottom sheets, top corners only</td></tr>
+      <tr><td>Tap target</td><td class="num">≥ 44px</td><td>Every interactive element, no exceptions</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><p><b>Safe areas.</b> Every screen adds <code>env(safe-area-inset-bottom)</code> to its bottom padding and <code>env(safe-area-inset-top)</code> to the top. Android gesture-nav bars sit right where the primary action wants to be, and this is the single most common way a layout that looks right in a browser breaks on a real handset.</p></div>
+</div></section>
+
+<section id="components"><div class="wrap">
+  <h2>03 — Inventory</h2>
+  <p class="sub">Components</p>
+  <p class="note">Eleven pieces build all thirteen screens. If a new screen needs a twelfth, that's worth a conversation rather than a one-off.</p>
+  <div class="scroller"><table>
+    <thead><tr><th>Component</th><th>Spec</th><th>States</th></tr></thead>
+    <tbody>
+      <tr><td><b>Button · primary</b></td><td>Mint fill, <code>#04342C</code> text, 11px radius, 13px/700 uppercase, 0.1em tracking, 44px min height</td><td>rest · pressed (scale 0.98) · disabled (surface fill, muted text)</td></tr>
+      <tr><td><b>Button · secondary</b></td><td>1px <code>#262626</code> border, white text, transparent fill</td><td>rest · pressed</td></tr>
+      <tr><td><b>Button · pink outline</b></td><td>1px pink border, pink text. Hydrate only.</td><td>rest · pressed</td></tr>
+      <tr><td><b>Stat tile</b></td><td>Surface fill, 11px radius, uppercase key over tabular value</td><td>default · pink value (drinks) · unavailable (hidden entirely, never zeroed)</td></tr>
+      <tr><td><b>Timer</b></td><td>44px/700, tabular, updates on a 1s interval derived from <code>startedAt</code></td><td>running · ended</td></tr>
+      <tr><td><b>Bottom sheet</b></td><td>Scrim over screen, <code>#0D0D0D</code> panel, 16px top corners, drag handle</td><td>entering · open · dismissing</td></tr>
+      <tr><td><b>Chip</b></td><td>1px border, 9px radius, 12px text. Drink presets.</td><td>rest · selected (mint border and text)</td></tr>
+      <tr><td><b>Field</b></td><td>Underline only, uppercase label above, 14px value</td><td>empty (placeholder <code>#3A3A3A</code>) · filled · focused (mint underline)</td></tr>
+      <tr><td><b>Warning banner</b></td><td>1px amber border, 11px radius, amber heading, action pair</td><td>visible only when the hydration threshold is crossed</td></tr>
+      <tr><td><b>List row</b></td><td>Surface fill, 9px radius, bold date left, tabular metrics right</td><td>rest · pressed</td></tr>
+      <tr><td><b>Nav pair</b></td><td>Two secondary buttons at the screen foot, pinned with <code>margin-top:auto</code></td><td>rest · pressed</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section id="screens"><div class="wrap">
+  <h2>04 — Flows</h2>
+  <p class="sub">Thirteen screens</p>
+  <p class="note">Shown at production fidelity with real copy and real numbers. Screens 01 through 12 are the app; screen 13 is Android-specific and exists because background location is the one permission the OS makes users grant in a separate trip to system settings.</p>
+
+  <div class="grid">
+
+    <figure><div class="phone">
+      <div class="push"></div>
+      <div style="text-align:center">
+        <div style="font-size:29px;font-weight:700;letter-spacing:-.04em;line-height:1">LAST<br><span style="color:var(--mint)">CALL</span></div>
+        <div class="sm" style="margin-top:9px;letter-spacing:.02em">Track the night.<br>Piece it together later.</div>
+      </div>
+      <div class="push"></div>
+      <div class="btn pri">Start night</div>
+      <div class="btn sec">History</div>
+      <div class="btn ghost sm">Settings</div>
+    </div><figcaption><div class="id">01</div><div class="nm">Start</div><div class="ds">No login, no email gate, no account. One button, and the app is doing its job three seconds after install.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="hd"><div class="eb mint">On the night</div><div class="eb">Sat</div></div>
+      <div class="timer">3:47</div>
+      <div class="sm">Started 9:12 pm</div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Drinks</div><div class="v pink">7</div></div>
+        <div class="tile"><div class="k">Water</div><div class="v">2</div></div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Steps</div><div class="v sm">4,120</div></div>
+        <div class="tile"><div class="k">Distance</div><div class="v sm">3.1<span style="font-size:12px;color:var(--app-muted)"> km</span></div></div>
+      </div>
+      <div class="btn pri">Add drink</div>
+      <div class="btn pinkline">Hydrate</div>
+      <div class="row2 push"><div class="btn sec sm">Map</div><div class="btn sec sm">End</div></div>
+    </div><figcaption><div class="id">02</div><div class="nm">Live session</div><div class="ds">Home for the whole night. Thumb-reachable actions, and a clock big enough to read at arm's length in a dark room.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div style="font-size:17px;font-weight:700;letter-spacing:-.02em">What are you having?</div>
+        <div class="eb" style="margin-top:2px">Recent</div>
+        <div class="chips">
+          <div class="chip2 on">Beer</div><div class="chip2">Whiskey</div>
+          <div class="chip2">Seltzer</div><div class="chip2">Shot</div>
+          <div class="chip2">Wine</div><div class="chip2">Something else</div>
+        </div>
+        <div class="btn pri sm" style="margin-top:3px">Log it</div>
+      </div>
+    </div><figcaption><div class="id">03</div><div class="nm">Pick your poison</div><div class="ds">Recents float to the top, so by the third round it's two taps. Selection is a mint border, never a fill.</div></figcaption></figure>
+
+    <figure><div class="phone pad0">
+      <div style="flex:1;background:#0E1412;display:flex;align-items:center;justify-content:center;position:relative">
+        <svg viewBox="0 0 120 150" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true">
+          <polyline points="22,128 34,104 52,110 66,74 88,84 100,44" fill="none" stroke="#7EE0C0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="22" cy="128" r="4.5" fill="#7EE0C0"/><circle cx="52" cy="110" r="4" fill="#F06C9B"/><circle cx="66" cy="74" r="4" fill="#F06C9B"/><circle cx="100" cy="44" r="6" fill="#fff"/>
+        </svg>
+        <span style="position:absolute;bottom:8px;right:10px;font-size:8px;color:#3A4340">© OpenStreetMap</span>
+      </div>
+      <div style="padding:11px 14px 16px;display:flex;flex-direction:column;gap:8px">
+        <div class="tiles t3">
+          <div class="tile"><div class="k">Dist</div><div class="v sm">3.1</div></div>
+          <div class="tile"><div class="k">Stops</div><div class="v sm">3</div></div>
+          <div class="tile"><div class="k">Time</div><div class="v sm">3:47</div></div>
+        </div>
+        <div class="btn pri">Drop pin here</div>
+        <div class="btn sec sm">Back to session</div>
+      </div>
+    </div><figcaption><div class="id">04</div><div class="nm">Map</div><div class="ds">Live position in white, route in mint, named stops in pink. Attribution is a licence condition of the tiles, not a design choice.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="scrim" style="display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true"><path d="M20 3c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="none" stroke="#F06C9B" stroke-width="2.5"/><circle cx="20" cy="14" r="4" fill="#F06C9B"/></svg>
+      </div>
+      <div class="sheet">
+        <div style="font-size:17px;font-weight:700;letter-spacing:-.02em">Name this stop</div>
+        <div class="field"><div class="lbl">Venue</div><div class="val">The Fox &amp; Hounds</div></div>
+        <div class="field"><div class="lbl">Note · optional</div><div class="val ph">Anything worth remembering</div></div>
+        <div class="btn pri sm" style="margin-top:3px">Save stop</div>
+        <div class="btn ghost sm">Cancel</div>
+      </div>
+    </div><figcaption><div class="id">05</div><div class="nm">Drop pin</div><div class="ds">Names a stop so it earns a place in the recap and the card. The note is genuinely optional and never blocks saving.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="warn">
+          <div class="eb amber">Hydration</div>
+          <div style="font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.25">Five drinks since your last water.</div>
+          <div class="sm" style="color:#9A9A9A">Takes ten seconds. Tomorrow says thanks.</div>
+          <div class="btn pri sm">Log water</div>
+          <div class="btn ghost sm">Not now</div>
+        </div>
+      </div>
+    </div><figcaption><div class="id">06</div><div class="nm">Hydration nudge</div><div class="ds">Fires on a threshold, not a timer. Also arrives as a local notification when the app is closed. Always dismissible.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div style="font-size:19px;font-weight:700;letter-spacing:-.025em">Call it a night?</div>
+        <div class="sm" style="color:#9A9A9A;line-height:1.5">You've been out 5 hours 12 minutes. This stops tracking and builds your recap. You can't reopen a session once it's closed.</div>
+        <div class="btn pri sm" style="margin-top:4px">End and see recap</div>
+        <div class="btn sec sm">Keep going</div>
+      </div>
+    </div><figcaption><div class="id">07</div><div class="nm">End night</div><div class="ds">Deliberately wordy. It's the one destructive action in the app and it gets tapped at two in the morning.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="eb pink">Saturday 2 August</div>
+      <div style="font-size:21px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin-top:-3px">That was a night.</div>
+      <div style="background:var(--app-surface);border-radius:11px;padding:10px;margin-top:2px">
+        <svg viewBox="0 0 100 44" style="width:100%;display:block" aria-hidden="true"><polyline points="8,37 20,25 34,29 50,13 68,19 92,7" fill="none" stroke="#7EE0C0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="37" r="3" fill="#7EE0C0"/><circle cx="92" cy="7" r="3" fill="#F06C9B"/></svg>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Duration</div><div class="v sm">5:12</div></div>
+        <div class="tile"><div class="k">Drinks</div><div class="v sm pink">11</div></div>
+        <div class="tile"><div class="k">Stops</div><div class="v sm">5</div></div>
+        <div class="tile"><div class="k">Distance</div><div class="v sm">4.8</div></div>
+      </div>
+      <div class="btn pri push">Make a card</div>
+      <div class="btn sec sm">Just save it</div>
+    </div><figcaption><div class="id">08</div><div class="nm">Recap</div><div class="ds">Lands here the moment a night ends. Saving without making a card is a first-class option, not a skip link.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="row2"><div class="btn pri sm">Preset</div><div class="btn sec sm">Your photo</div></div>
+      <div style="flex:1;background:#0B0B0B;border:1px solid var(--app-line);border-radius:11px;position:relative;min-height:120px">
+        <div style="position:absolute;top:10px;left:10px;font-size:9px;letter-spacing:.15em;color:#7EE0C0;font-weight:700">SAT 2 AUG</div>
+        <svg viewBox="0 0 100 40" style="position:absolute;top:44%;left:8%;width:60%" aria-hidden="true"><polyline points="4,34 20,20 38,25 58,9 80,15 96,4" fill="none" stroke="#7EE0C0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="position:absolute;bottom:10px;left:10px"><div style="font-size:8.5px;letter-spacing:.15em;color:#4D4D4D;font-weight:600">DRINKS</div><div style="font-size:21px;font-weight:700;letter-spacing:-.03em">11</div></div>
+      </div>
+      <div class="eb">Elements</div>
+      <div class="tiles t3">
+        <div class="chip2 on" style="font-size:10.5px">Stats</div><div class="chip2 on" style="font-size:10.5px">Route</div><div class="chip2" style="font-size:10.5px">Time</div>
+      </div>
+      <div class="tiles t3">
+        <div class="chip2" style="font-size:10.5px">Stops</div><div class="chip2" style="font-size:10.5px">Drink</div><div class="chip2 on" style="font-size:10.5px">Mark</div>
+      </div>
+      <div class="btn pri sm push">Next</div>
+    </div><figcaption><div class="id">09</div><div class="nm">Card builder</div><div class="ds">Toggle an element on and it lands on the canvas; drag it anywhere. Everything renders to a real canvas, not a screenshot.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="eb mint">Ready</div>
+      <div style="flex:1;background:#0B0B0B;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:.14em;color:#3A3A3A;text-transform:uppercase;min-height:150px">1080 × 1350</div>
+      <div class="row2"><div class="btn sec sm">Feed 4:5</div><div class="btn ghost sm">Story 9:16</div></div>
+      <div class="btn pri">Share</div>
+      <div class="btn sec sm">Save to photos</div>
+      <div class="btn ghost sm">Back to editing</div>
+    </div><figcaption><div class="id">10</div><div class="nm">Share</div><div class="ds">Native Android share sheet. Two export ratios, rendered offscreen at full resolution rather than scaled up from the preview.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="hd"><div class="eb mint">History</div><div class="eb">12 nights</div></div>
+      <div class="tiles t3">
+        <div class="tile"><div class="k">Longest</div><div class="v sm">7:04</div></div>
+        <div class="tile"><div class="k">Avg</div><div class="v sm pink">8.2</div></div>
+        <div class="tile"><div class="k">Water</div><div class="v sm">1:4</div></div>
+      </div>
+      <div class="eb" style="margin-top:2px">Last eight weeks</div>
+      <div class="bars"><i style="height:40%"></i><i style="height:65%"></i><i style="height:25%"></i><i style="height:80%"></i><i style="height:50%"></i><i style="height:35%"></i><i style="height:70%"></i><i class="on" style="height:95%"></i></div>
+      <div class="listrow"><span class="d">Sat 2 Aug</span><span class="m">5:12 · 11</span></div>
+      <div class="listrow"><span class="d">Fri 25 Jul</span><span class="m">3:40 · 6</span></div>
+      <div class="listrow"><span class="d">Sat 19 Jul</span><span class="m">6:20 · 14</span></div>
+      <div class="btn ghost sm push">Export data</div>
+    </div><figcaption><div class="id">11</div><div class="nm">History</div><div class="ds">Replaces the leaderboard the original had. You against your own record. Water ratio is deliberately given equal billing.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="hd"><div class="eb pink">Sat 2 August</div><div class="eb">5:12</div></div>
+      <div style="background:var(--app-surface);border-radius:11px;padding:9px">
+        <svg viewBox="0 0 100 40" style="width:100%;display:block" aria-hidden="true"><polyline points="8,34 22,22 38,26 56,11 76,17 92,6" fill="none" stroke="#7EE0C0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="22" r="3" fill="#F06C9B"/><circle cx="56" cy="11" r="3" fill="#F06C9B"/></svg>
+      </div>
+      <div class="eb">Timeline</div>
+      <div class="tl">
+        <div><span>9:12</span>Started the night</div>
+        <div><span>9:31</span>The Fox &amp; Hounds</div>
+        <div><span>10:04</span>Water</div>
+        <div><span>11:20</span>The Gantry</div>
+        <div><span>12:48</span>Water</div>
+        <div><span>2:24</span>Called it</div>
+      </div>
+      <div class="btn pri sm push">Make a card</div>
+      <div class="btn ghost sm">Delete night</div>
+    </div><figcaption><div class="id">12</div><div class="nm">Night detail</div><div class="ds">The timeline is the piece that actually jogs memory. Any past night can be turned into a card later.</div></figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="push"></div>
+      <svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true" style="margin:0 auto"><circle cx="20" cy="20" r="17" fill="none" stroke="#7EE0C0" stroke-width="2"/><path d="M20 11v10l6 4" fill="none" stroke="#7EE0C0" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <div style="font-size:19px;font-weight:700;letter-spacing:-.025em;line-height:1.25;text-align:center;margin-top:4px">Your phone will be in your pocket</div>
+      <div class="sm" style="color:#9A9A9A;line-height:1.55;text-align:center">To draw your route, Last Call needs location access set to <b style="color:#fff">Allow all the time</b>. Android opens its settings screen for this one — pick "Allow all the time", then come back.</div>
+      <div class="sm" style="color:var(--app-faint);text-align:center">Your location never leaves the phone.</div>
+      <div class="push"></div>
+      <div class="btn pri">Open location settings</div>
+      <div class="btn ghost sm">Skip — track without the map</div>
+    </div><figcaption><div class="id">13</div><div class="nm">Permission priming · Android</div><div class="ds">Shown before the system prompt. Without it people deny background location and the app silently fails at its one job. Skipping is allowed and degrades to a working non-map tracker.</div></figcaption></figure>
+
+  </div>
+</div></section>
+
+<section id="cards"><div class="wrap">
+  <h2>05 — Output</h2>
+  <p class="sub">The share card</p>
+  <p class="note">The artefact that leaves the app, so it carries the identity on its own with no chrome around it. Drawn with the Canvas 2D API rather than screenshotting the DOM — compositing a live map would pull in cross-origin tiles, taint the canvas, and make export throw. Two modes, three layouts.</p>
+
+  <div class="cardgrid">
+    <figure><div class="card45">
+      <div class="wm" style="color:var(--pink)">Sat 2 Aug</div>
+      <div style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4D4D4D;font-weight:600">East Nashville</div>
+      <svg viewBox="0 0 100 50" style="width:100%;margin:14px 0 12px" aria-hidden="true"><polyline points="8,42 20,28 34,32 48,14 64,21 90,8" fill="none" stroke="#7EE0C0" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="42" r="3.4" fill="#7EE0C0"/><circle cx="90" cy="8" r="3.4" fill="#F06C9B"/></svg>
+      <div class="st">
+        <div><div class="k">Duration</div><div class="v">5:12</div></div>
+        <div><div class="k">Drinks</div><div class="v" style="color:var(--pink)">11</div></div>
+        <div><div class="k">Stops</div><div class="v">5</div></div>
+        <div><div class="k">Distance</div><div class="v">4.8</div></div>
+      </div>
+      <div style="margin-top:auto;padding-top:11px;border-top:1px solid #1F1F1F"><span class="wm">Last Call</span></div>
+    </div><figcaption><div class="id">Mode A</div><div class="nm">Preset</div><div class="ds">One tap, zero editing. Route drawn from the session's own GPS trail, auto-fitted to the frame.</div></figcaption></figure>
+
+    <figure><div class="card45" style="padding:0">
+      <div style="flex:1;background:#2F3A42;position:relative"><div class="photo" style="color:#6B7780">Your photo</div>
+        <div style="position:absolute;top:13px;left:13px;font-size:10px;letter-spacing:.16em;font-weight:700">SAT 2 AUG</div>
+      </div>
+      <div style="background:#000;padding:13px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+        <div><div class="k">Time</div><div class="v" style="font-size:19px">5:12</div></div>
+        <div><div class="k">Drinks</div><div class="v" style="font-size:19px;color:var(--pink)">11</div></div>
+        <div><div class="k">Km</div><div class="v" style="font-size:19px">4.8</div></div>
+      </div>
+    </div><figcaption><div class="id">Mode B</div><div class="nm">Photo · stats bar</div><div class="ds">Your picture with the numbers locked to a solid footer. The most legible option over a busy image.</div></figcaption></figure>
+
+    <figure><div class="card45" style="padding:0">
+      <div style="position:absolute;inset:0;background:#3A3340"></div>
+      <div class="photo" style="color:#7B7080">Your photo</div>
+      <div class="selbox" style="top:13px;left:13px"><div class="k" style="color:#CFD6D3">Drinks</div><div class="v" style="font-size:26px">11</div></div>
+      <svg viewBox="0 0 60 30" style="position:absolute;bottom:66px;right:14px;width:38%" aria-hidden="true"><polyline points="4,26 14,15 25,19 36,7 48,12 56,4" fill="none" stroke="#7EE0C0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="position:absolute;bottom:15px;left:15px"><div style="font-size:9.5px;letter-spacing:.13em;color:#B9B2BD;font-weight:600">5 STOPS · 4.8 KM</div><div style="font-size:20px;font-weight:700;letter-spacing:-.03em">5:12 out</div></div>
+      <div style="position:absolute;bottom:17px;right:15px"><span class="wm">Last Call</span></div>
+    </div><figcaption><div class="id">Mode C</div><div class="nm">Photo · free placement</div><div class="ds">Every element draggable and scalable. The dashed mint outline is the selection state, and never renders into the export.</div></figcaption></figure>
+  </div>
+
+  <h3>Export spec</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Item</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Feed ratio</td><td class="num">1080 × 1350 (4:5)</td></tr>
+      <tr><td>Story ratio</td><td class="num">1080 × 1920 (9:16)</td></tr>
+      <tr><td>Render</td><td>Offscreen canvas at full resolution — never a scaled-up preview</td></tr>
+      <tr><td>Draggable elements</td><td>Stats block · single big stat · route · elapsed time · stops list · drink of choice · date and place · wordmark</td></tr>
+      <tr><td>Safe margin</td><td class="num">64px on all edges at 1080 wide</td></tr>
+      <tr><td>Photo handling</td><td>Cover-fit, centred, read from the device picker. Never uploaded anywhere.</td></tr>
+      <tr><td>Wordmark</td><td>Always mint, always present, bottom corner. The one fixed element.</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section id="copy"><div class="wrap">
+  <h2>06 — Voice</h2>
+  <p class="sub">Copy deck</p>
+  <p class="note">Dry, short, never scolding. The app is a record of a good night, not a health intervention — it can be honest about water without moralising. Sentence case in prose, uppercase only on buttons and labels.</p>
+  <div class="scroller"><table>
+    <thead><tr><th>Where</th><th>String</th></tr></thead>
+    <tbody>
+      <tr><td>Tagline</td><td>Track the night. Piece it together later.</td></tr>
+      <tr><td>Start</td><td>Start night</td></tr>
+      <tr><td>Live · eyebrow</td><td>On the night</td></tr>
+      <tr><td>Live · start time</td><td>Started 9:12 pm</td></tr>
+      <tr><td>Drink sheet</td><td>What are you having?</td></tr>
+      <tr><td>Drink sheet · custom</td><td>Something else</td></tr>
+      <tr><td>Pin sheet</td><td>Name this stop · Anything worth remembering</td></tr>
+      <tr><td>Hydration</td><td>Five drinks since your last water. · Takes ten seconds. Tomorrow says thanks.</td></tr>
+      <tr><td>Hydration · notification</td><td>Last Call · Time for a water.</td></tr>
+      <tr><td>End confirm</td><td>Call it a night? · You've been out 5 hours 12 minutes. This stops tracking and builds your recap. You can't reopen a session once it's closed.</td></tr>
+      <tr><td>Recap</td><td>That was a night.</td></tr>
+      <tr><td>Permission priming</td><td>Your phone will be in your pocket · Android opens its settings screen for this one — pick "Allow all the time", then come back.</td></tr>
+      <tr><td>Permission · reassurance</td><td>Your location never leaves the phone.</td></tr>
+      <tr><td>Permission · decline</td><td>Skip — track without the map</td></tr>
+      <tr><td>Foreground service</td><td>Last Call is tracking your night.</td></tr>
+      <tr><td>History · empty</td><td>No nights yet. Your first one shows up here.</td></tr>
+      <tr><td>Map · no fix</td><td>Waiting for GPS. Everything else still works.</td></tr>
+      <tr><td>Map · denied</td><td>Location is off, so there's no map tonight. Drinks, water and time are all still being tracked.</td></tr>
+      <tr><td>Storage · full</td><td>Storage is full. Export your history to free up room.</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section id="brief"><div class="wrap">
+  <h2>07 — Handoff</h2>
+  <p class="sub">What to change, and where it lands</p>
+  <p class="note">The build reads every colour, size and radius from custom properties in a single stylesheet. Changing the palette or the type scale is a handful of lines, not a refactor. These are the things most worth pushing on.</p>
+  <ul class="tight">
+    <li><b>The wordmark.</b> Set as plain type here as a placeholder. It's the one element on every share card, so it's the highest-leverage thing to draw properly.</li>
+    <li><b>Mint versus pink weighting.</b> Currently mint carries all action and pink carries only drink counts. Worth testing whether pink should own more, given drinks are the thing people actually post about.</li>
+    <li><b>The preset card.</b> It'll be the most-seen surface by a wide margin. Layout, crop and hierarchy are all open.</li>
+    <li><b>Timer treatment.</b> A system sans at 44/700 is functional but it's the hero of screen 02 and could carry far more character.</li>
+    <li><b>Empty and first-run states.</b> Specified in copy but not yet designed.</li>
+    <li><b>The icon.</b> Needs 192, 512, 512-maskable and an adaptive Android foreground layer. Nothing exists yet.</li>
+  </ul>
+  <div class="callout">
+    <p><b>Constraints worth knowing before redesigning anything.</b></p>
+    <p>Dark ground is load-bearing, not stylistic — the app is used in dark rooms and runs GPS for six hours, so a light theme costs real battery on OLED. Type is the system sans on purpose: the app boots offline from a service worker, and a webfont that fails to load silently would break every layout. Android requires a permanent foreground-service notification while tracking, and it cannot be hidden or restyled. Every tap target stays at 44px or above, because this is operated by people who have been drinking.</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Last Call · design handoff v1 · Android first, iOS to follow · no accounts, no server, no data leaves the device</div></footer>
