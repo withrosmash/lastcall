@@ -51,9 +51,9 @@ const sw = await readFile(resolve(root, 'sw.js'), 'utf8');
 const shell = new Set([...sw.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]).filter(Boolean));
 
 const shouldCache = [];
-for (const dir of ['js', 'css', 'css/tokens', 'vendor', 'icons']) {
+for (const dir of ['js', 'css', 'css/tokens', 'vendor', 'icons', 'icons/badges']) {
   for (const name of await readdir(resolve(root, dir), { withFileTypes: true })) {
-    if (name.isFile() && /\.(js|css|png)$/.test(name.name)) shouldCache.push(`${dir}/${name.name}`);
+    if (name.isFile() && /\.(js|css|png|svg)$/.test(name.name)) shouldCache.push(`${dir}/${name.name}`);
   }
 }
 

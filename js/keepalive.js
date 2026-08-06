@@ -55,6 +55,42 @@ export async function saveImage(base64, name) {
   return true;
 }
 
+/* ---------- quick log from the notification shade ---------- */
+
+export async function showQuickLog(drinkLabel = 'Drink') {
+  if (!isNative()) return;
+  try { await LastCallNative.showQuickLog({ drinkLabel }); } catch { /* cosmetic */ }
+}
+
+export async function hideQuickLog() {
+  if (!isNative()) return;
+  try { await LastCallNative.hideQuickLog(); } catch { /* already gone */ }
+}
+
+// Taps recorded while the WebView slept, with the tap's own timestamps.
+export async function drainQuickLogs() {
+  if (!isNative()) return [];
+  try {
+    const res = await LastCallNative.drainPendingLogs();
+    return Array.isArray(res?.events) ? res.events : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function onQuickLog(cb) {
+  if (!isNative()) return null;
+  try { return await LastCallNative.addListener('quicklog', cb); } catch { return null; }
+}
+
+/* ---------- text files to Downloads (GPX, JSON export) ---------- */
+
+export async function saveTextFile(name, mime, data) {
+  if (!isNative()) return false;
+  await LastCallNative.saveTextFile({ name, mime, data });
+  return true;
+}
+
 /* ---------- steps ----------
    The hardware step counter accumulates in silicon regardless of app state, so
    even if events pause while the phone sleeps, the next delivery carries the

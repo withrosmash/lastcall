@@ -7,6 +7,8 @@ import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
+import * as badges from './badges.js';
+import { atlasScreen } from './map.js';
 import * as steps from './steps.js';
 import * as notify from './notify.js';
 import * as keepalive from './keepalive.js';
@@ -37,6 +39,8 @@ const SCREENS = {
   history: { build: historyScreen, bloom: 'hero' },
   detail: { build: (c) => detailScreen(c, c.arg), bloom: 'hero' },
   settings: { build: settingsScreen, bloom: 'hero' },
+  badges: { build: badges.badgesScreen, bloom: 'hero' },
+  atlas: { build: atlasScreen, bloom: 'none' },
 };
 
 function go(screen, arg = null) {
@@ -117,18 +121,70 @@ async function fixBattery() {
   render();
 }
 
-function endNight() {
+async function endNight() {
   const s = ctx.state.active;
   if (!s) return;
+  // Taps made from the notification shade land before the night closes.
+  await drainQuickLogs({ silent: true });
   S.endSession(s);
   ctx.state.sessions.unshift(s);
   ctx.state.active = null;
   ctx.lastSession = s;
+  ctx.newBadges = syncBadges();
   save();
   store.flush();
   keepalive.setSessionActive(false);
+  keepalive.hideQuickLog();
   stopTracking();
   go('recap', s);
+}
+
+/* ---------- badges ---------- */
+
+function syncBadges() {
+  const have = new Set(ctx.state.badges.map((b) => b.slug));
+  const earnable = badges.evaluate({
+    sessions: ctx.state.sessions,
+    prefs: ctx.state.prefs,
+    flags: ctx.state.flags,
+  });
+  const fresh = earnable.filter((e) => !have.has(e.slug));
+  if (fresh.length) {
+    ctx.state.badges.push(...fresh.map((e) => ({ slug: e.slug, earnedAt: Date.now(), sessionId: e.sessionId })));
+    save();
+  }
+  return fresh;
+}
+
+// The card export badge can only be earned outside endNight.
+window.addEventListener('lc:card-exported', () => {
+  ctx.state.flags.cardExported = true;
+  const fresh = syncBadges();
+  if (fresh.length) {
+    const meta = badges.BADGES.find((b) => b.slug === fresh[0].slug);
+    if (meta) toast(`Badge earned — ${meta.name}.`);
+  }
+});
+
+/* ---------- quick log drain ---------- */
+
+async function drainQuickLogs({ silent = false } = {}) {
+  const s = ctx.state.active;
+  const events = await keepalive.drainQuickLogs();
+  if (!s || !events.length) return;
+  for (const e of events) {
+    const t = Number(e.t) || Date.now();
+    if (e.type === 'water') S.addWater(s, t);
+    else S.addDrink(s, ctx.state.prefs.recentDrinks[0] || 'Drink', t);
+  }
+  // Shade taps carry their own timestamps and may interleave with in-app logs.
+  s.drinks.sort((a, b) => a.t - b.t);
+  s.waters.sort((a, b) => a.t - b.t);
+  save();
+  if (!silent) {
+    render();
+    toast(`${events.length} logged from the notification.`);
+  }
 }
 
 function logDrink(kind) {
@@ -140,6 +196,8 @@ function logDrink(kind) {
   save();
   render();
   buzz();
+  // Keep the shade button labelled with the latest drink of choice.
+  keepalive.showQuickLog(kind);
   // Tap-to-undo instead of a confirm step: logging stays two-second fast, and
   // a 2am mistap costs one tap to take back.
   toast(`${kind} logged. Tap to undo.`, 4000, () => {
@@ -199,6 +257,9 @@ async function startTracking() {
   });
   startSteps();
   notify.init();
+  keepalive.showQuickLog(ctx.state.prefs.recentDrinks[0] || 'Drink');
+  keepalive.onQuickLog(() => drainQuickLogs());
+  drainQuickLogs();
   requestWakeLock();
 }
 
@@ -253,6 +314,7 @@ document.addEventListener('visibilitychange', () => {
     // Coming back from the battery settings screen is the usual reason we're
     // visible again, so re-read the state rather than trusting the old answer.
     checkBattery();
+    drainQuickLogs();
   }
 });
 

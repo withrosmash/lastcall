@@ -3,6 +3,8 @@ import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon,
 import * as S from './state.js';
 import * as store from './storage.js';
 import { routeSvg } from './session.js';
+import { saveTextFile } from './keepalive.js';
+import { BADGES } from './badges-data.js';
 
 /* ---------- 11 history ---------- */
 
@@ -40,6 +42,17 @@ export function historyScreen(ctx) {
         }))),
       el('div', { class: 'bars-x' }, buckets.map((_, i) => el('span', { text: String(i + 1) }))),
     ),
+
+    el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('badges') },
+      el('span', { class: 'listrow__d', text: 'Badges' }),
+      el('span', { class: 'listrow__m' }, el('span', { text: `${ctx.state.badges.length} of ${BADGES.length}` })),
+    ),
+    done.some((s) => s.trail.length > 1)
+      ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('atlas') },
+          el('span', { class: 'listrow__d', text: 'Everywhere you’ve been' }),
+          el('span', { class: 'listrow__m' }, el('span', { text: `${km(done.reduce((n, s) => n + s.distanceM, 0))} km` })),
+        )
+      : null,
 
     el('div', { class: 'eb', text: 'Nights' }),
     el('div', { class: 'stack', style: 'gap:6px' },
@@ -132,9 +145,36 @@ export function detailScreen(ctx, session) {
     spacer(),
     foot(
       btn('Make a card', 'btn--pri', () => ctx.go('card', s), { lg: true }),
+      s.trail.length > 1 ? btn('Export route (GPX)', 'btn--sec', () => exportGpx(s)) : null,
       btn('Delete night', 'btn--sec', () => confirmDelete(ctx, s)),
     ),
   ];
+}
+
+/* ---------- GPX ----------
+   The night's route in the format every fitness app ingests. */
+
+const escapeXml = (str) => String(str).replace(/[<>&'"]/g, (c) =>
+  ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+
+function toGpx(s) {
+  const name = `Last Call — ${shortDate(s.startedAt)}`;
+  const points = s.trail.map((p) =>
+    `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
+  const stops = s.pins.map((p) =>
+    `<wpt lat="${p.lat}" lon="${p.lng}"><name>${escapeXml(p.name)}</name><time>${new Date(p.t).toISOString()}</time></wpt>`).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Last Call" xmlns="http://www.topografix.com/GPX/1/1">
+${stops}
+<trk><name>${escapeXml(name)}</name><trkseg>
+${points}
+</trkseg></trk>
+</gpx>`;
+}
+
+async function exportGpx(s) {
+  const name = `lastcall-${new Date(s.startedAt).toISOString().slice(0, 10)}.gpx`;
+  await exportText(name, 'application/gpx+xml', toGpx(s), 'Route saved to Downloads › Last Call.');
 }
 
 function confirmDelete(ctx, s) {
@@ -161,8 +201,20 @@ function confirmDelete(ctx, s) {
 /* ---------- export / import ---------- */
 
 function exportData() {
-  const blob = new Blob([store.exportJSON()], { type: 'application/json' });
-  download(blob, `lastcall-${new Date().toISOString().slice(0, 10)}.json`);
+  const name = `lastcall-${new Date().toISOString().slice(0, 10)}.json`;
+  exportText(name, 'application/json', store.exportJSON(), 'History saved to Downloads › Last Call.');
+}
+
+// Native writes through MediaStore — the WebView silently drops <a download>
+// clicks, which is how "Export" used to export to nowhere on the phone.
+async function exportText(name, mime, text, nativeMsg) {
+  try {
+    if (await saveTextFile(name, mime, text)) { toast(nativeMsg); return; }
+  } catch {
+    toast('Saving failed. Check storage and try again.');
+    return;
+  }
+  download(new Blob([text], { type: mime }), name);
   toast('Exported.');
 }
 

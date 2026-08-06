@@ -219,6 +219,52 @@ async function nearbyVenues({ lat, lng }, radiusM = 150) {
   }
 }
 
+/* ---------- everywhere you've been ----------
+   Every stored trail on one map. Reuses the same Leaflet lifecycle as the
+   night map, so navigating away tears it down identically. */
+
+export function atlasScreen(ctx) {
+  const done = ctx.state.sessions.filter((s) => s.endedAt && s.trail.length > 1);
+  if (!done.length) { ctx.go('history'); return []; }
+
+  const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Every route you have recorded' });
+  queueMicrotask(() => initAtlas(host, done));
+
+  const totalKm = km(done.reduce((n, s) => n + s.distanceM, 0));
+
+  return [
+    head({ title: 'Everywhere you’ve been', back: () => ctx.go('history') }),
+    el('div', { class: 'map-wrap' },
+      host,
+      el('div', { class: 'map-foot' },
+        el('div', {},
+          el('div', { class: 'tile__k', text: 'Nights' }),
+          el('div', { class: 'tile__v', text: String(done.length) })),
+        el('div', {},
+          el('div', { class: 'tile__k', text: 'Distance' }),
+          el('div', { class: 'tile__v', text: `${totalKm} km` })),
+      )),
+  ];
+}
+
+function initAtlas(host, done) {
+  if (!globalThis.L || !host.isConnected) return;
+  teardownMap();
+
+  map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
+  L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIB, subdomains: SUBDOMAINS, crossOrigin: true }).addTo(map);
+
+  let bounds = null;
+  for (const s of done) {
+    const line = L.polyline(s.trail.map((p) => [p.lat, p.lng]), {
+      color: '#7EE0C0', weight: 3, opacity: 0.75, lineCap: 'round', lineJoin: 'round',
+    }).addTo(map);
+    bounds = bounds ? bounds.extend(line.getBounds()) : line.getBounds();
+  }
+  if (bounds) map.fitBounds(bounds, { padding: [34, 34] });
+  setTimeout(() => map?.invalidateSize(), 60);
+}
+
 export function teardownMap() {
   if (onFix) { window.removeEventListener('lc:fix', onFix); onFix = null; }
   if (map) { map.remove(); map = null; }

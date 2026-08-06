@@ -2,6 +2,7 @@ import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast,
          hms, hm, longDuration, clockTime, upperDate, km, words } from './ui.js';
 import * as S from './state.js';
 import { pickDrink, remember } from './drinks.js';
+import { badgeChip, BADGES } from './badges.js';
 
 /* ---------- 01 start ---------- */
 
@@ -97,12 +98,34 @@ export function liveScreen(ctx) {
     spacer(),
 
     foot(
-      btn('Add drink', 'btn--pri', () => pickDrink(ctx.state.prefs, (kind) => ctx.logDrink(kind)),
-        { iconName: 'plus', lg: true }),
+      addDrinkButton(ctx),
       btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
       navPair([['Map', () => ctx.go('map')], ['End night', () => confirmEnd(ctx)]]),
     ),
   ];
+}
+
+// Tap opens the picker; holding for half a second logs your last drink
+// straight away — round-buying mode, one thumb, no sheet.
+function addDrinkButton(ctx) {
+  const node = btn('Add drink', 'btn--pri', () => {
+    if (node.dataset.held) { delete node.dataset.held; return; }
+    pickDrink(ctx.state.prefs, (kind) => ctx.logDrink(kind));
+  }, { iconName: 'plus', lg: true });
+
+  let timer = null;
+  node.addEventListener('pointerdown', () => {
+    const last = ctx.state.prefs.recentDrinks[0];
+    if (!last) return;
+    timer = setTimeout(() => {
+      node.dataset.held = '1';
+      ctx.logDrink(last);
+    }, 550);
+  });
+  for (const evt of ['pointerup', 'pointerleave', 'pointercancel']) {
+    node.addEventListener(evt, () => clearTimeout(timer));
+  }
+  return node;
 }
 
 /* ---------- 07 end night ---------- */
@@ -148,6 +171,8 @@ export function recapScreen(ctx, session) {
 
     gapNote(s),
 
+    newBadgesRow(ctx),
+
     spacer(),
     foot(
       btn('Make a card', 'btn--pri', () => ctx.go('card', s), { lg: true }),
@@ -158,6 +183,23 @@ export function recapScreen(ctx, session) {
 
 // Say it plainly when the route has holes in it. The map draws a straight line
 // across a gap, which would otherwise read as a walk that never happened.
+// Badges earned by the night that just closed, shown once, right here.
+function newBadgesRow(ctx) {
+  const fresh = ctx.newBadges || [];
+  if (!fresh.length) return null;
+  return el('div', { class: 'stack', style: 'gap:7px' },
+    el('div', { class: 'eb eb--mint', text: fresh.length === 1 ? 'New badge' : 'New badges' }),
+    el('div', { style: 'display:flex;gap:12px;flex-wrap:wrap' },
+      fresh.map((f) => {
+        const meta = BADGES.find((b) => b.slug === f.slug);
+        return el('div', { style: 'display:flex;flex-direction:column;align-items:center;gap:4px;width:72px' },
+          badgeChip(f.slug, { size: 56 }),
+          el('div', { class: 'cap', style: 'text-align:center;line-height:1.25', text: meta?.name || f.slug }),
+        );
+      })),
+  );
+}
+
 function gapNote(s) {
   const gaps = S.trailGaps(s);
   if (!gaps.length) return null;

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<radialGradient id="fifty-stops-bloom" cx="0.5" cy="0.28" r="0.75"><stop offset="0" stop-color="rgba(240,108,155,0.14)"></stop><stop offset="1" stop-color="rgba(240,108,155,0)"></stop></radialGradient>
+<radialGradient id="fifty-stops-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0.8" stop-color="rgba(240,108,155,0)"></stop><stop offset="0.89" stop-color="rgba(240,108,155,0.11)"></stop><stop offset="1" stop-color="rgba(240,108,155,0)"></stop></radialGradient>
+</defs>
+<circle cx="256" cy="256" r="256" fill="url(#fifty-stops-glow)"></circle>
+<circle cx="256" cy="256" r="225" fill="#141414"></circle>
+<circle cx="256" cy="256" r="225" fill="url(#fifty-stops-bloom)"></circle>
+<path d="M 63.7 145 A 222 222 0 0 1 448.3 145" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" stroke-linecap="round"></path>
+<circle cx="256" cy="256" r="190" fill="none" stroke="rgba(240,108,155,0.2)" stroke-width="7"></circle>
+<g transform="translate(120 120) scale(11.3333)"><path d="M10 7H6.7l-.5 4.3c.6-.5 1.3-.8 2.1-.8a3 3 0 0 1 0 6c-1.1 0-2-.5-2.6-1.3 M15.3 7c-1.8 0-2.7 2.2-2.7 5s.9 5 2.7 5 2.7-2.2 2.7-5-.9-5-2.7-5Z" fill="none" stroke="#F06C9B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></g>
+</svg>

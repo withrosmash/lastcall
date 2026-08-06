@@ -1,7 +1,7 @@
 const KEY = 'lastcall_v1';
 const SCHEMA = 1;
 
-const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs() };
+const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs(), badges: [], flags: {} };
 
 export function defaultPrefs() {
   // Threshold of 5 is the design system's value, not a guess.
@@ -32,6 +32,8 @@ function migrate(data) {
     active: data.active ?? null,
     sessions: Array.isArray(data.sessions) ? data.sessions : [],
     prefs: { ...defaultPrefs(), ...(data.prefs || {}) },
+    badges: Array.isArray(data.badges) ? data.badges : [],
+    flags: data.flags && typeof data.flags === 'object' ? data.flags : {},
   };
   return out;
 }

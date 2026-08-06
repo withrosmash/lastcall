@@ -465,10 +465,14 @@ async function shareCard() {
   try { blob = await render(); } catch { toast('The card didn’t render.'); return; }
   const file = new File([blob], filename(), { type: 'image/png' });
   if (navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file] }); return; }
-    catch (err) { if (err?.name === 'AbortError') return; }
+    try {
+      await navigator.share({ files: [file] });
+      window.dispatchEvent(new Event('lc:card-exported'));
+      return;
+    } catch (err) { if (err?.name === 'AbortError') return; }
   }
   download(blob);
+  window.dispatchEvent(new Event('lc:card-exported'));
   toast('Sharing isn’t available here, so it downloaded instead.');
 }
 
@@ -481,6 +485,7 @@ async function saveCard() {
   try {
     const base64 = await blobToBase64(blob);
     if (await saveImage(base64, filename())) {
+      window.dispatchEvent(new Event('lc:card-exported'));
       toast('Saved to your gallery, in Pictures › Last Call.');
       return;
     }
@@ -490,6 +495,7 @@ async function saveCard() {
   }
 
   download(blob);
+  window.dispatchEvent(new Event('lc:card-exported'));
   toast('Saved.');
 }
 
