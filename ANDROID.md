@@ -54,6 +54,35 @@ Store account and no developer fee.
   notification, which the OS requires and which cannot be hidden. It also
   carries the hydration nudge.
 
+## Keeping a night recording end to end
+
+Tracking runs only between Start night and End night — nothing is recorded
+between nights. Within a night it is built to not drop out:
+
+- **Foreground service.** Survives the screen locking, the app being
+  backgrounded, and the phone going in a pocket. This is what the permanent
+  notification is for; Android will not grant background location without it.
+- **Battery optimisation.** Samsung's Device Care puts apps to "sleep" and
+  stops their services, which is the most likely way to lose half a night. The
+  first time you start a night the app asks Android to exempt it. If you decline
+  — or if Samsung silently re-enables it later — the session screen shows an
+  amber warning with a **Fix it** button, and the state is re-checked every time
+  you return to the app. You get told before you lose a night, not after.
+- **Reboot.** A restart kills the service, and Android does not let anything
+  restart location tracking from the background. Rather than pretend, a
+  notification says tracking stopped and one tap picks the night back up.
+- **Gaps are reported, not hidden.** If no fix arrives for more than 12 minutes
+  the recap says so — "Tracking dropped for 40 minutes, so part of the route is
+  missing." The map draws a straight line across a hole, which would otherwise
+  read as a walk that never happened.
+
+### Samsung, by hand
+
+The in-app prompt covers most of it. If the warning persists:
+Settings → Apps → Last Call → Battery → **Unrestricted**, and
+Settings → Battery → Background usage limits → make sure Last Call is **not** in
+**Sleeping apps** or **Deep sleeping apps**.
+
 ## The test that matters
 
 Start a night, lock the phone, put it in a pocket, walk a few hundred metres,

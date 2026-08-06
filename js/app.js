@@ -9,6 +9,7 @@ import { historyScreen, detailScreen, settingsScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as steps from './steps.js';
 import * as notify from './notify.js';
+import * as keepalive from './keepalive.js';
 
 const ctx = {
   state: store.load(),
@@ -18,8 +19,11 @@ const ctx = {
   geoStatus: 'idle',
   stepsAvailable: false,
   nudgeDismissed: false,
+  // null on the web, where battery optimisation isn't a concept.
+  batteryExempt: null,
   tick: null,
   go, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, addPin,
+  fixBattery, checkBattery,
 };
 
 const SCREENS = {
@@ -79,9 +83,38 @@ function startNight({ skipLocation = false } = {}) {
   ctx.state.active = S.newSession();
   ctx.nudgeDismissed = false;
   save();
+  keepalive.setSessionActive(true);
   go('live');
   if (!skipLocation) startTracking();
   else startSteps();
+  ensureBatteryExemption();
+}
+
+// Asked once, the first time a night starts. After that the live screen just
+// checks the state, so a user who declined isn't nagged every night — but is
+// warned while it still matters.
+async function ensureBatteryExemption() {
+  const exempt = await keepalive.isExempt();
+  ctx.batteryExempt = exempt;
+  if (exempt === false && !ctx.state.prefs.batteryAsked) {
+    ctx.state.prefs.batteryAsked = true;
+    save();
+    ctx.batteryExempt = await keepalive.requestExempt();
+  }
+  if (ctx.screen === 'live') render();
+}
+
+async function checkBattery() {
+  const before = ctx.batteryExempt;
+  ctx.batteryExempt = await keepalive.isExempt();
+  if (before !== ctx.batteryExempt && ctx.screen === 'live') render();
+}
+
+async function fixBattery() {
+  const granted = await keepalive.requestExempt();
+  if (granted === false) await keepalive.openAppSettings();
+  ctx.batteryExempt = granted;
+  render();
 }
 
 function endNight() {
@@ -93,6 +126,7 @@ function endNight() {
   ctx.lastSession = s;
   save();
   store.flush();
+  keepalive.setSessionActive(false);
   stopTracking();
   go('recap', s);
 }
@@ -193,6 +227,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && ctx.state.active) {
     requestWakeLock();
     render();
+    // Coming back from the battery settings screen is the usual reason we're
+    // visible again, so re-read the state rather than trusting the old answer.
+    checkBattery();
   }
 });
 
@@ -214,9 +251,12 @@ function boot() {
     go('recap', active);
     toast('That session was left open, so it was closed for you.');
   } else if (active) {
+    keepalive.setSessionActive(true);
     go('live');
     startTracking();
+    ensureBatteryExemption();
   } else {
+    keepalive.setSessionActive(false);
     go('start');
   }
 

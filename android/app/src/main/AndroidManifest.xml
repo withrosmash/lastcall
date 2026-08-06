@@ -24,6 +24,19 @@
 
         </activity>
 
+        <!-- A reboot kills the foreground service and nothing may restart
+             location tracking from the background, so this tells the user
+             rather than letting the night quietly stop recording. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -57,4 +70,9 @@
          avoids a Play Store background-location declaration, at the cost of
          those edge cases. -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- Samsung's Device Care puts apps to "sleep" and stops their foreground
+         services. Being on the battery-optimisation allow-list is the single
+         biggest thing that prevents a night quietly stopping mid-record. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 </manifest>

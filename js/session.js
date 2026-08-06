@@ -84,6 +84,14 @@ export function liveScreen(ctx) {
       ),
     ) : null,
 
+    // Same warning shape as hydration, because the consequence is comparable:
+    // Samsung will stop the service and the rest of the night goes unrecorded.
+    ctx.batteryExempt === false ? el('div', { class: 'warn' },
+      el('div', { class: 'warn__h', text: 'Android may stop tracking.' }),
+      el('div', { class: 'cap cap--up', text: 'Battery optimisation is on for Last Call, so your phone can put it to sleep mid-night.' }),
+      btn('Fix it', 'btn--pink', () => ctx.fixBattery()),
+    ) : null,
+
     gpsNote ? el('p', { class: 'cap cap--up', text: gpsNote }) : null,
 
     spacer(),
@@ -138,12 +146,26 @@ export function recapScreen(ctx, session) {
       tile('Stops', sum.stops),
     ),
 
+    gapNote(s),
+
     spacer(),
     foot(
       btn('Make a card', 'btn--pri', () => ctx.go('card', s), { lg: true }),
       btn('Just save it', 'btn--sec', () => { toast('Saved to history.'); ctx.go('start'); }),
     ),
   ];
+}
+
+// Say it plainly when the route has holes in it. The map draws a straight line
+// across a gap, which would otherwise read as a walk that never happened.
+function gapNote(s) {
+  const gaps = S.trailGaps(s);
+  if (!gaps.length) return null;
+  const total = Math.round(S.missingMs(s) / 60000);
+  return el('p', { class: 'cap cap--up', style: 'margin:0',
+    text: gaps.length === 1
+      ? `Tracking dropped for ${total} minutes, so part of the route is missing.`
+      : `Tracking dropped ${gaps.length} times, ${total} minutes in total, so parts of the route are missing.` });
 }
 
 /* ---------- route ----------

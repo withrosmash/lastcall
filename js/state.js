@@ -86,6 +86,24 @@ export function lastActivity(s) {
   return Math.max(...times);
 }
 
+// Stretches where no fix arrived for far longer than the throttle allows —
+// the phone was killed, denied, or asleep. Reported rather than smoothed over:
+// a straight line drawn across a missing hour is a lie.
+export const GAP_MS = 12 * 60 * 1000;
+
+export function trailGaps(s, threshold = GAP_MS) {
+  const gaps = [];
+  for (let i = 1; i < s.trail.length; i++) {
+    const ms = s.trail[i].t - s.trail[i - 1].t;
+    if (ms > threshold) gaps.push({ from: s.trail[i - 1].t, to: s.trail[i].t, ms });
+  }
+  return gaps;
+}
+
+export function missingMs(s) {
+  return trailGaps(s).reduce((n, g) => n + g.ms, 0);
+}
+
 export function summarise(s) {
   return {
     id: s.id,
