@@ -1,6 +1,7 @@
 import { el, btn, foot, head, spacer, toast, icon, hms, km } from './ui.js';
 import * as S from './state.js';
 import { fitPoints } from './session.js';
+import { saveImage } from './keepalive.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
@@ -24,7 +25,12 @@ export function cardScreen(ctx, session) {
 
   const tabs = el('div', { class: 'chips' },
     tab('Preset', () => setMode('preset'), ui.mode === 'preset'),
-    tab('Your photo', () => pickPhoto(), ui.mode === 'photo'),
+    // A photo already picked switches back without reopening the picker;
+    // tapping again while active re-picks.
+    tab('Your photo', () => {
+      if (ui.photo && ui.mode !== 'photo') setMode('photo');
+      else pickPhoto();
+    }, ui.mode === 'photo'),
   );
 
   const toggles = el('div', { class: 'chips' });
@@ -289,7 +295,9 @@ function draw({ forExport = false } = {}) {
   g.fillStyle = C.bg;
   g.fillRect(0, 0, w, h);
 
-  if (ui.photo) {
+  // The photo belongs to photo mode only — preset always shows the black
+  // bloom card, even when a photo has been picked and is waiting in state.
+  if (ui.photo && ui.mode === 'photo') {
     drawCover(g, ui.photo, w, h);
     // A 34% wash so white type holds over any picture.
     g.fillStyle = 'rgba(0,0,0,.34)';
@@ -465,8 +473,33 @@ async function shareCard() {
 }
 
 async function saveCard() {
-  try { download(await render()); toast('Saved.'); }
-  catch { toast('The card didn’t render.'); }
+  let blob;
+  try { blob = await render(); } catch { toast('The card didn’t render.'); return; }
+
+  // On Android, write into the gallery via MediaStore — an <a download> click
+  // does nothing inside the WebView, which is how "Save" saved to nowhere.
+  try {
+    const base64 = await blobToBase64(blob);
+    if (await saveImage(base64, filename())) {
+      toast('Saved to your gallery, in Pictures › Last Call.');
+      return;
+    }
+  } catch {
+    toast('Saving to the gallery failed. Try Share instead.');
+    return;
+  }
+
+  download(blob);
+  toast('Saved.');
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1]);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 function download(blob) {

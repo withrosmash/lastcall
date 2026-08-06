@@ -1,10 +1,18 @@
-// Step counting from the accelerometer. On the web this only runs while the
-// app is in the foreground, so it undercounts — the tile is hidden entirely
-// rather than shown wrong when the sensor isn't there. The native build swaps
-// this for the phone's own pedometer.
+// Step counting behind one interface, native-first.
+//
+// Native: the phone's hardware step counter via LastCallNative — counts in
+// silicon whether or not the app is awake, which is the only way a night in a
+// pocket records real numbers.
+//
+// Web fallback: accelerometer peak detection, foreground-only and honest about
+// it (the tile is hidden entirely when the sensor is absent). Both paths emit
+// DELTAS, not totals, so the caller accumulates and a restart can only ever
+// undercount, never rewind.
 
-let count = 0;
-let onChange = () => {};
+import * as keepalive from './keepalive.js';
+
+let mode = null; // 'native' | 'web' | null
+let onDelta = () => {};
 let handler = null;
 
 // Peak detection on the magnitude of acceleration. A step shows up as a bump
@@ -26,35 +34,30 @@ function onMotion(e) {
   if (armed && smoothed > THRESHOLD && now - lastStep > REFRACTORY_MS) {
     armed = false;
     lastStep = now;
-    count += 1;
-    onChange(count);
+    onDelta(1);
   } else if (smoothed < THRESHOLD - 0.8) {
     armed = true;
   }
 }
 
-export function supported() {
-  return typeof DeviceMotionEvent !== 'undefined';
-}
+export async function start(cb) {
+  onDelta = cb || onDelta;
 
-// iOS Safari gates the sensor behind an explicit gesture. Returns false rather
-// than throwing so callers can just hide the tile.
-export async function start(cb, { fromGesture = false } = {}) {
-  if (!supported()) return false;
-  onChange = cb || onChange;
-
-  const needsPermission = typeof DeviceMotionEvent.requestPermission === 'function';
-  if (needsPermission) {
-    if (!fromGesture) return false;
-    try {
-      const res = await DeviceMotionEvent.requestPermission();
-      if (res !== 'granted') return false;
-    } catch { return false; }
+  if (await keepalive.startSteps((d) => onDelta(d))) {
+    mode = 'native';
+    return true;
   }
 
-  if (handler) return true;
-  handler = onMotion;
-  window.addEventListener('devicemotion', handler);
+  if (typeof DeviceMotionEvent === 'undefined') return false;
+
+  // iOS gates the sensor behind an explicit gesture; without one, hide the
+  // tile rather than showing a confidently wrong zero.
+  if (typeof DeviceMotionEvent.requestPermission === 'function') return false;
+
+  if (!handler) {
+    handler = onMotion;
+    window.addEventListener('devicemotion', handler);
+  }
 
   // Desktop Chrome fires devicemotion with null readings, so the event alone
   // proves nothing — wait for one that actually carries acceleration.
@@ -67,17 +70,18 @@ export async function start(cb, { fromGesture = false } = {}) {
     window.addEventListener('devicemotion', probe);
     setTimeout(() => {
       window.removeEventListener('devicemotion', probe);
-      if (!usable) stop();
+      if (usable) mode = 'web';
+      else stop();
       resolve(usable);
     }, 1200);
   });
 }
 
 export function stop() {
-  if (!handler) return;
-  window.removeEventListener('devicemotion', handler);
-  handler = null;
+  if (mode === 'native') keepalive.stopSteps();
+  if (handler) {
+    window.removeEventListener('devicemotion', handler);
+    handler = null;
+  }
+  mode = null;
 }
-
-export function reset() { count = 0; }
-export function total() { return count; }

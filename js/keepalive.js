@@ -45,3 +45,47 @@ export async function setSessionActive(active) {
   try { await LastCallNative.setSessionActive({ active: !!active }); }
   catch { /* the flag is a courtesy, never a failure path */ }
 }
+
+// Writes a PNG into the system gallery via MediaStore. An <a download> click —
+// the web path — does nothing inside Android's WebView, which is why the card
+// "saved" to nowhere on the phone.
+export async function saveImage(base64, name) {
+  if (!isNative()) return false;
+  await LastCallNative.saveToGallery({ data: base64, name });
+  return true;
+}
+
+/* ---------- steps ----------
+   The hardware step counter accumulates in silicon regardless of app state, so
+   even if events pause while the phone sleeps, the next delivery carries the
+   full count. The web accelerometer can never match this: it hears nothing
+   once the screen locks, which is how a 5,500-step walk logged 89. */
+
+let stepHandle = null;
+let lastTotal = 0;
+
+export async function startSteps(onDelta) {
+  if (!isNative()) return false;
+  try {
+    const res = await LastCallNative.startStepCount();
+    if (!res?.available) return false;
+    lastTotal = 0;
+    stepHandle = await LastCallNative.addListener('steps', (e) => {
+      const total = Number(e?.steps) || 0;
+      const delta = total - lastTotal;
+      lastTotal = total;
+      if (delta > 0) onDelta(delta);
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function stopSteps() {
+  try { stepHandle?.remove?.(); } catch { /* gone */ }
+  stepHandle = null;
+  lastTotal = 0;
+  if (!isNative()) return;
+  try { await LastCallNative.stopStepCount(); } catch { /* not counting */ }
+}

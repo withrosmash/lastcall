@@ -75,4 +75,11 @@
          services. Being on the battery-optimisation allow-list is the single
          biggest thing that prevents a night quietly stopping mid-record. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Hardware step counter; runtime-gated only from Android 10. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- Gallery writes below Android 10 go through the legacy external store. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 </manifest>

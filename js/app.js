@@ -1,6 +1,6 @@
 import * as store from './storage.js';
 import * as S from './state.js';
-import { mount, toast, dismissSheet, serviceNotice } from './ui.js';
+import { mount, toast, buzz, dismissSheet, serviceNotice } from './ui.js';
 import { startScreen, liveScreen, recapScreen, primingScreen } from './session.js';
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
@@ -139,7 +139,15 @@ function logDrink(kind) {
   ctx.nudgeDismissed = false;
   save();
   render();
-  toast(`${kind} logged.`);
+  buzz();
+  // Tap-to-undo instead of a confirm step: logging stays two-second fast, and
+  // a 2am mistap costs one tap to take back.
+  toast(`${kind} logged. Tap to undo.`, 4000, () => {
+    s.drinks.pop();
+    save();
+    render();
+    toast('Undone.');
+  });
 
   const every = ctx.state.prefs.hydrationEvery;
   const since = S.drinksSinceWater(s);
@@ -154,7 +162,13 @@ function logWater() {
   save();
   render();
   notify.clearHydration();
-  toast('Water logged.');
+  buzz();
+  toast('Water logged. Tap to undo.', 4000, () => {
+    s.waters.pop();
+    save();
+    render();
+    toast('Undone.');
+  });
 }
 
 function addPin(pin) {
@@ -188,12 +202,21 @@ async function startTracking() {
   requestWakeLock();
 }
 
+let lastStepsPaint = 0;
+
 async function startSteps() {
-  ctx.stepsAvailable = await steps.start((count) => {
+  // Deltas, not totals: a process restart mid-night can then only ever
+  // undercount, never rewind the tile.
+  ctx.stepsAvailable = await steps.start((delta) => {
     const s = ctx.state.active;
     if (!s) return;
-    s.steps = count;
+    s.steps += delta;
     save();
+    const now = Date.now();
+    if (ctx.screen === 'live' && document.visibilityState === 'visible' && now - lastStepsPaint > 4000) {
+      lastStepsPaint = now;
+      render();
+    }
   });
   if (ctx.stepsAvailable && ctx.screen === 'live') render();
 }

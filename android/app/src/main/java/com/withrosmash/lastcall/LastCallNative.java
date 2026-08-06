@@ -1,32 +1,56 @@
 package com.withrosmash.lastcall;
 
+import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.PowerManager;
+import android.provider.MediaStore;
 import android.provider.Settings;
+import android.util.Base64;
 
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
+
+import java.io.OutputStream;
 
 /**
- * The bits of "keep tracking alive" that no off-the-shelf plugin covers.
+ * The bits of the app no off-the-shelf plugin covers:
  *
- * Samsung's Device Care is the most aggressive battery manager on Android: it
- * puts apps to "sleep" and silently stops their foreground services, which for
- * this app means a night that quietly stops recording. Being on the battery
- * optimisation allow-list is the single biggest thing that prevents it, so the
- * app both requests it and can check afterwards whether it actually stuck.
+ * - Battery-optimisation exemption (Samsung's Device Care stops foreground
+ *   services of "sleeping" apps, which silently ends a night mid-record).
+ * - The hardware step counter. It accumulates in silicon regardless of app
+ *   state — the only way a phone in a pocket records real numbers. The
+ *   WebView's accelerometer heard 89 of a 5,500-step walk.
+ * - Saving the share card into the system gallery. An <a download> click does
+ *   nothing inside Android's WebView.
+ * - A SharedPreferences mirror of "a night is open" for the boot receiver.
  */
-@CapacitorPlugin(name = "LastCallNative")
-public class LastCallNative extends Plugin {
+@CapacitorPlugin(
+        name = "LastCallNative",
+        permissions = {
+                @Permission(strings = { Manifest.permission.ACTIVITY_RECOGNITION }, alias = "activity")
+        })
+public class LastCallNative extends Plugin implements SensorEventListener {
 
     public static final String PREFS = "lastcall";
     public static final String KEY_SESSION_ACTIVE = "session_active";
+
+    /* ---------- battery optimisation ---------- */
 
     static boolean isExempt(Context ctx) {
         PowerManager pm = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
@@ -91,16 +115,129 @@ public class LastCallNative extends Plugin {
         }
     }
 
-    /**
-     * Mirrors "a night is open" somewhere native code can read it. The web
-     * layer's storage is inside the WebView and invisible to a broadcast
-     * receiver that runs after a reboot.
-     */
+    /* ---------- session flag ---------- */
+
     @PluginMethod
     public void setSessionActive(PluginCall call) {
         boolean active = Boolean.TRUE.equals(call.getBoolean("active", false));
         SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         prefs.edit().putBoolean(KEY_SESSION_ACTIVE, active).apply();
         call.resolve();
+    }
+
+    /* ---------- hardware step counter ----------
+       TYPE_STEP_COUNTER reports steps-since-boot, cumulative in hardware, so a
+       gap in event delivery loses nothing: the next event carries the total.
+       JS receives steps since the listener started and converts to deltas. */
+
+    private SensorManager sensorManager;
+    private boolean counting = false;
+    private float baseline = -1f;
+
+    @PluginMethod
+    public void startStepCount(PluginCall call) {
+        // ACTIVITY_RECOGNITION is runtime-gated only from Android 10.
+        if (Build.VERSION.SDK_INT >= 29
+                && getPermissionState("activity") != PermissionState.GRANTED) {
+            requestPermissionForAlias("activity", call, "stepPermissionCallback");
+            return;
+        }
+        beginCounting(call);
+    }
+
+    @PermissionCallback
+    private void stepPermissionCallback(PluginCall call) {
+        if (getPermissionState("activity") == PermissionState.GRANTED) {
+            beginCounting(call);
+        } else {
+            JSObject ret = new JSObject();
+            ret.put("available", false);
+            call.resolve(ret);
+        }
+    }
+
+    private void beginCounting(PluginCall call) {
+        sensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+        Sensor sensor = sensorManager != null
+                ? sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+                : null;
+
+        JSObject ret = new JSObject();
+        if (sensor == null) {
+            ret.put("available", false);
+            call.resolve(ret);
+            return;
+        }
+
+        baseline = -1f;
+        counting = true;
+        // 5s max report latency lets the sensor batch in hardware instead of
+        // waking the SoC per step.
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL, 5_000_000);
+        ret.put("available", true);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void stopStepCount(PluginCall call) {
+        if (sensorManager != null) sensorManager.unregisterListener(this);
+        counting = false;
+        baseline = -1f;
+        call.resolve();
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (!counting || event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) return;
+        float value = event.values[0];
+        if (baseline < 0f) baseline = value;
+        JSObject data = new JSObject();
+        data.put("steps", Math.round(value - baseline));
+        notifyListeners("steps", data);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) { }
+
+    /* ---------- gallery save ---------- */
+
+    @PluginMethod
+    public void saveToGallery(PluginCall call) {
+        String data = call.getString("data");
+        String name = call.getString("name", "lastcall.png");
+        if (data == null || data.isEmpty()) {
+            call.reject("No image data");
+            return;
+        }
+
+        byte[] bytes;
+        try {
+            bytes = Base64.decode(data, Base64.DEFAULT);
+        } catch (IllegalArgumentException e) {
+            call.reject("Image data was not valid base64");
+            return;
+        }
+
+        try {
+            ContentResolver resolver = getContext().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            if (Build.VERSION.SDK_INT >= 29) {
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Last Call");
+            }
+            Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) {
+                call.reject("MediaStore refused the insert");
+                return;
+            }
+            try (OutputStream out = resolver.openOutputStream(uri)) {
+                if (out == null) throw new IllegalStateException("null stream");
+                out.write(bytes);
+            }
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Save failed: " + e.getMessage());
+        }
     }
 }

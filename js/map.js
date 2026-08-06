@@ -141,32 +141,82 @@ function dropPin(ctx, s) {
   let name = '';
   let note = '';
 
-  sheet((close) => [
-    el('h2', { class: 'title', text: 'Name this stop' }),
-    el('label', { class: 'field' },
-      el('div', { class: 'field__k', text: 'Name this stop' }),
-      el('input', {
-        type: 'text', placeholder: 'The Grapes', autocapitalize: 'words', enterkeyhint: 'done',
-        oninput: (e) => { name = e.target.value; },
-      }),
-    ),
-    el('label', { class: 'field' },
-      el('div', { class: 'field__k', text: 'Anything worth remembering' }),
-      el('input', {
-        type: 'text', placeholder: 'Met Tom outside',
-        oninput: (e) => { note = e.target.value; },
-      }),
-    ),
-    foot(btn('Drop pin', 'btn--pri', () => {
-      close();
-      // Empty name falls back rather than blocking the save.
-      const pin = { lat: here.lat, lng: here.lng, name: name.trim() || 'Unnamed stop', note: note.trim() };
-      ctx.addPin(pin);
-      if (map) addPinMarker({ ...pin, t: Date.now() });
-      ctx.render();
-      toast('Stop saved.');
-    })),
-  ]);
+  sheet((close) => {
+    const nameInput = el('input', {
+      type: 'text', placeholder: 'The Grapes', autocapitalize: 'words', enterkeyhint: 'done',
+      oninput: (e) => { name = e.target.value; },
+    });
+
+    // Filled in async once Overpass answers; invisible until then, and offline
+    // or on failure it simply never appears — typing always works.
+    const suggestions = el('div', { class: 'stack', style: 'gap:6px' });
+    nearbyVenues(here).then((venues) => {
+      if (!venues.length || !suggestions.isConnected) return;
+      suggestions.append(
+        el('div', { class: 'eb', text: 'Nearby' }),
+        el('div', { class: 'chips' }, venues.slice(0, 6).map((v) =>
+          el('button', {
+            class: 'chip press', type: 'button',
+            onclick: () => { name = v.name; nameInput.value = v.name; },
+          }, v.name))),
+        el('div', { class: 'cap', text: 'Suggestions from OpenStreetMap' }),
+      );
+    }).catch(() => { /* offline or slow — manual entry stands */ });
+
+    return [
+      el('h2', { class: 'title', text: 'Name this stop' }),
+      suggestions,
+      el('label', { class: 'field' },
+        el('div', { class: 'field__k', text: 'Name this stop' }),
+        nameInput,
+      ),
+      el('label', { class: 'field' },
+        el('div', { class: 'field__k', text: 'Anything worth remembering' }),
+        el('input', {
+          type: 'text', placeholder: 'Met Tom outside',
+          oninput: (e) => { note = e.target.value; },
+        }),
+      ),
+      foot(btn('Drop pin', 'btn--pri', () => {
+        close();
+        // Empty name falls back rather than blocking the save.
+        const pin = { lat: here.lat, lng: here.lng, name: name.trim() || 'Unnamed stop', note: note.trim() };
+        ctx.addPin(pin);
+        if (map) addPinMarker({ ...pin, t: Date.now() });
+        ctx.render();
+        toast('Stop saved.');
+      })),
+    ];
+  });
+}
+
+// Venues around the current fix from OpenStreetMap's free Overpass API — no
+// key, no account. Sorted nearest-first. This is the app's one optional
+// network lookup beyond map tiles; it only ever suggests, never blocks.
+const OVERPASS = 'https://overpass-api.de/api/interpreter';
+const VENUE_KINDS = '^(pub|bar|restaurant|cafe|nightclub|fast_food|biergarten|casino)$';
+
+async function nearbyVenues({ lat, lng }, radiusM = 150) {
+  const query = `[out:json][timeout:8];node(around:${radiusM},${lat},${lng})["name"]["amenity"~"${VENUE_KINDS}"];out body 30;`;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const res = await fetch(OVERPASS, {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: ctl.signal,
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const seen = new Set();
+    return (json.elements || [])
+      .filter((e) => e.tags?.name && !seen.has(e.tags.name) && seen.add(e.tags.name))
+      .map((e) => ({ name: e.tags.name, d: S.haversineM(lat, lng, e.lat, e.lon) }))
+      .sort((a, b) => a.d - b.d);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function teardownMap() {

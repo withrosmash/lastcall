@@ -146,12 +146,21 @@ export function dismissSheet() { closeSheet?.(); }
 /* ---------- toast ---------- */
 
 let toastTimer = null;
-export function toast(msg, ms = 2600) {
+export function toast(msg, ms = 2600, onTap = null) {
   clearTimeout(toastTimer);
   document.querySelector('.toast')?.remove();
-  const node = el('div', { class: 'toast', role: 'status', text: msg });
+  const node = el('div', {
+    class: 'toast', role: 'status', text: msg,
+    onclick: onTap ? () => { node.remove(); onTap(); } : null,
+  });
+  if (onTap) node.style.cursor = 'pointer';
   document.body.append(node);
   toastTimer = setTimeout(() => node.remove(), ms);
+}
+
+// A short tick you can feel in a loud room. Silently absent on iOS WebViews.
+export function buzz(ms = 30) {
+  try { navigator.vibrate?.(ms); } catch { /* unsupported */ }
 }
 
 /* ---------- formatting ---------- */
