@@ -4,7 +4,8 @@
 // be the repo root — that would drag in node_modules, android/ and the design
 // package. There's no bundler here on purpose; this is a file copy.
 
-import { cp, rm, mkdir, access } from 'node:fs/promises';
+import { cp, rm, mkdir, access, readFile, readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,3 +43,28 @@ for (const entry of ENTRIES) {
 }
 
 console.log(`www/ built from ${ENTRIES.length} entries`);
+
+// The service worker hardcodes its app-shell list, so a new module that isn't
+// added there gets served stale forever — and it fails in ways that look
+// nothing like a caching bug. Fail the build instead of shipping that.
+const sw = await readFile(resolve(root, 'sw.js'), 'utf8');
+const shell = new Set([...sw.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]).filter(Boolean));
+
+const shouldCache = [];
+for (const dir of ['js', 'css', 'css/tokens', 'vendor', 'icons']) {
+  for (const name of await readdir(resolve(root, dir), { withFileTypes: true })) {
+    if (name.isFile() && /\.(js|css|png)$/.test(name.name)) shouldCache.push(`${dir}/${name.name}`);
+  }
+}
+
+const missing = shouldCache.filter((p) => !shell.has(p));
+const stale = [...shell].filter((p) => p && !existsSync(resolve(root, p)));
+
+if (missing.length || stale.length) {
+  for (const p of missing) console.error(`  sw.js SHELL is missing: ${p}`);
+  for (const p of stale) console.error(`  sw.js SHELL references a deleted file: ${p}`);
+  console.error('\nAdd the entries to SHELL in sw.js and bump CACHE.');
+  process.exit(1);
+}
+
+console.log(`sw.js shell verified — ${shell.size} entries, none missing or stale`);
