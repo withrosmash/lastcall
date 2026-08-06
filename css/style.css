@@ -83,9 +83,11 @@ input::placeholder{color:var(--placeholder)}
 .head__title{margin:7px 0 0}
 .back{
   display:inline-flex;align-items:center;gap:4px;
-  min-height:36px;padding:0 12px 0 8px;border-radius:var(--r-chip);
+  /* 44px is the floor for every target in this app, no exceptions. */
+  min-height:var(--tap);padding:0 14px 0 10px;border-radius:var(--r-chip);
   border:var(--hairline) solid var(--line);
   font:var(--type-button);letter-spacing:var(--tr-button);text-transform:uppercase;
+  flex:0 0 auto;
 }
 
 /* ---------- buttons ---------- */
