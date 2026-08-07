@@ -28,6 +28,32 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      # Android's debug keystore is generated per machine, so a fresh runner
+      # would sign every build with a different key — and Android refuses an
+      # update whose signature changed, forcing an uninstall (and wiping your
+      # nights) on every single install. Caching one keystore under a fixed key
+      # keeps the signature stable, so builds update over each other.
+      - name: Restore the debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: lastcall-debug-keystore-v1
+
+      - name: Create the debug signing key if the cache was empty
+        run: |
+          if [ ! -f ~/.android/debug.keystore ]; then
+            mkdir -p ~/.android
+            keytool -genkeypair -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android -keypass android \
+              -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            echo "Generated a fresh debug keystore; it will be cached for future builds."
+          else
+            echo "Reused the cached debug keystore."
+          fi
+
       - name: Install dependencies
         run: npm ci
 
