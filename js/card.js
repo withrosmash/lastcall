@@ -36,6 +36,8 @@ export function cardScreen(ctx, session) {
 
   const toggles = el('div', { class: 'chips' });
   const togglesLabel = el('div', { class: 'eb', text: 'Elements' });
+  const hint = el('p', { class: 'cap', style: 'margin:0',
+    text: 'Drag to move. Pinch, or pull the corner dot, to resize.' });
 
   // Element toggles gate content in both modes: preset stacks whatever is on,
   // photo mode makes the same pieces draggable.
@@ -44,6 +46,7 @@ export function cardScreen(ctx, session) {
     tabs.children[0].setAttribute('aria-pressed', preset ? 'true' : 'false');
     tabs.children[1].setAttribute('aria-pressed', preset ? 'false' : 'true');
     toggles.replaceChildren(...elementToggles());
+    hint.classList.toggle('hidden', preset);
   };
   ui.refreshChrome();
   draw();
@@ -52,6 +55,7 @@ export function cardScreen(ctx, session) {
     head({ title: 'Your card', back: () => ctx.go(ctx.state.active ? 'live' : 'history') }),
     tabs,
     el('div', { class: 'canvas-wrap' }, canvas),
+    hint,
     togglesLabel,
     toggles,
     spacer(),
@@ -131,16 +135,22 @@ function makeState(s, allBadges = []) {
     drag: null,
     // Defaults reproduce Mode B — the stats bar sitting along the foot.
     elements: {
-      route: { on: true, x: PAD, y: 300 },
-      time: { on: true, x: PAD, y: 1350 - PAD - 300 },
-      stats: { on: true, x: PAD, y: 1350 - PAD - 190 },
-      date: { on: true, x: PAD, y: 1350 - PAD - 90 },
-      stops: { on: false, x: PAD, y: 200 },
-      badges: { on: badgeImgs.length > 0, x: PAD, y: 180 },
+      route: { on: true, x: PAD, y: 300, scale: 1 },
+      time: { on: true, x: PAD, y: 1350 - PAD - 300, scale: 1 },
+      stats: { on: true, x: PAD, y: 1350 - PAD - 190, scale: 1 },
+      date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1 },
+      stops: { on: false, x: PAD, y: 200, scale: 1 },
+      badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1 },
     },
     bounds: new Map(),
   };
 }
+
+const SCALE_MIN = 0.5;
+const SCALE_MAX = 2.5;
+// Non-finite guards the divide-by-tiny-baseline case; NaN would otherwise
+// slip through Math.min/max and stick to the element permanently.
+const clampScale = (n) => (Number.isFinite(n) ? Math.min(SCALE_MAX, Math.max(SCALE_MIN, n)) : 1);
 
 function elementToggles() {
   // The badges toggle only exists when the night actually earned some.
@@ -223,35 +233,94 @@ function attachDrag(canvas) {
       y: ((e.clientY - r.top) / r.height) * canvas.height,
     };
   };
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  // Every active pointer, so a second finger upgrades a drag into a pinch.
+  const pointers = new Map();
 
   canvas.addEventListener('pointerdown', (e) => {
     if (ui.mode !== 'photo') return;
+    // A hidden pane reports a zero-size rect; the division would poison every
+    // coordinate with NaN.
+    if (!canvas.getBoundingClientRect().width) return;
     const p = toCard(e);
+    pointers.set(e.pointerId, p);
+    // Android occasionally drops a pointerup; without this, one dropped event
+    // leaves a ghost finger that breaks gestures for the rest of the session.
+    if (pointers.size > 2) {
+      pointers.clear();
+      pointers.set(e.pointerId, p);
+      ui.pinch = null;
+    }
+    try { canvas.setPointerCapture(e.pointerId); } catch { /* not captured */ }
+
+    // Second finger on a selected element: switch from dragging to pinching.
+    if (pointers.size === 2 && ui.selected) {
+      const [a, b] = [...pointers.values()];
+      ui.drag = null;
+      ui.pinch = { key: ui.selected, baseDist: Math.max(dist(a, b), 1), baseScale: ui.elements[ui.selected].scale || 1 };
+      return;
+    }
+
+    // The corner grip resizes; generous slop because thumbs at 2am.
+    if (ui.selected && ui.bounds.has(ui.selected)) {
+      const grip = handleCentre(ui.bounds.get(ui.selected));
+      if (dist(p, grip) < 95) {
+        const el2 = ui.elements[ui.selected];
+        const b = ui.bounds.get(ui.selected);
+        ui.resize = {
+          key: ui.selected,
+          baseScale: el2.scale || 1,
+          baseDist: Math.max(dist(p, { x: b.x, y: b.y }), 1),
+        };
+        return;
+      }
+    }
+
     const hit = hitTest(p);
     ui.selected = hit;
     if (hit) {
       const b = ui.bounds.get(hit);
       ui.drag = { key: hit, dx: p.x - b.x, dy: p.y - b.y };
-      try { canvas.setPointerCapture(e.pointerId); } catch { /* not captured */ }
     }
     draw();
   });
 
   canvas.addEventListener('pointermove', (e) => {
-    if (!ui.drag) return;
-    e.preventDefault();
+    if (!pointers.has(e.pointerId)) return;
     const p = toCard(e);
-    const node = ui.elements[ui.drag.key];
-    node.x = p.x - ui.drag.dx;
-    node.y = p.y - ui.drag.dy;
-    clampAll();
-    draw();
+    pointers.set(e.pointerId, p);
+    e.preventDefault();
+
+    if (ui.pinch && pointers.size >= 2) {
+      const [a, b] = [...pointers.values()];
+      ui.elements[ui.pinch.key].scale = clampScale(ui.pinch.baseScale * (dist(a, b) / ui.pinch.baseDist));
+      draw();
+      return;
+    }
+
+    if (ui.resize) {
+      const el2 = ui.elements[ui.resize.key];
+      const b = ui.bounds.get(ui.resize.key);
+      el2.scale = clampScale(ui.resize.baseScale * (dist(p, { x: b.x, y: b.y }) / ui.resize.baseDist));
+      draw();
+      return;
+    }
+
+    if (ui.drag) {
+      const node = ui.elements[ui.drag.key];
+      node.x = p.x - ui.drag.dx;
+      node.y = p.y - ui.drag.dy;
+      clampAll();
+      draw();
+    }
   });
 
   const end = (e) => {
-    if (!ui.drag) return;
+    pointers.delete(e.pointerId);
     try { canvas.releasePointerCapture(e.pointerId); } catch { /* already released */ }
-    ui.drag = null;
+    if (pointers.size < 2) ui.pinch = null;
+    if (!pointers.size) { ui.drag = null; ui.resize = null; }
   };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
@@ -375,8 +444,15 @@ function drawFree(g, w, h, forExport) {
   for (const t of TYPES) {
     const e = ui.elements[t.key];
     if (!e.on) continue;
-    const box = DRAW[t.key](g, e.x, e.y, w);
-    ui.bounds.set(t.key, { x: e.x, y: e.y, w: box.w, h: box.h });
+    const scale = e.scale || 1;
+    // Elements draw themselves at the origin under a transform, so every DRAW
+    // routine scales for free and the stored bounds stay in card coordinates.
+    g.save();
+    g.translate(e.x, e.y);
+    g.scale(scale, scale);
+    const box = DRAW[t.key](g, 0, 0, w);
+    g.restore();
+    ui.bounds.set(t.key, { x: e.x, y: e.y, w: box.w * scale, h: box.h * scale });
   }
   if (!forExport && ui.selected && ui.bounds.has(ui.selected)) {
     const b = ui.bounds.get(ui.selected);
@@ -385,9 +461,17 @@ function drawFree(g, w, h, forExport) {
     g.lineWidth = 3;
     g.setLineDash([14, 10]);
     g.strokeRect(b.x - 16, b.y - 16, b.w + 32, b.h + 32);
+    // The resize grip: a filled dot on the corner. Never in the export.
+    g.setLineDash([]);
+    g.fillStyle = C.mint;
+    g.beginPath();
+    g.arc(b.x + b.w + 16, b.y + b.h + 16, 34, 0, Math.PI * 2);
+    g.fill();
     g.restore();
   }
 }
+
+const handleCentre = (b) => ({ x: b.x + b.w + 16, y: b.y + b.h + 16 });
 
 function drawTime(g, x, y) {
   const w = drawText(g, hms(ui.sum.ms), x, y, { size: 96, weight: 700, spacing: -4 });
@@ -550,6 +634,8 @@ function download(blob) {
 }
 
 // Exposed so verification can prove toBlob works — the exact thing that fails
-// if a card is composited from a live map instead of drawn.
+// if a card is composited from a live map instead of drawn — and can read the
+// element geometry the pointer gestures mutate.
 export function __renderForTest() { return render(); }
+export function __stateForTest() { return ui; }
 export { icon, km };
