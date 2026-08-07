@@ -105,6 +105,7 @@ input::placeholder{color:var(--placeholder)}
 .btn--pink{border:var(--hairline) solid var(--pink);color:var(--pink)}
 .btn[disabled]{opacity:.38;pointer-events:none}
 .btn-pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-tight)}
+.btn-pair--3{grid-template-columns:1fr 1fr 1fr}
 .foot{display:flex;flex-direction:column;gap:var(--gap-tight)}
 
 /* ---------- surfaces ----------

@@ -131,7 +131,12 @@ function escapeHtml(str) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-/* ---------- 05 drop pin ---------- */
+/* ---------- 05 drop pin ----------
+   Also exported as checkIn: the sheet works identically from the live screen
+   without the trip through the map — it only needs a fix, not the map itself
+   (every map-marker touch below is guarded on `map`). */
+
+export { dropPin as checkIn };
 
 function dropPin(ctx, s) {
   const here = s.trail[s.trail.length - 1]

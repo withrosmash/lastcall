@@ -2,6 +2,7 @@ import { el, btn, foot, head, spacer, toast, icon, hms, km } from './ui.js';
 import * as S from './state.js';
 import { fitPoints } from './session.js';
 import { saveImage } from './keepalive.js';
+import { badgeSrc, BADGES } from './badges.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
@@ -18,7 +19,7 @@ let ui = null;
 export function cardScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
-  if (!ui || ui.session !== s) ui = makeState(s);
+  if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
 
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);
@@ -63,7 +64,7 @@ export function cardScreen(ctx, session) {
 export function shareScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
-  if (!ui || ui.session !== s) ui = makeState(s);
+  if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
 
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);
@@ -101,12 +102,28 @@ const TYPES = [
   { key: 'time', label: 'Time' },
   { key: 'date', label: 'Date + place' },
   { key: 'stops', label: 'Stops' },
+  { key: 'badges', label: 'Badges' },
 ];
 
-function makeState(s) {
+function makeState(s, allBadges = []) {
+  // Badges the night itself earned, art preloaded for the canvas. The SVGs are
+  // same-origin, so drawing them never taints the export.
+  const sessionBadges = allBadges
+    .filter((b) => b.sessionId === s.id)
+    .map((b) => BADGES.find((m) => m.slug === b.slug))
+    .filter(Boolean)
+    .slice(0, 4);
+  const badgeImgs = sessionBadges.map((meta) => {
+    const img = new Image();
+    img.onload = () => draw();
+    img.src = badgeSrc(meta.slug);
+    return { meta, img };
+  });
+
   return {
     session: s,
     sum: S.summarise(s),
+    badgeImgs,
     mode: 'preset',
     ratio: 'feed',
     photo: null,
@@ -119,13 +136,15 @@ function makeState(s) {
       stats: { on: true, x: PAD, y: 1350 - PAD - 190 },
       date: { on: true, x: PAD, y: 1350 - PAD - 90 },
       stops: { on: false, x: PAD, y: 200 },
+      badges: { on: badgeImgs.length > 0, x: PAD, y: 180 },
     },
     bounds: new Map(),
   };
 }
 
 function elementToggles() {
-  return TYPES.map((t) =>
+  // The badges toggle only exists when the night actually earned some.
+  return TYPES.filter((t) => t.key !== 'badges' || ui.badgeImgs.length).map((t) =>
     el('button', {
       class: 'chip press', type: 'button',
       'aria-pressed': ui.elements[t.key].on ? 'true' : 'false',
@@ -337,6 +356,7 @@ function drawPreset(g, w, h) {
   if (on.time.on) blocks.push({ h: 118, draw: (y) => drawTime(g, PAD, y) });
   if (on.stats.on) blocks.push({ h: 100, draw: (y) => drawStats(g, PAD, y) });
   if (on.stops.on) blocks.push({ h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 14, draw: (y) => DRAW.stops(g, PAD, y, w) });
+  if (on.badges?.on && ui.badgeImgs.length) blocks.push({ h: 175, draw: (y) => DRAW.badges(g, PAD, y, w) });
   if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: C.muted }) });
 
   const stackH = blocks.reduce((n, b) => n + b.h, 0);
@@ -402,6 +422,18 @@ const DRAW = {
   date(g, x, y) {
     const w = drawText(g, placeLine(ui.session), x, y, { size: 24, weight: 400, color: C.muted });
     return { w, h: 30 };
+  },
+  badges(g, x, y) {
+    const items = ui.badgeImgs;
+    if (!items.length) return { w: 0, h: 0 };
+    const size = 120, gap = 26, cell = size + gap;
+    items.forEach(({ meta, img }, i) => {
+      const cx = x + i * cell;
+      if (img.complete && img.naturalWidth) g.drawImage(img, cx, y, size, size);
+      drawText(g, meta.name.toUpperCase(), cx + size / 2, y + size + 14,
+        { size: 16, weight: 600, color: labelInk(), spacing: 2, align: 'center' });
+    });
+    return { w: cell * items.length - gap, h: size + 40 };
   },
   stops(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);

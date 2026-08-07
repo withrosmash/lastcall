@@ -1,13 +1,14 @@
 import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast, icon,
-         hms, hm, longDuration, clockTime, upperDate, km, words } from './ui.js';
+         hms, hm, longDuration, clockTime, shortDate, upperDate, km, words } from './ui.js';
 import * as S from './state.js';
 import { pickDrink, remember } from './drinks.js';
 import { badgeChip, BADGES } from './badges.js';
+import { checkIn } from './map.js';
 
 /* ---------- 01 start ---------- */
 
 export function startScreen(ctx) {
-  const hasHistory = ctx.state.sessions.some((s) => s.endedAt);
+  const last = ctx.state.sessions.find((s) => s.endedAt);
   return [
     spacer(),
     el('div', { class: 'eb eb--mint-dim', text: 'Last Call' }),
@@ -16,9 +17,16 @@ export function startScreen(ctx) {
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
       text: 'Steps, stops, drinks and water — kept on this phone, nowhere else.' }),
     el('div', { style: 'height:20px' }),
+    last ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', last) },
+      el('span', { class: 'listrow__d', text: `Last night · ${shortDate(last.startedAt)}` }),
+      el('span', { class: 'listrow__m' },
+        el('b', { text: `${last.drinks.length} drink${last.drinks.length === 1 ? '' : 's'}` }),
+        el('span', { text: hm(S.elapsedMs(last)) }),
+      ),
+    ) : null,
     foot(
       btn('Start night', 'btn--pri', () => ctx.beginNight(), { lg: true }),
-      hasHistory ? btn('History', 'btn--sec', () => ctx.go('history')) : null,
+      btn('History', 'btn--sec', () => ctx.go('history')),
     ),
   ];
 }
@@ -99,8 +107,15 @@ export function liveScreen(ctx) {
 
     foot(
       addDrinkButton(ctx),
-      btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
-      navPair([['Map', () => ctx.go('map')], ['End night', () => confirmEnd(ctx)]]),
+      el('div', { class: 'btn-pair' },
+        btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
+        btn('Food', 'btn--sec', () => ctx.logMeal()),
+      ),
+      el('div', { class: 'btn-pair btn-pair--3' },
+        btn('Check in', 'btn--sec', () => checkIn(ctx, s), { iconName: 'map-pin' }),
+        btn('Map', 'btn--sec', () => ctx.go('map')),
+        btn('End', 'btn--sec', () => confirmEnd(ctx)),
+      ),
     ),
   ];
 }

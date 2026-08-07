@@ -66,7 +66,9 @@ public class LastCallNative extends Plugin implements SensorEventListener {
     public static final String KEY_PENDING_LOGS = "pending_logs";
 
     private static final int QUICKLOG_NOTIFICATION_ID = 7;
-    private static final String QUICKLOG_CHANNEL = "lastcall_quicklog";
+    // v2: Android caches a channel's settings forever once created, so the
+    // lock-screen visibility fix needs a fresh channel id to take effect.
+    private static final String QUICKLOG_CHANNEL = "lastcall_quicklog_v2";
 
     // The quick-log receiver runs with no bridge of its own; this lets it nudge
     // a live instance so taps land immediately when the WebView is awake.
@@ -166,6 +168,28 @@ public class LastCallNative extends Plugin implements SensorEventListener {
     private boolean counting = false;
     private float baseline = -1f;
 
+    /** Fired explicitly at Start night so the dialog appears while the user is
+        still holding the phone, chained ahead of the location prompt — left to
+        the sensor's own lazy request, it sat waiting until the walk was over. */
+    @PluginMethod
+    public void requestActivityPermission(PluginCall call) {
+        if (Build.VERSION.SDK_INT < 29
+                || getPermissionState("activity") == PermissionState.GRANTED) {
+            JSObject ret = new JSObject();
+            ret.put("granted", true);
+            call.resolve(ret);
+            return;
+        }
+        requestPermissionForAlias("activity", call, "activityPermissionCallback");
+    }
+
+    @PermissionCallback
+    private void activityPermissionCallback(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("granted", getPermissionState("activity") == PermissionState.GRANTED);
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void startStepCount(PluginCall call) {
         // ACTIVITY_RECOGNITION is runtime-gated only from Android 10.
@@ -247,10 +271,14 @@ public class LastCallNative extends Plugin implements SensorEventListener {
         if (manager == null) { call.reject("no notification manager"); return; }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // DEFAULT importance (not LOW) so the lock screen keeps the action
+            // buttons instead of collapsing to one line; setSilent below keeps
+            // it from making a sound anyway.
             NotificationChannel channel = new NotificationChannel(
-                    QUICKLOG_CHANNEL, "Quick log", NotificationManager.IMPORTANCE_LOW);
+                    QUICKLOG_CHANNEL, "Quick log", NotificationManager.IMPORTANCE_DEFAULT);
             channel.setDescription("Log a drink or water from the shade while a night is open.");
             channel.setShowBadge(false);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             manager.createNotificationChannel(channel);
         }
 
@@ -263,7 +291,9 @@ public class LastCallNative extends Plugin implements SensorEventListener {
                 .setContentText("Log without opening the app.")
                 .setOngoing(true)
                 .setSilent(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                // Full content on the lock screen, action buttons included.
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .addAction(0, drinkLabel, drink)
                 .addAction(0, "Water", water)
                 .build();

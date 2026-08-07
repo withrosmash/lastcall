@@ -133,14 +133,21 @@ export function detailScreen(ctx, session) {
     ),
 
     el('div', { class: 'eb', text: 'Timeline' }),
-    s.pins.length
-      ? el('div', { class: 'tl' }, s.pins.map((p) =>
-          el('div', { class: 'tl__i' },
-            icon('map-pin', { size: 15 }),
-            el('span', { class: 'tl__n', text: p.note ? `${p.name} — ${p.note}` : p.name }),
-            el('span', { class: 'tl__t', text: clockTime(p.t) }),
-          )))
-      : el('p', { class: 'cap cap--up', text: 'No stops pinned on this one.' }),
+    (() => {
+      const entries = [
+        ...s.pins.map((p) => ({ t: p.t, pin: true, label: p.note ? `${p.name} — ${p.note}` : p.name })),
+        ...(s.meals || []).map((m) => ({ t: m.t, pin: false, label: 'Food' })),
+        ...s.waters.map((w) => ({ t: w.t, pin: false, label: 'Water' })),
+      ].sort((a, b) => a.t - b.t);
+      return entries.length
+        ? el('div', { class: 'tl' }, entries.map((e) =>
+            el('div', { class: 'tl__i' },
+              e.pin ? icon('map-pin', { size: 15 }) : el('span', { style: 'width:15px' }),
+              el('span', { class: 'tl__n', text: e.label }),
+              el('span', { class: 'tl__t', text: clockTime(e.t) }),
+            )))
+        : el('p', { class: 'cap cap--up', text: 'No stops pinned on this one.' });
+    })(),
 
     spacer(),
     foot(

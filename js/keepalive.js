@@ -55,6 +55,18 @@ export async function saveImage(base64, name) {
   return true;
 }
 
+// Ask for the step-counter permission while the user is still holding the
+// phone — chained before the location dialog at Start night.
+export async function requestActivityPermission() {
+  if (!isNative()) return true;
+  try {
+    const res = await LastCallNative.requestActivityPermission();
+    return !!res?.granted;
+  } catch {
+    return false;
+  }
+}
+
 /* ---------- quick log from the notification shade ---------- */
 
 export async function showQuickLog(drinkLabel = 'Drink') {

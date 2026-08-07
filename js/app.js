@@ -24,7 +24,7 @@ const ctx = {
   // null on the web, where battery optimisation isn't a concept.
   batteryExempt: null,
   tick: null,
-  go, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, addPin,
+  go, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, addPin,
   fixBattery, checkBattery,
 };
 
@@ -82,13 +82,17 @@ async function grantThenStart() {
   startNight();
 }
 
-function startNight({ skipLocation = false } = {}) {
+async function startNight({ skipLocation = false } = {}) {
   if (skipLocation) { ctx.state.prefs.locationPrimed = true; save(); }
   ctx.state.active = S.newSession();
   ctx.nudgeDismissed = false;
   save();
   keepalive.setSessionActive(true);
   go('live');
+  // Sequenced ahead of the location dialog: Android shows one permission
+  // prompt at a time and none while backgrounded, so left to the sensor's own
+  // lazy request this sat unanswered until the walk was over.
+  await keepalive.requestActivityPermission();
   if (!skipLocation) startTracking();
   else startSteps();
   ensureBatteryExemption();
@@ -223,6 +227,21 @@ function logWater() {
   buzz();
   toast('Water logged. Tap to undo.', 4000, () => {
     s.waters.pop();
+    save();
+    render();
+    toast('Undone.');
+  });
+}
+
+function logMeal() {
+  const s = ctx.state.active;
+  if (!s) return;
+  S.addMeal(s);
+  save();
+  render();
+  buzz();
+  toast('Food logged. Tap to undo.', 4000, () => {
+    s.meals.pop();
     save();
     render();
     toast('Undone.');
