@@ -184,11 +184,13 @@ input::placeholder{color:var(--placeholder)}
 .listrow__m{display:flex;gap:10px;font:var(--type-caption);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .listrow__m b{color:var(--pink);font-weight:var(--fw-regular)}
 
-.bars{display:flex;align-items:flex-end;gap:6px;height:96px}
-.bars i{flex:1;background:var(--mint-dim);border-radius:3px 3px 0 0;min-height:3px;display:block}
+/* Centring plus a max width keeps a one- or two-bucket range (a brand new
+   All time) reading as bars rather than a full-width rule. */
+.bars{display:flex;align-items:flex-end;justify-content:center;gap:6px;height:96px}
+.bars i{flex:1;max-width:56px;background:var(--mint-dim);border-radius:3px 3px 0 0;min-height:3px;display:block}
 .bars i.on{background:var(--mint)}
-.bars-x{display:flex;gap:6px;margin-top:6px}
-.bars-x span{flex:1;text-align:center;font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums}
+.bars-x{display:flex;justify-content:center;gap:6px;margin-top:6px}
+.bars-x span{flex:1;max-width:56px;text-align:center;font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums}
 
 /* ---------- timeline ---------- */
 

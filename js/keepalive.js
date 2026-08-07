@@ -55,6 +55,24 @@ export async function saveImage(base64, name) {
   return true;
 }
 
+// Live state of everything tracking depends on. null on the web, where none of
+// it applies.
+export async function permissionStatus() {
+  if (!isNative()) return null;
+  try {
+    const res = await LastCallNative.permissionStatus();
+    return {
+      fineLocation: !!res?.fineLocation,
+      backgroundLocation: !!res?.backgroundLocation,
+      activity: !!res?.activity,
+      notifications: !!res?.notifications,
+      battery: !!res?.battery,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Ask for the step-counter permission while the user is still holding the
 // phone — chained before the location dialog at Start night.
 export async function requestActivityPermission() {

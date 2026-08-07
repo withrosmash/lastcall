@@ -17,6 +17,14 @@ export function startScreen(ctx) {
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
       text: 'Steps, stops, drinks and water — kept on this phone, nowhere else.' }),
     el('div', { style: 'height:20px' }),
+    // Caught before a night rather than discovered after one went unrecorded.
+    ctx.permissions && Object.values(ctx.permissions).some((v) => !v)
+      ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('settings') },
+          el('span', { class: 'listrow__d', style: 'color:var(--amber)', text: 'Setup needs attention' }),
+          el('span', { class: 'listrow__m' },
+            el('span', { text: `${Object.values(ctx.permissions).filter((v) => !v).length} to grant` })),
+        )
+      : null,
     last ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', last) },
       el('span', { class: 'listrow__d', text: `Last night · ${shortDate(last.startedAt)}` }),
       el('span', { class: 'listrow__m' },

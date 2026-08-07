@@ -22,25 +22,35 @@ export function historyScreen(ctx) {
     ];
   }
 
-  const totalDrinks = done.reduce((n, s) => n + s.drinks.length, 0);
-  const buckets = S.weekly(done);
-  const peak = Math.max(...buckets, 1);
+  const range = ctx.state.prefs.historyRange || '8w';
+  const shown = done.filter((s) => S.inRange(s, done, range));
+  const totalDrinks = shown.reduce((n, s) => n + s.drinks.length, 0);
+  const buckets = S.chartBuckets(done, range);
+  const peak = Math.max(...buckets.map((b) => b.value), 1);
+  const rangeLabel = S.RANGES.find((r) => r.key === range)?.label || '8 weeks';
 
   return [
-    head({ eyebrow: 'History', title: 'Eight weeks', back }),
+    head({ eyebrow: 'History', title: rangeLabel, back }),
+
+    el('div', { class: 'chips' }, S.RANGES.map((r) =>
+      el('button', {
+        class: 'chip press', type: 'button',
+        'aria-pressed': r.key === range ? 'true' : 'false',
+        onclick: () => { ctx.state.prefs.historyRange = r.key; ctx.save(); ctx.render(); },
+      }, r.label))),
 
     tiles(
-      tile('Nights out', done.length),
+      tile('Nights out', shown.length),
       tile('Drinks', totalDrinks, { tone: 'drinks' }),
     ),
 
     glass(
-      el('div', { class: 'bars', role: 'img', 'aria-label': `Drinks per week: ${buckets.join(', ')}` },
-        buckets.map((n, i) => el('i', {
-          class: i === buckets.length - 1 && n ? 'on' : '',
-          style: `height:${Math.max(3, (n / peak) * 100)}%`,
+      el('div', { class: 'bars', role: 'img', 'aria-label': `Drinks per period: ${buckets.map((b) => b.value).join(', ')}` },
+        buckets.map((b, i) => el('i', {
+          class: i === buckets.length - 1 && b.value ? 'on' : '',
+          style: `height:${Math.max(3, (b.value / peak) * 100)}%`,
         }))),
-      el('div', { class: 'bars-x' }, buckets.map((_, i) => el('span', { text: String(i + 1) }))),
+      el('div', { class: 'bars-x' }, buckets.map((b) => el('span', { text: b.label }))),
     ),
 
     el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('badges') },
@@ -56,7 +66,7 @@ export function historyScreen(ctx) {
 
     el('div', { class: 'eb', text: 'Nights' }),
     el('div', { class: 'stack', style: 'gap:6px' },
-      done.slice(0, 20).map((s) => {
+      shown.slice(0, 40).map((s) => {
         const sum = S.summarise(s);
         return el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', s) },
           el('span', { class: 'listrow__d', text: shortDate(s.startedAt) }),
@@ -79,6 +89,48 @@ export function historyScreen(ctx) {
 /* ---------- settings ---------- */
 
 const THRESHOLDS = [3, 4, 5, 6, 8];
+
+// Each row names what breaks when it's missing — a checklist is only useful if
+// it says why the item matters.
+const PERMISSIONS = [
+  { key: 'fineLocation', name: 'Location', why: 'Without it there is no map and no route on your card.' },
+  { key: 'backgroundLocation', name: 'Location all the time', why: 'Lets the route keep drawing with the phone in your pocket.' },
+  { key: 'activity', name: 'Physical activity', why: 'The step count comes from the phone’s own step sensor.' },
+  { key: 'notifications', name: 'Notifications', why: 'Carries the tracking notice, quick log and water nudge.' },
+  { key: 'battery', name: 'Unrestricted battery', why: 'Stops Android putting the app to sleep mid-night.' },
+];
+
+export function permissionRows(ctx) {
+  const status = ctx.permissions;
+  if (!status) return null;
+  const missing = PERMISSIONS.filter((p) => !status[p.key]);
+
+  return el('div', { class: 'stack', style: 'gap:7px' },
+    el('div', { class: 'eb', text: 'Permissions' }),
+    el('p', { class: 'cap cap--up', style: 'margin:0',
+      text: missing.length
+        ? `${missing.length} of ${PERMISSIONS.length} still needed. Tracking works best with all of them.`
+        : 'All set. Nothing will stop a night recording.' }),
+    ...PERMISSIONS.map((p) => {
+      const ok = status[p.key];
+      return el('div', { class: 'tile', style: 'display:flex;gap:10px;align-items:flex-start' },
+        el('span', { style: `color:${ok ? 'var(--mint)' : 'var(--amber)'};font-weight:700;font-size:13px;line-height:1.5`, text: ok ? '✓' : '!' }),
+        el('div', { style: 'flex:1;min-width:0' },
+          el('div', { style: 'font-size:13px;font-weight:600', text: p.name }),
+          el('div', { class: 'cap', style: 'line-height:1.4', text: p.why }),
+        ),
+        ok ? null : el('button', {
+          class: 'chip press', type: 'button', style: 'min-height:36px;padding:0 12px;font-size:11px',
+          onclick: () => ctx.fixPermission(p.key),
+        }, 'Fix'),
+      );
+    }),
+    el('div', { class: 'btn-pair' },
+      btn('Re-check', 'btn--sec btn--sm', () => ctx.checkPermissions({ toastResult: true })),
+      btn('App settings', 'btn--sec btn--sm', () => ctx.openAppSettings()),
+    ),
+  );
+}
 
 export function settingsScreen(ctx) {
   const p = ctx.state.prefs;
@@ -107,6 +159,8 @@ export function settingsScreen(ctx) {
       p.hydrationEvery
         ? `The nudge shows on the session screen once you’re ${p.hydrationEvery} drinks past your last water.`
         : 'No water reminders. Everything else is tracked the same.'),
+
+    permissionRows(ctx),
 
     spacer(),
     foot(

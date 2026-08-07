@@ -5,7 +5,10 @@ const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs(), ba
 
 export function defaultPrefs() {
   // Threshold of 5 is the design system's value, not a guess.
-  return { hydrationEvery: 5, batterySaver: false, units: 'km', recentDrinks: [], locationPrimed: false };
+  return {
+    hydrationEvery: 5, batterySaver: false, units: 'km',
+    recentDrinks: [], locationPrimed: false, historyRange: '8w',
+  };
 }
 
 let cache = null;

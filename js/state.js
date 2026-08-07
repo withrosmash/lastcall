@@ -140,17 +140,77 @@ export function stats(sessions) {
   };
 }
 
-// Eight buckets, newest last, each holding the drink total for that week.
-export function weekly(sessions, weeks = 8, now = Date.now()) {
-  const WEEK = 7 * 24 * 60 * 60 * 1000;
-  const start = now - weeks * WEEK;
-  const buckets = new Array(weeks).fill(0);
-  for (const s of sessions) {
-    if (!s.endedAt || s.startedAt < start) continue;
-    const i = Math.min(weeks - 1, Math.floor((s.startedAt - start) / WEEK));
-    buckets[i] += s.drinks.length;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const RANGES = [
+  { key: '8w', label: '8 weeks' },
+  { key: '6m', label: '6 months' },
+  { key: '1y', label: 'Year' },
+  { key: 'all', label: 'All time' },
+];
+
+// Oldest night in the set, or now when there are none.
+function earliest(sessions, now) {
+  const done = sessions.filter((s) => s.endedAt);
+  return done.length ? Math.min(...done.map((s) => s.startedAt)) : now;
+}
+
+export function rangeStart(sessions, range, now = Date.now()) {
+  if (range === '8w') return now - 8 * WEEK_MS;
+  if (range === '6m') return new Date(now).setMonth(new Date(now).getMonth() - 6);
+  if (range === '1y') return new Date(now).setFullYear(new Date(now).getFullYear() - 1);
+  return earliest(sessions, now);
+}
+
+export function inRange(s, sessions, range, now = Date.now()) {
+  return !!s.endedAt && s.startedAt >= rangeStart(sessions, range, now);
+}
+
+// Buckets for the chart, newest last: weekly for the short range, monthly for
+// the longer ones. Returns [{ label, value }] so the axis labels itself.
+export function chartBuckets(sessions, range = '8w', now = Date.now()) {
+  const done = sessions.filter((s) => s.endedAt);
+
+  if (range === '8w') {
+    const start = now - 8 * WEEK_MS;
+    const out = Array.from({ length: 8 }, (_, i) => ({ label: String(i + 1), value: 0 }));
+    for (const s of done) {
+      if (s.startedAt < start) continue;
+      const i = Math.min(7, Math.floor((s.startedAt - start) / WEEK_MS));
+      out[i].value += s.drinks.length;
+    }
+    return out;
   }
-  return buckets;
+
+  const start = rangeStart(sessions, range, now);
+  const startDate = new Date(start);
+  const months = Math.max(1,
+    (new Date(now).getFullYear() - startDate.getFullYear()) * 12
+    + (new Date(now).getMonth() - startDate.getMonth()) + 1);
+
+  // Beyond two years monthly bars stop being readable, so switch to years.
+  if (months > 24) {
+    const y0 = startDate.getFullYear();
+    const years = new Date(now).getFullYear() - y0 + 1;
+    const out = Array.from({ length: years }, (_, i) => ({ label: String((y0 + i) % 100).padStart(2, '0'), value: 0 }));
+    for (const s of done) {
+      const i = new Date(s.startedAt).getFullYear() - y0;
+      if (i >= 0 && i < years) out[i].value += s.drinks.length;
+    }
+    return out;
+  }
+
+  const M = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  const out = Array.from({ length: months }, (_, i) => {
+    const d = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+    return { label: M[d.getMonth()], value: 0 };
+  });
+  for (const s of done) {
+    const d = new Date(s.startedAt);
+    const i = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
+    if (i >= 0 && i < months) out[i].value += s.drinks.length;
+  }
+  return out;
 }
 
 /* ---------- geo maths ---------- */

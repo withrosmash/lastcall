@@ -24,8 +24,10 @@ const ctx = {
   // null on the web, where battery optimisation isn't a concept.
   batteryExempt: null,
   tick: null,
+  // null until a native status read lands; the web build stays null.
+  permissions: null,
   go, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, addPin,
-  fixBattery, checkBattery,
+  fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
 };
 
 const SCREENS = {
@@ -116,6 +118,24 @@ async function checkBattery() {
   const before = ctx.batteryExempt;
   ctx.batteryExempt = await keepalive.isExempt();
   if (before !== ctx.batteryExempt && ctx.screen === 'live') render();
+}
+
+async function checkPermissions({ toastResult = false } = {}) {
+  ctx.permissions = await keepalive.permissionStatus();
+  if (ctx.screen === 'settings' || ctx.screen === 'start') render();
+  if (toastResult && ctx.permissions) {
+    const missing = Object.values(ctx.permissions).filter((v) => !v).length;
+    toast(missing ? `${missing} still to grant.` : 'All permissions granted.');
+  }
+}
+
+// Battery has its own system dialog; the rest live on the app's settings page,
+// which is also where Android hides "Allow all the time".
+async function fixPermission(key) {
+  if (key === 'battery') await keepalive.requestExempt();
+  else if (key === 'activity') await keepalive.requestActivityPermission();
+  else await keepalive.openAppSettings();
+  checkPermissions();
 }
 
 async function fixBattery() {
@@ -333,6 +353,7 @@ document.addEventListener('visibilitychange', () => {
     // Coming back from the battery settings screen is the usual reason we're
     // visible again, so re-read the state rather than trusting the old answer.
     checkBattery();
+    checkPermissions();
     drainQuickLogs();
   }
 });
@@ -365,6 +386,7 @@ function boot() {
   }
 
   setInterval(() => ctx.tick?.(), 1000);
+  checkPermissions();
 
   // Skipped on localhost: stale-while-revalidate would serve the previous
   // build on every edit, which looks like a code bug rather than a cache hit.

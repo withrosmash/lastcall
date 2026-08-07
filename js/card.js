@@ -353,6 +353,44 @@ function drawText(g, str, x, y, { size = 40, weight = 700, color = C.text, spaci
   return width;
 }
 
+function textWidth(g, str, { size = 16, weight = 600, spacing = 0 } = {}) {
+  g.font = `${weight} ${size}px ${SANS}`;
+  return measure(g, [...str], spacing);
+}
+
+// A badge label has to stay inside its own cell — at full size "HOMING PIGEON"
+// ran straight into the next badge. Try one line, then the most balanced
+// two-line split, then shrink as a last resort. Returns the height used.
+function drawLabelFit(g, text, cx, y, maxW, base = {}) {
+  const opts = { size: 16, weight: 600, color: labelInk(), spacing: 2, align: 'center', ...base };
+
+  if (textWidth(g, text, opts) <= maxW) {
+    drawText(g, text, cx, y, opts);
+    return opts.size + 4;
+  }
+
+  const words = text.split(' ');
+  if (words.length > 1) {
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' ');
+      const b = words.slice(i).join(' ');
+      const w = Math.max(textWidth(g, a, opts), textWidth(g, b, opts));
+      if (!best || w < best.w) best = { a, b, w };
+    }
+    if (best && best.w <= maxW) {
+      drawText(g, best.a, cx, y, opts);
+      drawText(g, best.b, cx, y + opts.size + 3, opts);
+      return (opts.size + 3) * 2;
+    }
+  }
+
+  let size = opts.size;
+  while (size > 10 && textWidth(g, text, { ...opts, size }) > maxW) size -= 1;
+  drawText(g, text, cx, y, { ...opts, size });
+  return size + 4;
+}
+
 function measure(g, chars, spacing) {
   let w = 0;
   for (const ch of chars) w += g.measureText(ch).width + spacing;
@@ -425,7 +463,7 @@ function drawPreset(g, w, h) {
   if (on.time.on) blocks.push({ h: 118, draw: (y) => drawTime(g, PAD, y) });
   if (on.stats.on) blocks.push({ h: 100, draw: (y) => drawStats(g, PAD, y) });
   if (on.stops.on) blocks.push({ h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 14, draw: (y) => DRAW.stops(g, PAD, y, w) });
-  if (on.badges?.on && ui.badgeImgs.length) blocks.push({ h: 175, draw: (y) => DRAW.badges(g, PAD, y, w) });
+  if (on.badges?.on && ui.badgeImgs.length) blocks.push({ h: 195, draw: (y) => DRAW.badges(g, PAD, y, w) });
   if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: C.muted }) });
 
   const stackH = blocks.reduce((n, b) => n + b.h, 0);
@@ -510,14 +548,15 @@ const DRAW = {
   badges(g, x, y) {
     const items = ui.badgeImgs;
     if (!items.length) return { w: 0, h: 0 };
-    const size = 120, gap = 26, cell = size + gap;
+    const size = 120, gap = 34, cell = size + gap;
+    let labelH = 0;
     items.forEach(({ meta, img }, i) => {
       const cx = x + i * cell;
       if (img.complete && img.naturalWidth) g.drawImage(img, cx, y, size, size);
-      drawText(g, meta.name.toUpperCase(), cx + size / 2, y + size + 14,
-        { size: 16, weight: 600, color: labelInk(), spacing: 2, align: 'center' });
+      labelH = Math.max(labelH, drawLabelFit(
+        g, meta.name.toUpperCase(), cx + size / 2, y + size + 14, cell - 10));
     });
-    return { w: cell * items.length - gap, h: size + 40 };
+    return { w: cell * items.length - gap, h: size + 14 + labelH };
   },
   stops(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);

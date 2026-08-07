@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -33,6 +34,7 @@ import android.app.PendingIntent;
 import android.os.Environment;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 
@@ -147,6 +149,31 @@ public class LastCallNative extends Plugin implements SensorEventListener {
         } catch (Exception e) {
             call.reject("Could not open app settings");
         }
+    }
+
+    /**
+     * Live state of everything tracking depends on, so Settings can show a
+     * checklist rather than the user discovering a missing permission the
+     * morning after a night went unrecorded.
+     */
+    @PluginMethod
+    public void permissionStatus(PluginCall call) {
+        Context ctx = getContext();
+        JSObject ret = new JSObject();
+
+        ret.put("fineLocation", granted(ctx, Manifest.permission.ACCESS_FINE_LOCATION));
+        ret.put("backgroundLocation", Build.VERSION.SDK_INT < 29
+                || granted(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION));
+        ret.put("activity", Build.VERSION.SDK_INT < 29
+                || granted(ctx, Manifest.permission.ACTIVITY_RECOGNITION));
+        ret.put("notifications", Build.VERSION.SDK_INT < 33
+                || granted(ctx, Manifest.permission.POST_NOTIFICATIONS));
+        ret.put("battery", isExempt(ctx));
+        call.resolve(ret);
+    }
+
+    private static boolean granted(Context ctx, String permission) {
+        return ContextCompat.checkSelfPermission(ctx, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     /* ---------- session flag ---------- */
