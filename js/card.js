@@ -12,6 +12,38 @@ const C = {
 };
 const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
+/* Text themes. The labels were the casualty on a bright, busy photo — values
+   are large and bold enough to survive, a 20px tracked label is not. Each
+   theme lifts the label colour and, where needed, puts a halo behind every
+   glyph so the type carries its own contrast onto any background. */
+const THEMES = [
+  {
+    key: 'light',
+    label: 'Light',
+    ink: '#fff',
+    labelInk: '#CFD6D3',
+    muted: '#B4BDB9',
+    shadow: null,
+  },
+  {
+    key: 'halo',
+    label: 'Halo',
+    ink: '#fff',
+    labelInk: '#EAEFEC',
+    muted: '#DDE3E0',
+    // A soft dark glow, not a hard drop shadow — reads as depth, not emboss.
+    shadow: { color: 'rgba(0,0,0,.85)', blur: 26 },
+  },
+  {
+    key: 'dark',
+    label: 'Dark',
+    ink: '#0B0F0D',
+    labelInk: '#2B3330',
+    muted: '#3C4642',
+    shadow: { color: 'rgba(255,255,255,.75)', blur: 22 },
+  },
+];
+
 let ui = null;
 
 /* ---------- 09 card builder ---------- */
@@ -34,6 +66,14 @@ export function cardScreen(ctx, session) {
     }, ui.mode === 'photo'),
   );
 
+  // Shape sits with the other composition choices, not after them — you frame
+  // the card before you place things on it.
+  const ratios = el('div', { class: 'chips' },
+    tab('Feed 4:5', () => { setRatio('feed'); ui.refreshChrome(); }, ui.ratio === 'feed'),
+    tab('Story 9:16', () => { setRatio('story'); ui.refreshChrome(); }, ui.ratio === 'story'),
+  );
+
+  const themes = el('div', { class: 'chips' });
   const toggles = el('div', { class: 'chips' });
   const togglesLabel = el('div', { class: 'eb', text: 'Elements' });
   const hint = el('p', { class: 'cap', style: 'margin:0',
@@ -45,6 +85,10 @@ export function cardScreen(ctx, session) {
     const preset = ui.mode === 'preset';
     tabs.children[0].setAttribute('aria-pressed', preset ? 'true' : 'false');
     tabs.children[1].setAttribute('aria-pressed', preset ? 'false' : 'true');
+    ratios.children[0].setAttribute('aria-pressed', ui.ratio === 'feed' ? 'true' : 'false');
+    ratios.children[1].setAttribute('aria-pressed', ui.ratio === 'story' ? 'true' : 'false');
+    themes.replaceChildren(...THEMES.map((t) =>
+      tab(t.label, () => { ui.theme = t.key; ui.refreshChrome(); draw(); }, ui.theme === t.key)));
     toggles.replaceChildren(...elementToggles());
     hint.classList.toggle('hidden', preset);
   };
@@ -52,10 +96,13 @@ export function cardScreen(ctx, session) {
   draw();
 
   return [
-    head({ title: 'Your card', back: () => ctx.go(ctx.state.active ? 'live' : 'history') }),
+    head({ title: 'Your card', back: () => ctx.back() }),
     tabs,
+    ratios,
     el('div', { class: 'canvas-wrap' }, canvas),
     hint,
+    el('div', { class: 'eb', text: 'Text' }),
+    themes,
     togglesLabel,
     toggles,
     spacer(),
@@ -73,19 +120,10 @@ export function shareScreen(ctx, session) {
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);
 
-  const ratios = el('div', { class: 'chips' },
-    tab('Feed 4:5', () => { setRatio('feed'); syncRatios(); }, ui.ratio === 'feed'),
-    tab('Story 9:16', () => { setRatio('story'); syncRatios(); }, ui.ratio === 'story'),
-  );
-  const syncRatios = () => {
-    ratios.children[0].setAttribute('aria-pressed', ui.ratio === 'feed' ? 'true' : 'false');
-    ratios.children[1].setAttribute('aria-pressed', ui.ratio === 'story' ? 'true' : 'false');
-  };
   draw();
 
   return [
-    head({ title: 'Share', back: () => ctx.go('card', s) }),
-    ratios,
+    head({ title: 'Share', back: () => ctx.back() }),
     el('div', { class: 'canvas-wrap' }, canvas),
     spacer(),
     foot(
@@ -130,6 +168,7 @@ function makeState(s, allBadges = []) {
     badgeImgs,
     mode: 'preset',
     ratio: 'feed',
+    theme: 'light',
     photo: null,
     selected: null,
     drag: null,
@@ -339,10 +378,20 @@ function hitTest(p) {
    Manual letter-spacing: ctx.letterSpacing isn't universal, and the labels
    depend on +0.18em tracking to read as labels at all. */
 
-function drawText(g, str, x, y, { size = 40, weight = 700, color = C.text, spacing = 0, align = 'left' } = {}) {
+const theme = () => THEMES.find((t) => t.key === ui.theme) || THEMES[0];
+
+function drawText(g, str, x, y, { size = 40, weight = 700, color, spacing = 0, align = 'left' } = {}) {
+  const th = theme();
+  g.save();
   g.font = `${weight} ${size}px ${SANS}`;
-  g.fillStyle = color;
+  g.fillStyle = color || th.ink;
   g.textBaseline = 'top';
+  // The halo has to be painted per glyph, not per string, or the shadow of one
+  // letter lands over the next.
+  if (th.shadow) {
+    g.shadowColor = th.shadow.color;
+    g.shadowBlur = th.shadow.blur;
+  }
   const chars = [...str];
   const width = measure(g, chars, spacing);
   let cx = align === 'right' ? x - width : align === 'center' ? x - width / 2 : x;
@@ -350,6 +399,7 @@ function drawText(g, str, x, y, { size = 40, weight = 700, color = C.text, spaci
     g.fillText(ch, cx, y);
     cx += g.measureText(ch).width + spacing;
   }
+  g.restore();
   return width;
 }
 
@@ -400,8 +450,10 @@ function measure(g, chars, spacing) {
 const abbrev = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 // Faint reads fine on the black preset card but disappears over a photograph,
-// so labels step up whenever there's an image behind them.
-const labelInk = () => (ui.photo ? C.muted : C.faint);
+// so labels step up whenever there's an image behind them — and the chosen
+// text theme decides how far.
+const labelInk = () => (ui.photo && ui.mode === 'photo' ? theme().labelInk : C.faint);
+const mutedInk = () => (ui.photo && ui.mode === 'photo' ? theme().muted : C.muted);
 
 function placeLine(s) {
   const date = new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
@@ -464,7 +516,7 @@ function drawPreset(g, w, h) {
   if (on.stats.on) blocks.push({ h: 100, draw: (y) => drawStats(g, PAD, y) });
   if (on.stops.on) blocks.push({ h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 14, draw: (y) => DRAW.stops(g, PAD, y, w) });
   if (on.badges?.on && ui.badgeImgs.length) blocks.push({ h: 195, draw: (y) => DRAW.badges(g, PAD, y, w) });
-  if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: C.muted }) });
+  if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: mutedInk() }) });
 
   const stackH = blocks.reduce((n, b) => n + b.h, 0);
   const stackTop = h - PAD - 26 - 30 - stackH;
@@ -519,9 +571,9 @@ function drawTime(g, x, y) {
 function drawStats(g, x, y) {
   const cells = [
     ['DRINKS', String(ui.sum.drinks), C.pink],
-    ['STOPS', String(ui.sum.stops), C.text],
-    ['STEPS', abbrev(ui.sum.steps), C.text],
-    ['KM', km(ui.sum.distanceM), C.text],
+    ['STOPS', String(ui.sum.stops), null],
+    ['STEPS', abbrev(ui.sum.steps), null],
+    ['KM', km(ui.sum.distanceM), null],
   ];
   let cx = x;
   for (const [k, v, color] of cells) {
@@ -542,7 +594,7 @@ const DRAW = {
   time: drawTime,
   stats: drawStats,
   date(g, x, y) {
-    const w = drawText(g, placeLine(ui.session), x, y, { size: 24, weight: 400, color: C.muted });
+    const w = drawText(g, placeLine(ui.session), x, y, { size: 24, weight: 400, color: mutedInk() });
     return { w, h: 30 };
   },
   badges(g, x, y) {

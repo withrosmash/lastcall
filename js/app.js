@@ -17,6 +17,7 @@ const ctx = {
   state: store.load(),
   screen: 'start',
   arg: null,
+  stack: [],
   lastSession: null,
   geoStatus: 'idle',
   stepsAvailable: false,
@@ -26,7 +27,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, addPin,
+  go, back, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
 };
 
@@ -45,12 +46,37 @@ const SCREENS = {
   atlas: { build: atlasScreen, bloom: 'none' },
 };
 
-function go(screen, arg = null) {
+// Screens the hardware back button should leave rather than unwind into: a
+// closed night is done, and returning to the live screen of a finished session
+// would be a lie.
+const STACK_ROOTS = new Set(['start', 'live', 'recap']);
+
+function go(screen, arg = null, { replace = false } = {}) {
   if (ctx.screen === 'map' && screen !== 'map') teardownMap();
   dismissSheet();
+  if (!replace && ctx.screen && ctx.screen !== screen) {
+    if (STACK_ROOTS.has(screen)) ctx.stack.length = 0;
+    else ctx.stack.push({ screen: ctx.screen, arg: ctx.arg });
+  }
   ctx.screen = screen;
   ctx.arg = arg;
   render();
+}
+
+// Android's back button: close a sheet, else unwind one screen, else leave the
+// app running in the background. Never kills the process — a night may be
+// recording, and exitApp would take the foreground service with it.
+function back() {
+  if (document.querySelector('.sheet')) { dismissSheet(); return; }
+  const prev = ctx.stack.pop();
+  if (prev) {
+    if (ctx.screen === 'map') teardownMap();
+    ctx.screen = prev.screen;
+    ctx.arg = prev.arg;
+    render();
+    return;
+  }
+  keepalive.minimize();
 }
 
 function render() {
@@ -387,6 +413,7 @@ function boot() {
 
   setInterval(() => ctx.tick?.(), 1000);
   checkPermissions();
+  keepalive.onBackButton(() => back());
 
   // Skipped on localhost: stale-while-revalidate would serve the previous
   // build on every edit, which looks like a code bug rather than a cache hit.

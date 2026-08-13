@@ -130,7 +130,7 @@ export function badgesScreen(ctx) {
   const cats = [...new Set(BADGES.map((b) => b.cat))];
 
   return [
-    head({ eyebrow: 'Badges', title: `${earned.size} of ${BADGES.length}`, back: () => ctx.go('history') }),
+    head({ eyebrow: 'Badges', title: `${earned.size} of ${BADGES.length}`, back: () => ctx.back() }),
 
     ...cats.flatMap((cat) => [
       el('div', { class: 'eb', style: 'margin-top:7px', text: cat }),
@@ -147,7 +147,7 @@ export function badgesScreen(ctx) {
     ]),
 
     spacer(),
-    foot(btn('Back', 'btn--sec btn--sm', () => ctx.go('history'))),
+    foot(btn('Back', 'btn--sec btn--sm', () => ctx.back())),
   ];
 }
 

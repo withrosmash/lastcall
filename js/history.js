@@ -151,7 +151,7 @@ export function settingsScreen(ctx) {
   );
 
   return [
-    head({ eyebrow: 'Settings', title: 'Reminders', back: () => ctx.go('history') }),
+    head({ eyebrow: 'Settings', title: 'Reminders', back: () => ctx.back() }),
 
     el('div', { class: 'eb', text: 'Remind me to drink water after' }),
     row,
@@ -177,7 +177,7 @@ export function detailScreen(ctx, session) {
   const sum = S.summarise(s);
 
   return [
-    head({ eyebrow: upperDate(s.startedAt), title: `${hm(sum.ms)} out`, back: () => ctx.go('history') }),
+    head({ eyebrow: upperDate(s.startedAt), title: `${hm(sum.ms)} out`, back: () => ctx.back() }),
 
     glass(routeSvg(s, 176)),
 

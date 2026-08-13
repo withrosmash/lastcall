@@ -5,6 +5,7 @@
 import { registerPlugin, Capacitor } from '../vendor/capacitor-core.js';
 
 const LastCallNative = registerPlugin('LastCallNative');
+const App = registerPlugin('App');
 
 export const isNative = () => {
   try { return Capacitor.isNativePlatform(); } catch { return false; }
@@ -53,6 +54,22 @@ export async function saveImage(base64, name) {
   if (!isNative()) return false;
   await LastCallNative.saveToGallery({ data: base64, name });
   return true;
+}
+
+/* ---------- hardware back button ---------- */
+
+// Android's back button otherwise closes the app from any screen. Routing it
+// through the app's own stack is what makes it behave like every other app.
+export async function onBackButton(cb) {
+  if (!isNative()) return null;
+  try { return await App.addListener('backButton', cb); } catch { return null; }
+}
+
+// Background, don't exit: a night may be recording and exitApp would take the
+// foreground service down with it.
+export async function minimize() {
+  if (!isNative()) return;
+  try { await App.minimizeApp(); } catch { /* not Android */ }
 }
 
 // Live state of everything tracking depends on. null on the web, where none of

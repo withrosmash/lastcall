@@ -34,7 +34,7 @@ export function mapScreen(ctx) {
       el('div', { class: `tile__v${tone ? ' tile__v--' + tone : ''}`, text: v }));
 
   return [
-    head({ title: 'Tonight', back: () => ctx.go('live') }),
+    head({ title: 'Tonight', back: () => ctx.back() }),
 
     denied
       ? el('div', { class: 'glass', style: 'flex:1;display:flex;align-items:center' },
@@ -54,7 +54,7 @@ export function mapScreen(ctx) {
     denied ? spacer() : null,
     foot(
       denied
-        ? btn('Back to session', 'btn--sec', () => ctx.go('live'))
+        ? btn('Back to session', 'btn--sec', () => ctx.back())
         : btn('Drop pin', 'btn--pri', () => dropPin(ctx, s), { iconName: 'map-pin', lg: true }),
     ),
   ];
@@ -238,7 +238,7 @@ export function atlasScreen(ctx) {
   const totalKm = km(done.reduce((n, s) => n + s.distanceM, 0));
 
   return [
-    head({ title: 'Everywhere you’ve been', back: () => ctx.go('history') }),
+    head({ title: 'Everywhere you’ve been', back: () => ctx.back() }),
     el('div', { class: 'map-wrap' },
       host,
       el('div', { class: 'map-foot' },
