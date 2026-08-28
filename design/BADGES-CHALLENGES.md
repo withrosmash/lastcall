@@ -16,5 +16,6 @@ as playful and social rather than boozy.
 | `ringleader` | Ringleader | 25 challenges all-time | amber | Aspirational |
 | `chaos-agent` 🔒 | Chaos Agent | Ten challenges in one night | pink | Funny |
 
-Until the art lands the app draws a placeholder ring with the badge's initials,
-so the feature works and the swap is a drop-in of five files.
+**Delivered and shipped.** All five SVGs are in `icons/badges/`; the app no
+longer draws placeholders. The monogram fallback remains in `js/badges.js` as a
+guard for any future badge added ahead of its artwork.

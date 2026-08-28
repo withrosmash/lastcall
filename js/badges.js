@@ -122,9 +122,9 @@ export const badgeSrc = (slug) => `./icons/badges/badge-${slug}.svg`;
 
 const ACCENTS = { mint: '#7EE0C0', pink: '#F06C9B', amber: '#EF9F27', forest: '#35A26F' };
 
-// Art for the challenge badges hasn't come back from design yet, so a missing
-// SVG falls back to a ringed monogram rather than a broken image icon. Drops
-// out the moment the real files land.
+// Every badge has art as of the challenge set, so this never fires today. It
+// stays as the guard for the next badge added ahead of its artwork: a missing
+// SVG becomes a ringed monogram rather than a broken-image icon.
 function placeholder(meta, size, earned) {
   const accent = earned ? (ACCENTS[meta?.accent] || ACCENTS.mint) : '#3A3A3A';
   const initials = (meta?.name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();

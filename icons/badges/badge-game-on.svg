@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<radialGradient id="game-on-bloom" cx="0.5" cy="0.28" r="0.75"><stop offset="0" stop-color="rgba(240,108,155,0.14)"></stop><stop offset="1" stop-color="rgba(240,108,155,0)"></stop></radialGradient>
+<radialGradient id="game-on-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0.8" stop-color="rgba(240,108,155,0)"></stop><stop offset="0.89" stop-color="rgba(240,108,155,0.11)"></stop><stop offset="1" stop-color="rgba(240,108,155,0)"></stop></radialGradient>
+</defs>
+<circle cx="256" cy="256" r="256" fill="url(#game-on-glow)"></circle>
+<circle cx="256" cy="256" r="225" fill="#141414"></circle>
+<circle cx="256" cy="256" r="225" fill="url(#game-on-bloom)"></circle>
+<path d="M 63.7 145 A 222 222 0 0 1 448.3 145" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" stroke-linecap="round"></path>
+<circle cx="256" cy="256" r="190" fill="none" stroke="rgba(240,108,155,0.2)" stroke-width="7"></circle>
+<g transform="translate(120 120) scale(11.3333)"><path d="M4 5.5h13a1.5 1.5 0 0 1 1.5 1.5v13a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 20V7A1.5 1.5 0 0 1 4 5.5Z M6.3 9.3v.01 M14.7 9.3v.01 M10.5 13.5v.01 M6.3 17.7v.01 M14.7 17.7v.01 M6.5 5.5 8 2.8a1.5 1.5 0 0 1 2-.6l9.8 5.2" fill="none" stroke="#F06C9B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></g>
+</svg>

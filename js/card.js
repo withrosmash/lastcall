@@ -157,9 +157,9 @@ function makeState(s, allBadges = []) {
     .map((b) => BADGES.find((m) => m.slug === b.slug))
     .filter(Boolean)
     .slice(0, 4);
-  // A badge whose art hasn't shipped yet drops out of the card rather than
-  // leaving a labelled gap — the grid shows a monogram, but a hole in an
-  // exported image would just look broken.
+  // Same guard as the grid's monogram fallback: a badge whose art is missing
+  // drops out of the card rather than exporting a labelled gap. Inert now that
+  // all 32 have artwork.
   const badgeImgs = [];
   for (const meta of sessionBadges) {
     const entry = { meta, img: new Image() };

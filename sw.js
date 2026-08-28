@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'lastcall-v11';
+const CACHE = 'lastcall-v12';
 
 const SHELL = [
   './',
@@ -41,13 +41,16 @@ const SHELL = [
   './icons/badges/badge-balanced-books.svg',
   './icons/badges/badge-brand-loyal.svg',
   './icons/badges/badge-cartographer.svg',
+  './icons/badges/badge-chaos-agent.svg',
   './icons/badges/badge-century-club.svg',
   './icons/badges/badge-cover-star.svg',
   './icons/badges/badge-dry-run.svg',
   './icons/badges/badge-early-doors.svg',
   './icons/badges/badge-fifty-stops.svg',
+  './icons/badges/badge-first-dare.svg',
   './icons/badges/badge-first-night.svg',
   './icons/badges/badge-french-exit.svg',
+  './icons/badges/badge-game-on.svg',
   './icons/badges/badge-ghost.svg',
   './icons/badges/badge-good-habits.svg',
   './icons/badges/badge-homing-pigeon.svg',
@@ -56,10 +59,12 @@ const SHELL = [
   './icons/badges/badge-metronome.svg',
   './icons/badges/badge-mixologist.svg',
   './icons/badges/badge-month-in-books.svg',
+  './icons/badges/badge-no-notes.svg',
   './icons/badges/badge-on-the-board.svg',
   './icons/badges/badge-one-and-done.svg',
   './icons/badges/badge-pin-cushion.svg',
   './icons/badges/badge-regular.svg',
+  './icons/badges/badge-ringleader.svg',
   './icons/badges/badge-scenic-route.svg',
   './icons/badges/badge-sunrise-service.svg',
   './icons/badges/badge-ten-k.svg',
