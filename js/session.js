@@ -119,10 +119,15 @@ export function liveScreen(ctx) {
         btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
         btn('Food', 'btn--sec', () => ctx.logMeal()),
       ),
-      el('div', { class: 'btn-pair btn-pair--3' },
+      el('div', { class: 'btn-pair' },
         btn('Check in', 'btn--sec', () => checkIn(ctx, s), { iconName: 'map-pin' }),
+        btn('Challenge', 'btn--sec', () => ctx.openChallenge(ctx, s)),
+      ),
+      el('div', { class: 'btn-pair' },
         btn('Map', 'btn--sec', () => ctx.go('map')),
-        btn('End', 'btn--sec', () => confirmEnd(ctx)),
+        // End gets its own half rather than sitting in a three-up row: it is
+        // the one irreversible action here and gets tapped at 2am.
+        btn('End night', 'btn--sec', () => confirmEnd(ctx)),
       ),
     ),
   ];
@@ -193,6 +198,11 @@ export function recapScreen(ctx, session) {
     ),
 
     gapNote(s),
+
+    (s.challenges || []).length
+      ? el('p', { class: 'cap cap--up', style: 'margin:0',
+          text: `${s.challenges.length} challenge${s.challenges.length === 1 ? '' : 's'} completed.` })
+      : null,
 
     newBadgesRow(ctx),
 

@@ -162,6 +162,9 @@ input::placeholder{color:var(--placeholder)}
   border:var(--hairline) solid var(--line);color:var(--text);font-size:12px;
 }
 .chip[aria-pressed="true"],.chip[aria-selected="true"]{border-color:var(--mint);color:var(--mint)}
+/* Venue suggestions: a mint hairline so they read as offered rather than
+   decorative, without claiming the solid mint border that means "selected". */
+.chip--suggest{border-color:var(--glass-line-strong)}
 
 .field{border-bottom:var(--hairline) solid var(--line);padding-bottom:6px;transition:border-color var(--dur-fast) var(--ease-out)}
 .field:focus-within{border-color:var(--mint)}

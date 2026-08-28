@@ -152,21 +152,38 @@ function dropPin(ctx, s) {
       oninput: (e) => { name = e.target.value; },
     });
 
-    // Filled in async once Overpass answers; invisible until then, and offline
-    // or on failure it simply never appears — typing always works.
-    const suggestions = el('div', { class: 'stack', style: 'gap:6px' });
+    // A tester missed this section entirely, for two reasons: the heading sat
+    // at --faint on a near-black sheet, and the whole block appeared late,
+    // after the network answered. So the heading is mint, the chips carry a
+    // mint hairline to read as tappable, and the section is present from the
+    // start with a status line rather than materialising unannounced.
+    const label = el('div', { class: 'eb eb--mint', text: 'Nearby' });
+    const status = el('div', { class: 'cap cap--up', text: 'Looking for places nearby…' });
+    const chips = el('div', { class: 'chips' });
+    const suggestions = el('div', { class: 'stack', style: 'gap:6px' }, label, chips, status);
+
     nearbyVenues(here).then((venues) => {
-      if (!venues.length || !suggestions.isConnected) return;
-      suggestions.append(
-        el('div', { class: 'eb', text: 'Nearby' }),
-        el('div', { class: 'chips' }, venues.slice(0, 6).map((v) =>
-          el('button', {
-            class: 'chip press', type: 'button',
-            onclick: () => { name = v.name; nameInput.value = v.name; },
-          }, v.name))),
-        el('div', { class: 'cap', text: 'Suggestions from OpenStreetMap' }),
-      );
-    }).catch(() => { /* offline or slow — manual entry stands */ });
+      if (!suggestions.isConnected) return;
+      if (!venues.length) {
+        status.textContent = 'Nothing found nearby. Type the name instead.';
+        return;
+      }
+      chips.replaceChildren(...venues.slice(0, 6).map((v) =>
+        el('button', {
+          class: 'chip chip--suggest press', type: 'button',
+          onclick: () => {
+            name = v.name;
+            nameInput.value = v.name;
+            [...chips.children].forEach((c) => c.setAttribute('aria-pressed', 'false'));
+            chips.querySelector(`[data-name="${CSS.escape(v.name)}"]`)?.setAttribute('aria-pressed', 'true');
+          },
+          'data-name': v.name,
+          'aria-pressed': 'false',
+        }, v.name)));
+      status.textContent = 'Tap one, or type your own. Places from OpenStreetMap.';
+    }).catch(() => {
+      if (suggestions.isConnected) status.textContent = 'Couldn’t reach the venue list. Type the name instead.';
+    });
 
     return [
       el('h2', { class: 'title', text: 'Name this stop' }),

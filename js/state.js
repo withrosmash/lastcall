@@ -13,6 +13,7 @@ export function newSession(now = Date.now()) {
     drinks: [],
     waters: [],
     meals: [],
+    challenges: [],
     pins: [],
     trail: [],
     steps: 0,
@@ -34,6 +35,11 @@ export function addWater(s, now = Date.now()) {
 // Guarded init: sessions recorded before food logging existed lack the array.
 export function addMeal(s, now = Date.now()) {
   (s.meals = s.meals || []).push({ t: now });
+  return s;
+}
+
+export function addChallenge(s, challenge, now = Date.now()) {
+  (s.challenges = s.challenges || []).push({ id: challenge.id, text: challenge.text, t: now });
   return s;
 }
 

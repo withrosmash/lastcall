@@ -191,6 +191,7 @@ export function detailScreen(ctx, session) {
       const entries = [
         ...s.pins.map((p) => ({ t: p.t, pin: true, label: p.note ? `${p.name} — ${p.note}` : p.name })),
         ...(s.meals || []).map((m) => ({ t: m.t, pin: false, label: 'Food' })),
+        ...(s.challenges || []).map((c) => ({ t: c.t, pin: false, label: `Challenge — ${c.text}` })),
         ...s.waters.map((w) => ({ t: w.t, pin: false, label: 'Water' })),
       ].sort((a, b) => a.t - b.t);
       return entries.length

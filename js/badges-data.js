@@ -217,5 +217,45 @@ export const BADGES = [
     "accent": "amber",
     "cat": "Aspirational",
     "hidden": false
+  },
+  {
+    "slug": "first-dare",
+    "name": "First Dare",
+    "criteria": "Complete your first challenge",
+    "accent": "mint",
+    "cat": "Firsts",
+    "hidden": false
+  },
+  {
+    "slug": "game-on",
+    "name": "Game On",
+    "criteria": "Three challenges in one night",
+    "accent": "pink",
+    "cat": "Funny",
+    "hidden": false
+  },
+  {
+    "slug": "no-notes",
+    "name": "No Notes",
+    "criteria": "Five challenges in one night",
+    "accent": "pink",
+    "cat": "Funny",
+    "hidden": false
+  },
+  {
+    "slug": "chaos-agent",
+    "name": "Chaos Agent",
+    "criteria": "Ten challenges in one night",
+    "accent": "pink",
+    "cat": "Funny",
+    "hidden": true
+  },
+  {
+    "slug": "ringleader",
+    "name": "Ringleader",
+    "criteria": "25 challenges all-time",
+    "accent": "amber",
+    "cat": "Aspirational",
+    "hidden": false
   }
 ];

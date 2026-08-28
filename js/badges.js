@@ -66,6 +66,10 @@ const NIGHT_CHECKS = {
   'two-step': (s) => s.steps >= 5_000,
   'ten-k': (s) => s.steps >= 10_000,
   'dry-run': (s) => s.drinks.length === 0 && s.waters.length >= 3,
+  'first-dare': (s) => (s.challenges || []).length >= 1,
+  'game-on': (s) => (s.challenges || []).length >= 3,
+  'no-notes': (s) => (s.challenges || []).length >= 5,
+  'chaos-agent': (s) => (s.challenges || []).length >= 10,
 };
 
 const AGGREGATE_CHECKS = {
@@ -93,6 +97,7 @@ const AGGREGATE_CHECKS = {
   'fifty-stops': (done) => done.reduce((n, s) => n + s.pins.length, 0) >= 50,
   'century-club': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 100_000,
   'archivist': (done) => done.length >= 25,
+  'ringleader': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 25,
 };
 
 // Everything currently earnable, oldest qualifying night first so the badge
@@ -115,14 +120,34 @@ export function evaluate({ sessions, prefs, flags = {} }) {
 
 export const badgeSrc = (slug) => `./icons/badges/badge-${slug}.svg`;
 
+const ACCENTS = { mint: '#7EE0C0', pink: '#F06C9B', amber: '#EF9F27', forest: '#35A26F' };
+
+// Art for the challenge badges hasn't come back from design yet, so a missing
+// SVG falls back to a ringed monogram rather than a broken image icon. Drops
+// out the moment the real files land.
+function placeholder(meta, size, earned) {
+  const accent = earned ? (ACCENTS[meta?.accent] || ACCENTS.mint) : '#3A3A3A';
+  const initials = (meta?.name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  return el('div', {
+    style: `width:${size}px;height:${size}px;border-radius:50%;background:#141414;`
+      + `border:1.5px solid ${accent};color:${accent};display:flex;align-items:center;`
+      + `justify-content:center;font-size:${Math.round(size * 0.3)}px;font-weight:700;letter-spacing:-.02em`,
+    title: meta?.name || '',
+  }, initials);
+}
+
 export function badgeChip(slug, { size = 64, earned = true } = {}) {
   const meta = BADGES.find((b) => b.slug === slug);
-  return el('img', {
+  const wrap = el('span', { style: `display:inline-flex;width:${size}px;height:${size}px` });
+  const img = el('img', {
     src: badgeSrc(slug),
     alt: meta ? meta.name : slug,
     width: size, height: size,
     style: `width:${size}px;height:${size}px;border-radius:50%${earned ? '' : ';filter:grayscale(1) brightness(.55)'}`,
   });
+  img.addEventListener('error', () => wrap.replaceChildren(placeholder(meta, size, earned)));
+  wrap.append(img);
+  return wrap;
 }
 
 export function badgesScreen(ctx) {

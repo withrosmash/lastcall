@@ -144,6 +144,8 @@ const TYPES = [
   { key: 'time', label: 'Time' },
   { key: 'date', label: 'Date + place' },
   { key: 'stops', label: 'Stops' },
+  { key: 'water', label: 'Water' },
+  { key: 'food', label: 'Food' },
   { key: 'badges', label: 'Badges' },
 ];
 
@@ -155,12 +157,23 @@ function makeState(s, allBadges = []) {
     .map((b) => BADGES.find((m) => m.slug === b.slug))
     .filter(Boolean)
     .slice(0, 4);
-  const badgeImgs = sessionBadges.map((meta) => {
-    const img = new Image();
-    img.onload = () => draw();
-    img.src = badgeSrc(meta.slug);
-    return { meta, img };
-  });
+  // A badge whose art hasn't shipped yet drops out of the card rather than
+  // leaving a labelled gap — the grid shows a monogram, but a hole in an
+  // exported image would just look broken.
+  const badgeImgs = [];
+  for (const meta of sessionBadges) {
+    const entry = { meta, img: new Image() };
+    entry.img.onload = () => draw();
+    entry.img.onerror = () => {
+      const i = badgeImgs.indexOf(entry);
+      if (i >= 0) badgeImgs.splice(i, 1);
+      if (!badgeImgs.length && ui) ui.elements.badges.on = false;
+      ui?.refreshChrome?.();
+      draw();
+    };
+    entry.img.src = badgeSrc(meta.slug);
+    badgeImgs.push(entry);
+  }
 
   return {
     session: s,
@@ -179,6 +192,8 @@ function makeState(s, allBadges = []) {
       stats: { on: true, x: PAD, y: 1350 - PAD - 190, scale: 1 },
       date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1 },
       stops: { on: false, x: PAD, y: 200, scale: 1 },
+      water: { on: false, x: PAD, y: 1350 - PAD - 420, scale: 1 },
+      food: { on: false, x: PAD + 260, y: 1350 - PAD - 420, scale: 1 },
       badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1 },
     },
     bounds: new Map(),
@@ -515,6 +530,13 @@ function drawPreset(g, w, h) {
   if (on.time.on) blocks.push({ h: 118, draw: (y) => drawTime(g, PAD, y) });
   if (on.stats.on) blocks.push({ h: 100, draw: (y) => drawStats(g, PAD, y) });
   if (on.stops.on) blocks.push({ h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 14, draw: (y) => DRAW.stops(g, PAD, y, w) });
+  if (on.water.on || on.food.on) {
+    blocks.push({ h: 110, draw: (y) => {
+      let x = PAD;
+      if (on.water.on) { x += DRAW.water(g, x, y).w + 70; }
+      if (on.food.on) DRAW.food(g, x, y);
+    } });
+  }
   if (on.badges?.on && ui.badgeImgs.length) blocks.push({ h: 195, draw: (y) => DRAW.badges(g, PAD, y, w) });
   if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: mutedInk() }) });
 
@@ -568,6 +590,13 @@ function drawTime(g, x, y) {
   return { w, h: 100 };
 }
 
+// One labelled figure — the shape water and food share.
+function bigStat(g, x, y, label, value) {
+  drawText(g, label, x, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
+  const w = drawText(g, value, x, y + 30, { size: 52, weight: 700, spacing: -2 });
+  return { w: Math.max(w, 90), h: 92 };
+}
+
 function drawStats(g, x, y) {
   const cells = [
     ['DRINKS', String(ui.sum.drinks), C.pink],
@@ -609,6 +638,12 @@ const DRAW = {
         g, meta.name.toUpperCase(), cx + size / 2, y + size + 14, cell - 10));
     });
     return { w: cell * items.length - gap, h: size + 14 + labelH };
+  },
+  water(g, x, y) {
+    return bigStat(g, x, y, 'WATER', String(ui.sum.waters));
+  },
+  food(g, x, y) {
+    return bigStat(g, x, y, 'FOOD', String((ui.session.meals || []).length));
   },
   stops(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);

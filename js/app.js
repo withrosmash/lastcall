@@ -9,6 +9,7 @@ import { historyScreen, detailScreen, settingsScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as badges from './badges.js';
 import { atlasScreen } from './map.js';
+import { openChallenge } from './challenges.js';
 import * as steps from './steps.js';
 import * as notify from './notify.js';
 import * as keepalive from './keepalive.js';
@@ -27,7 +28,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, back, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, addPin,
+  go, back, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
 };
 
@@ -288,6 +289,21 @@ function logMeal() {
   buzz();
   toast('Food logged. Tap to undo.', 4000, () => {
     s.meals.pop();
+    save();
+    render();
+    toast('Undone.');
+  });
+}
+
+function logChallenge(challenge) {
+  const s = ctx.state.active;
+  if (!s) return;
+  S.addChallenge(s, challenge);
+  save();
+  render();
+  buzz();
+  toast('Challenge done. Tap to undo.', 4000, () => {
+    s.challenges.pop();
     save();
     render();
     toast('Undone.');
