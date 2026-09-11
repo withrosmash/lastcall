@@ -69,7 +69,6 @@ const NIGHT_CHECKS = {
   'first-dare': (s) => (s.challenges || []).length >= 1,
   'game-on': (s) => (s.challenges || []).length >= 3,
   'no-notes': (s) => (s.challenges || []).length >= 5,
-  'chaos-agent': (s) => (s.challenges || []).length >= 10,
 };
 
 const AGGREGATE_CHECKS = {
@@ -98,6 +97,9 @@ const AGGREGATE_CHECKS = {
   'century-club': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 100_000,
   'archivist': (done) => done.length >= 25,
   'ringleader': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 25,
+  // All-time, not per night: the pool is 26 dares, so 100 in one night would
+  // mean running the whole set four times over.
+  'chaos-agent': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 100,
 };
 
 // Everything currently earnable, oldest qualifying night first so the badge

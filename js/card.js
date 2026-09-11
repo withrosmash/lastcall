@@ -185,7 +185,7 @@ function makeState(s, allBadges = []) {
     badgeImgs,
     mode: 'preset',
     ratio: 'feed',
-    theme: 'light',
+    theme: 'halo',
     photo: null,
     selected: null,
     drag: null,

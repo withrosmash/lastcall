@@ -14,7 +14,7 @@ as playful and social rather than boozy.
 | `game-on` | Game On | Three challenges in one night | pink | Funny |
 | `no-notes` | No Notes | Five challenges in one night | pink | Funny |
 | `ringleader` | Ringleader | 25 challenges all-time | amber | Aspirational |
-| `chaos-agent` 🔒 | Chaos Agent | Ten challenges in one night | pink | Funny |
+| `chaos-agent` 🔒 | Chaos Agent | 100 challenges all-time | pink | Funny |
 
 **Delivered and shipped.** All five SVGs are in `icons/badges/`; the app no
 longer draws placeholders. The monogram fallback remains in `js/badges.js` as a

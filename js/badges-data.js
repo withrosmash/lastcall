@@ -245,7 +245,7 @@ export const BADGES = [
   {
     "slug": "chaos-agent",
     "name": "Chaos Agent",
-    "criteria": "Ten challenges in one night",
+    "criteria": "100 challenges all-time",
     "accent": "pink",
     "cat": "Funny",
     "hidden": true
