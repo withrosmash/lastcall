@@ -51,9 +51,12 @@ const SCREENS = {
 // closed night is done, and returning to the live screen of a finished session
 // would be a lie.
 const STACK_ROOTS = new Set(['start', 'live', 'recap']);
+// Every screen that owns a Leaflet instance, so leaving any of them tears it
+// down — previously only 'map' did, and detail/atlas left theirs alive.
+const MAP_SCREENS = new Set(['map', 'detail', 'atlas']);
 
 function go(screen, arg = null, { replace = false } = {}) {
-  if (ctx.screen === 'map' && screen !== 'map') teardownMap();
+  if (MAP_SCREENS.has(ctx.screen)) teardownMap();
   dismissSheet();
   if (!replace && ctx.screen && ctx.screen !== screen) {
     if (STACK_ROOTS.has(screen)) ctx.stack.length = 0;
@@ -71,7 +74,7 @@ function back() {
   if (document.querySelector('.sheet')) { dismissSheet(); return; }
   const prev = ctx.stack.pop();
   if (prev) {
-    if (ctx.screen === 'map') teardownMap();
+    if (MAP_SCREENS.has(ctx.screen)) teardownMap();
     ctx.screen = prev.screen;
     ctx.arg = prev.arg;
     render();

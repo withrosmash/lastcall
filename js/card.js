@@ -1,8 +1,9 @@
-import { el, btn, foot, head, spacer, toast, icon, hms, km } from './ui.js';
+import { el, btn, foot, head, spacer, toast, icon, hms, km, buzz } from './ui.js';
 import * as S from './state.js';
 import { fitPoints } from './session.js';
 import { saveImage } from './keepalive.js';
 import { badgeSrc, BADGES } from './badges.js';
+import * as SM from './staticmap.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
@@ -40,7 +41,9 @@ const THEMES = [
     ink: '#0B0F0D',
     labelInk: '#2B3330',
     muted: '#3C4642',
-    shadow: { color: 'rgba(255,255,255,.75)', blur: 22 },
+    // No glow: a white halo round dark type read as a smudge, not contrast.
+    // Dark is for pale photos, where the ink carries itself.
+    shadow: null,
   },
 ];
 
@@ -139,10 +142,11 @@ const tab = (label, onclick, on) =>
 /* ---------- state ---------- */
 
 const TYPES = [
+  { key: 'map', label: 'Map', presetOnly: true },
   { key: 'route', label: 'Route' },
   { key: 'stats', label: 'Stats' },
   { key: 'time', label: 'Time' },
-  { key: 'date', label: 'Date + place' },
+  { key: 'date', label: 'Date' },
   { key: 'stops', label: 'Stops' },
   { key: 'water', label: 'Water' },
   { key: 'food', label: 'Food' },
@@ -187,6 +191,7 @@ function makeState(s, allBadges = []) {
     drag: null,
     // Defaults reproduce Mode B — the stats bar sitting along the foot.
     elements: {
+      map: { on: s.trail.length > 1 },
       route: { on: true, x: PAD, y: 300, scale: 1 },
       time: { on: true, x: PAD, y: 1350 - PAD - 300, scale: 1 },
       stats: { on: true, x: PAD, y: 1350 - PAD - 190, scale: 1 },
@@ -208,7 +213,10 @@ const clampScale = (n) => (Number.isFinite(n) ? Math.min(SCALE_MAX, Math.max(SCA
 
 function elementToggles() {
   // The badges toggle only exists when the night actually earned some.
-  return TYPES.filter((t) => t.key !== 'badges' || ui.badgeImgs.length).map((t) =>
+  return TYPES.filter((t) =>
+    (t.key !== 'badges' || ui.badgeImgs.length)
+    && (!t.presetOnly || ui.mode === 'preset')
+    && (t.key !== 'map' || ui.session.trail.length > 1)).map((t) =>
     el('button', {
       class: 'chip press', type: 'button',
       'aria-pressed': ui.elements[t.key].on ? 'true' : 'false',
@@ -230,7 +238,7 @@ function setRatio(ratio) {
   const [, newH] = RATIOS[ratio];
   // Keep elements the same distance from whichever edge they were nearest.
   for (const e of Object.values(ui.elements)) {
-    if (e.y > oldH / 2) e.y += newH - oldH;
+    if (e.y != null && e.y > oldH / 2) e.y += newH - oldH;
   }
   sizeCanvas();
   clampAll();
@@ -247,6 +255,7 @@ function sizeCanvas() {
 function clampAll() {
   const [w, h] = RATIOS[ui.ratio];
   for (const e of Object.values(ui.elements)) {
+    if (e.x == null) continue;
     e.x = Math.min(Math.max(e.x, 0), w - 140);
     e.y = Math.min(Math.max(e.y, 0), h - 60);
   }
@@ -363,8 +372,15 @@ function attachDrag(canvas) {
 
     if (ui.drag) {
       const node = ui.elements[ui.drag.key];
-      node.x = p.x - ui.drag.dx;
-      node.y = p.y - ui.drag.dy;
+      const snapped = snap(ui.drag.key, p.x - ui.drag.dx, p.y - ui.drag.dy);
+      node.x = snapped.x;
+      node.y = snapped.y;
+      // A tick you can feel the moment an edge locks, so alignment doesn't
+      // depend on watching a hairline under your thumb.
+      const sig = snapped.guides.map((g) => g.axis + Math.round(g.at)).join();
+      if (sig && sig !== ui.guideSig) buzz(8);
+      ui.guideSig = sig;
+      ui.guides = snapped.guides;
       clampAll();
       draw();
     }
@@ -374,10 +390,53 @@ function attachDrag(canvas) {
     pointers.delete(e.pointerId);
     try { canvas.releasePointerCapture(e.pointerId); } catch { /* already released */ }
     if (pointers.size < 2) ui.pinch = null;
-    if (!pointers.size) { ui.drag = null; ui.resize = null; }
+    if (!pointers.size) {
+      ui.drag = null;
+      ui.resize = null;
+      if (ui.guides?.length) { ui.guides = []; ui.guideSig = ''; draw(); }
+    }
   };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
+}
+
+/* Snapping. The dragged element's left edge, centre and right edge are tested
+   against the card margins, the card's centre line, and every other element's
+   edges and centre — and the same vertically. Within reach, it jumps into line
+   and a guide shows what it locked to. 28 card px is about 9 screen px: firm
+   enough to catch, loose enough not to fight a deliberate placement. */
+const SNAP = 28;
+
+function snap(key, x, y) {
+  const [w, h] = RATIOS[ui.ratio];
+  const b = ui.bounds.get(key);
+  if (!b) return { x, y, guides: [] };
+
+  const xs = [PAD, w / 2, w - PAD];
+  const ys = [PAD, h / 2, h - PAD];
+  for (const [k, o] of ui.bounds) {
+    if (k === key) continue;
+    xs.push(o.x, o.x + o.w / 2, o.x + o.w);
+    ys.push(o.y, o.y + o.h / 2, o.y + o.h);
+  }
+
+  const nearest = (edges, lines) => {
+    let hit = null;
+    for (const edge of edges) {
+      for (const line of lines) {
+        const d = line - edge;
+        if (Math.abs(d) <= SNAP && (!hit || Math.abs(d) < Math.abs(hit.d))) hit = { d, line };
+      }
+    }
+    return hit;
+  };
+
+  const hx = nearest([x, x + b.w / 2, x + b.w], xs);
+  const hy = nearest([y, y + b.h / 2, y + b.h], ys);
+  const guides = [];
+  if (hx) { x += hx.d; guides.push({ axis: 'x', at: hx.line }); }
+  if (hy) { y += hy.d; guides.push({ axis: 'y', at: hy.line }); }
+  return { x, y, guides };
 }
 
 // Topmost first, so the element drawn last wins an overlap.
@@ -470,10 +529,10 @@ const abbrev = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 const labelInk = () => (ui.photo && ui.mode === 'photo' ? theme().labelInk : C.faint);
 const mutedInk = () => (ui.photo && ui.mode === 'photo' ? theme().muted : C.muted);
 
+// Date only. The place was the first stop's name, which on most nights is
+// either "Unnamed stop" or a venue that says nothing about the night.
 function placeLine(s) {
-  const date = new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
-  const place = s.pins[0]?.name;
-  return place ? `${date} · ${place}` : date;
+  return new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
 }
 
 /* ---------- draw ---------- */
@@ -542,18 +601,107 @@ function drawPreset(g, w, h) {
 
   const stackH = blocks.reduce((n, b) => n + b.h, 0);
   const stackTop = h - PAD - 26 - 30 - stackH;
+  const region = { x: PAD, y: PAD + 60, w: w - PAD * 2, h: stackTop - PAD - 100 };
+
+  const frame = on.map.on ? drawMapBackground(g, w, h, region, stackTop) : null;
 
   if (on.route.on) {
-    const top = PAD + 60;
-    drawRoute(g, PAD, top, w - PAD * 2, stackTop - top - 40);
+    if (frame) drawMapRoute(g, frame);
+    else drawRoute(g, region.x, region.y, region.w, region.h);
   }
 
   let y = stackTop;
   for (const b of blocks) { b.draw(y); y += b.h; }
 }
 
+let redrawQueued = false;
+function queueDraw() {
+  if (redrawQueued) return;
+  redrawQueued = true;
+  requestAnimationFrame(() => { redrawQueued = false; draw(); });
+}
+
+/* Tiles full-bleed behind the whole card, zoomed so the route fits the upper
+   region. Returns the frame when a map is actually showing, or null — offline,
+   a tiny region, or an export that had to fall back — so the caller draws the
+   plain outline instead. Bloom stays underneath while tiles load. */
+function drawMapBackground(g, w, h, region, stackTop) {
+  const trail = ui.session.trail;
+  if (trail.length < 2 || ui.mapBlocked || region.h < 120) return null;
+
+  const f = SM.frame(trail, region);
+  const list = SM.tilesFor(f, w, h);
+  let drawn = 0;
+  for (const t of list) {
+    const img = SM.tile(t.url, queueDraw);
+    if (!img) continue;
+    // A pixel of overlap hides the hairline seams fractional positions leave.
+    g.drawImage(img, Math.floor(t.dx), Math.floor(t.dy), Math.ceil(t.size) + 1, Math.ceil(t.size) + 1);
+    drawn++;
+  }
+  if (!drawn) return SM.status(list) === 'failed' ? null : f;
+
+  // Type over a map sits on a gradient, never a capsule (design system rule).
+  const foot = g.createLinearGradient(0, stackTop - 180, 0, h);
+  foot.addColorStop(0, 'rgba(0,0,0,0)');
+  foot.addColorStop(0.35, 'rgba(0,0,0,.72)');
+  foot.addColorStop(1, 'rgba(0,0,0,.92)');
+  g.fillStyle = foot;
+  g.fillRect(0, stackTop - 180, w, h - stackTop + 180);
+
+  const head = g.createLinearGradient(0, 0, 0, region.y + 40);
+  head.addColorStop(0, 'rgba(0,0,0,.55)');
+  head.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = head;
+  g.fillRect(0, 0, w, region.y + 40);
+
+  // The tiles' terms require a credit on anything that shows them, cards
+  // included. Kept small and out of the way in the top corner.
+  g.save();
+  g.font = `400 17px ${SANS}`;
+  g.textAlign = 'right';
+  g.textBaseline = 'top';
+  g.fillStyle = 'rgba(255,255,255,.45)';
+  g.fillText('Map © Esri · OpenStreetMap contributors', w - 28, 24);
+  g.restore();
+  return f;
+}
+
+// The route in the same projection as the tiles, so it lies on the streets.
+function drawMapRoute(g, f) {
+  const trail = ui.session.trail;
+  const pts = trail.map((p) => SM.toCard(f, p.lat, p.lng));
+  g.save();
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  // A dark under-stroke lifts the mint line off busy street detail.
+  g.strokeStyle = 'rgba(0,0,0,.55)';
+  g.lineWidth = 16;
+  g.beginPath();
+  pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+  g.stroke();
+  g.strokeStyle = C.mint;
+  g.lineWidth = 9;
+  g.stroke();
+
+  for (const pin of ui.session.pins) {
+    const p = SM.toCard(f, pin.lat, pin.lng);
+    g.fillStyle = C.pink;
+    g.beginPath();
+    g.arc(p.x, p.y, 13, 0, Math.PI * 2);
+    g.fill();
+  }
+  const end = pts[pts.length - 1];
+  g.fillStyle = '#fff';
+  g.beginPath();
+  g.arc(end.x, end.y, 12, 0, Math.PI * 2);
+  g.fill();
+  g.restore();
+}
+
 function drawFree(g, w, h, forExport) {
   for (const t of TYPES) {
+    if (t.presetOnly) continue;
     const e = ui.elements[t.key];
     if (!e.on) continue;
     const scale = e.scale || 1;
@@ -566,6 +714,20 @@ function drawFree(g, w, h, forExport) {
     g.restore();
     ui.bounds.set(t.key, { x: e.x, y: e.y, w: box.w * scale, h: box.h * scale });
   }
+  if (!forExport && ui.guides?.length) {
+    g.save();
+    g.strokeStyle = 'rgba(126,224,192,.75)';
+    g.lineWidth = 2;
+    g.setLineDash([10, 8]);
+    for (const gd of ui.guides) {
+      g.beginPath();
+      if (gd.axis === 'x') { g.moveTo(gd.at, 0); g.lineTo(gd.at, h); }
+      else { g.moveTo(0, gd.at); g.lineTo(w, gd.at); }
+      g.stroke();
+    }
+    g.restore();
+  }
+
   if (!forExport && ui.selected && ui.bounds.has(ui.selected)) {
     const b = ui.bounds.get(ui.selected);
     g.save();
@@ -690,6 +852,14 @@ function drawRoute(g, x, y, w, h) {
 /* ---------- export ---------- */
 
 function render() {
+  return renderOnce().catch((err) => {
+    if (ui.mapBlocked) throw err;
+    ui.mapBlocked = true;
+    return renderOnce();
+  });
+}
+
+function renderOnce() {
   draw({ forExport: true });
   return new Promise((resolve, reject) => {
     ui.canvas.toBlob((blob) => {

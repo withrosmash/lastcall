@@ -85,7 +85,7 @@ export function liveScreen(ctx) {
 
     tiles(
       tile('Drinks', s.drinks.length, { tone: 'drinks' }),
-      tile('Water', s.waters.length),
+      waterTile(ctx, s),
       ctx.stepsAvailable
         ? tile('Steps', s.steps.toLocaleString())
         : tile('Stops', s.pins.length),
@@ -131,6 +131,59 @@ export function liveScreen(ctx) {
       ),
     ),
   ];
+}
+
+// The water tile doubles as the way into its reminder setting: it's where you
+// look when the nudge fires, so it's where the control belongs. The caption
+// says the current setting so the tile advertises that it does something.
+function waterTile(ctx, s) {
+  const every = ctx.state.prefs.hydrationEvery;
+  return el('button', {
+    class: 'tile press', type: 'button', style: 'text-align:left;width:100%',
+    'aria-label': `Water, ${s.waters.length}. Reminder settings`,
+    onclick: () => hydrationSheet(ctx),
+  },
+    el('div', { class: 'tile__k', text: 'Water' }),
+    el('div', { class: 'tile__v', text: String(s.waters.length) }),
+    el('div', { class: 'cap', style: 'margin-top:2px',
+      text: every ? `Remind every ${every} ›` : 'Reminders off ›' }),
+  );
+}
+
+const THRESHOLDS = [3, 4, 5, 6, 8];
+
+function hydrationSheet(ctx) {
+  const p = ctx.state.prefs;
+  sheet((close) => {
+    const row = el('div', { class: 'chips' });
+    const note = el('p', { class: 'body', style: 'margin:0' });
+    const paint = () => {
+      row.replaceChildren(
+        ...[...THRESHOLDS.map((n) => [String(n), n]), ['Never', 0]].map(([label, n]) =>
+          el('button', {
+            class: 'chip press', type: 'button',
+            'aria-pressed': p.hydrationEvery === n ? 'true' : 'false',
+            onclick: () => {
+              p.hydrationEvery = n;
+              ctx.nudgeDismissed = false;
+              ctx.save();
+              paint();
+            },
+          }, label)),
+      );
+      note.textContent = p.hydrationEvery
+        ? `You’ll get a nudge once you’re ${p.hydrationEvery} drinks past your last water.`
+        : 'No water reminders tonight. Everything else is tracked the same.';
+    };
+    paint();
+    return [
+      el('h2', { class: 'title', text: 'Water reminders' }),
+      el('div', { class: 'eb', text: 'Remind me after' }),
+      row,
+      note,
+      foot(btn('Done', 'btn--pri', () => { close(); ctx.render(); })),
+    ];
+  }, { onClose: () => ctx.render() });
 }
 
 // Tap opens the picker; holding for half a second logs your last drink

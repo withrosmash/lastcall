@@ -244,3 +244,24 @@ input::placeholder{color:var(--placeholder)}
   padding:10px 18px;font:var(--type-caption);color:var(--text);
   max-width:86vw;text-align:center;animation:fade var(--dur-fast) var(--ease-out);
 }
+
+/* ---------- rewind slider ----------
+   Thumb at the 44px floor like every other target; the track fills mint up to
+   the thumb so "how far through the night" reads at a glance. --fill is set
+   from JS as the value moves. */
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rewind{
+  -webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;
+  background:transparent;touch-action:none;--fill:100%;
+}
+.rewind::-webkit-slider-runnable-track{
+  height:4px;border-radius:var(--r-pill);
+  background:linear-gradient(to right,var(--mint) var(--fill),var(--line) var(--fill));
+}
+.rewind::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:24px;height:24px;margin-top:-10px;
+  border-radius:var(--r-pill);background:var(--text);box-shadow:var(--glow-mint);
+}
+.rewind::-moz-range-track{height:4px;border-radius:var(--r-pill);background:var(--line)}
+.rewind::-moz-range-progress{height:4px;border-radius:var(--r-pill);background:var(--mint)}
+.rewind::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:var(--r-pill);background:var(--text)}

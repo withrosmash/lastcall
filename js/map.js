@@ -3,12 +3,15 @@ import * as S from './state.js';
 import * as geo from './geo.js';
 
 // Dark basemap: the standard OSM raster is light, which fights a true-black
-// night app and leaves the stats strip unreadable. CARTO's dark_all is free
-// with attribution. The design brief asks for genuinely offline tiles — that
-// needs bundled map data and is still open.
-const TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const SUBDOMAINS = 'abcd';
-const ATTRIB = '&copy; OpenStreetMap, &copy; CARTO';
+// night app and leaves the stats strip unreadable. CARTO's dark_all used to be
+// keyless but now stamps "API KEY REQUIRED" over every tile, so this is Esri's
+// Dark Gray Canvas — keyless, CORS-enabled, attribution required. Its data
+// stops at zoom 16 (z17 is a "not yet available" tile), so deeper zooms
+// upscale z16. Note the {y}/{x} order. Offline tiles are still open.
+const TILES =
+  'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+const ATTRIB = 'Esri, HERE, Garmin, &copy; OpenStreetMap contributors';
+const TILE_OPTS = { maxZoom: 19, maxNativeZoom: 16, attribution: ATTRIB, crossOrigin: true };
 
 let map = null;
 let layers = { trail: null, me: null, pins: [] };
@@ -65,7 +68,7 @@ function initMap(host, s) {
   teardownMap();
 
   map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
-  L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIB, subdomains: SUBDOMAINS, crossOrigin: true }).addTo(map);
+  L.tileLayer(TILES, TILE_OPTS).addTo(map);
 
   layers.trail = L.polyline(s.trail.map((p) => [p.lat, p.lng]), {
     color: '#7EE0C0', weight: 4, lineCap: 'round', lineJoin: 'round',
@@ -274,7 +277,7 @@ function initAtlas(host, done) {
   teardownMap();
 
   map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
-  L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIB, subdomains: SUBDOMAINS, crossOrigin: true }).addTo(map);
+  L.tileLayer(TILES, TILE_OPTS).addTo(map);
 
   let bounds = null;
   for (const s of done) {
@@ -285,6 +288,59 @@ function initAtlas(host, done) {
   }
   if (bounds) map.fitBounds(bounds, { padding: [34, 34] });
   setTimeout(() => map?.invalidateSize(), 60);
+}
+
+/* ---------- night detail: the real route, scrubbable through time ----------
+   Draws the whole route faint, the part walked by the chosen moment bright,
+   and a dot where you were. setTime() moves all three; the detail screen
+   drives it from a slider. */
+
+// Where you were at time t: interpolated between the two fixes either side.
+export function positionAt(trail, t) {
+  if (!trail.length) return null;
+  if (t <= trail[0].t) return { lat: trail[0].lat, lng: trail[0].lng, i: 0 };
+  for (let i = 1; i < trail.length; i++) {
+    const a = trail[i - 1], b = trail[i];
+    if (t <= b.t) {
+      const f = b.t === a.t ? 1 : (t - a.t) / (b.t - a.t);
+      return { lat: a.lat + (b.lat - a.lat) * f, lng: a.lng + (b.lng - a.lng) * f, i };
+    }
+  }
+  const last = trail[trail.length - 1];
+  return { lat: last.lat, lng: last.lng, i: trail.length };
+}
+
+export function nightMap(host, s) {
+  const controller = { setTime: () => {} };
+  queueMicrotask(() => {
+    if (!globalThis.L || !host.isConnected || s.trail.length < 2) return;
+    teardownMap();
+
+    map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
+    L.tileLayer(TILES, TILE_OPTS).addTo(map);
+
+    const all = s.trail.map((p) => [p.lat, p.lng]);
+    L.polyline(all, { color: '#7EE0C0', weight: 4, opacity: 0.3, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+    const walked = L.polyline(all, { color: '#7EE0C0', weight: 4, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+    for (const pin of s.pins) addPinMarker(pin);
+
+    const here = L.marker(all[all.length - 1], {
+      icon: L.divIcon({ className: '', html: '<div class="dot-me"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }),
+      keyboard: false,
+      interactive: false,
+    }).addTo(map);
+
+    map.fitBounds(L.polyline(all).getBounds(), { padding: [30, 30] });
+    setTimeout(() => map?.invalidateSize(), 60);
+
+    controller.setTime = (t) => {
+      const pos = positionAt(s.trail, t);
+      if (!pos || !map) return;
+      here.setLatLng([pos.lat, pos.lng]);
+      walked.setLatLngs([...all.slice(0, pos.i), [pos.lat, pos.lng]]);
+    };
+  });
+  return controller;
 }
 
 export function teardownMap() {
