@@ -40,6 +40,9 @@ cuteness lives.
 - **Blush**: its own colour, so it works on every skin tone. Warms up for happy
   moments.
 - **Mouths**: smile, cat (ω), open with tongue, ooh, wide, flat, small.
+- **Hair**: short, long, bun, quiff, curly and bald. Bald gets a rounder dome and
+  the hair shine moves onto the scalp; brows keep the hair colour, so that
+  swatch is labelled "Hair & brows".
 
 ## The movements
 
