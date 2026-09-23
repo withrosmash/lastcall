@@ -26,7 +26,15 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      # The runner image ships the Android SDK. android-actions/setup-android
+      # only reinstalled it, and from 22 Sept 2026 it started failing on every
+      # run (GitHub moved actions onto Node 24), so use the preinstalled one.
+      - name: Use the runner's Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          ls "$SDKM"
+          yes | "$SDKM" --licenses > /dev/null || true
 
       # Android's debug keystore is generated per machine, so a fresh runner
       # would sign every build with a different key — and Android refuses an
