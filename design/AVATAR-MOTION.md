@@ -9,6 +9,27 @@ app's black background.
 
 Working prototype: https://claude.ai/artifact/4iD1aQfs7V5P67Q7sxTeR1
 
+## In the app
+
+Engine: `js/avatar.js`. Customise screen: `js/avatarscreen.js`. The look is
+saved in `prefs.avatar` on the phone.
+
+- **Home**: the avatar stands above the title; tap it (or Customise) to change it.
+- **Live night**: beside the clock. One canvas is kept across re-renders so a
+  reaction is never cut off by the screen rebuilding. Reacts to start night,
+  drinks, water, food, check-ins (including taps from the notification shade)
+  and challenges; the water nudge queues behind the drink that triggered it.
+  Mood follows the night: thirsty past the reminder threshold, sleepy after
+  1am or five hours out, buzzing after a busy spell of water, food, stops and
+  challenges (never drinks), otherwise fresh.
+- **Recap**: celebrates any new badges, then yawns and dozes off. Once per night.
+- **Customise**: six hair styles, seven colour slots, quick-pick swatches plus
+  colour / strength / shade sliders that reach any colour. Range inputs rather
+  than a colour input, which Android's WebView doesn't reliably support.
+
+Still to come: avatar on the share card, walking the route on the map,
+badge-unlocked outfits, the morning-after screen, the watch.
+
 ## House rules
 
 - **12 frames a second**, everything snapped to the pixel grid. Sub-pixel motion

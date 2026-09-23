@@ -1,7 +1,8 @@
 import * as store from './storage.js';
 import * as S from './state.js';
 import { mount, toast, buzz, dismissSheet, serviceNotice } from './ui.js';
-import { startScreen, liveScreen, recapScreen, primingScreen } from './session.js';
+import { startScreen, liveScreen, recapScreen, primingScreen, react } from './session.js';
+import { avatarScreen } from './avatarscreen.js';
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
@@ -45,6 +46,7 @@ const SCREENS = {
   settings: { build: settingsScreen, bloom: 'hero' },
   badges: { build: badges.badgesScreen, bloom: 'hero' },
   atlas: { build: atlasScreen, bloom: 'none' },
+  avatar: { build: avatarScreen, bloom: 'none' },
 };
 
 // Screens the hardware back button should leave rather than unwind into: a
@@ -121,6 +123,7 @@ async function startNight({ skipLocation = false } = {}) {
   save();
   keepalive.setSessionActive(true);
   go('live');
+  react('start');
   // Sequenced ahead of the location dialog: Android shows one permission
   // prompt at a time and none while backgrounded, so left to the sensor's own
   // lazy request this sat unanswered until the walk was over.
@@ -237,6 +240,7 @@ async function drainQuickLogs({ silent = false } = {}) {
   save();
   if (!silent) {
     render();
+    react(events[events.length - 1].type === 'water' ? 'water' : 'drink');
     toast(`${events.length} logged from the notification.`);
   }
 }
@@ -263,7 +267,12 @@ function logDrink(kind) {
 
   const every = ctx.state.prefs.hydrationEvery;
   const since = S.drinksSinceWater(s);
-  if (every > 0 && since >= every) notify.hydrationNudge(since);
+  react('drink');
+  if (every > 0 && since >= every) {
+    notify.hydrationNudge(since);
+    // Finishes the sip first, then turns to you with the cup.
+    react('nudge', { queue: true });
+  }
 }
 
 function logWater() {
@@ -275,6 +284,7 @@ function logWater() {
   render();
   notify.clearHydration();
   buzz();
+  react('water');
   toast('Water logged. Tap to undo.', 4000, () => {
     s.waters.pop();
     save();
@@ -290,6 +300,7 @@ function logMeal() {
   save();
   render();
   buzz();
+  react('food');
   toast('Food logged. Tap to undo.', 4000, () => {
     s.meals.pop();
     save();
@@ -305,6 +316,7 @@ function logChallenge(challenge) {
   save();
   render();
   buzz();
+  react('cheer');
   toast('Challenge done. Tap to undo.', 4000, () => {
     s.challenges.pop();
     save();
@@ -318,6 +330,7 @@ function addPin(pin) {
   if (!s) return;
   S.addPin(s, pin);
   save();
+  react('checkin');
 }
 
 /* ---------- tracking ---------- */

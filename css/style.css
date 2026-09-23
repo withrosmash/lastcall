@@ -265,3 +265,35 @@ input::placeholder{color:var(--placeholder)}
 .rewind::-moz-range-track{height:4px;border-radius:var(--r-pill);background:var(--line)}
 .rewind::-moz-range-progress{height:4px;border-radius:var(--r-pill);background:var(--mint)}
 .rewind::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:var(--r-pill);background:var(--text)}
+
+/* ---------- avatar ----------
+   Drawn at whole-pixel sizes; pixelated keeps the upscaled blocks crisp. */
+canvas.avatar{
+  flex:0 0 auto;image-rendering:pixelated;image-rendering:crisp-edges;
+  touch-action:manipulation;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.live-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.avatar-home{display:flex;align-items:flex-end;gap:14px}
+/* The preview stays in view while the colour controls scroll beneath it. */
+.avatar-stage{
+  position:sticky;top:0;z-index:2;display:flex;justify-content:center;
+  padding:8px 0 10px;margin:0 calc(var(--pad-screen-x) * -1);
+  background:var(--bg);border-bottom:var(--hairline) solid var(--line);
+}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{
+  width:38px;height:38px;border-radius:var(--r-pill);background:var(--c);
+  border:2px solid var(--bg);box-shadow:0 0 0 1px var(--line);
+}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--mint)}
+.hsl{
+  -webkit-appearance:none;appearance:none;width:100%;height:40px;margin:0;
+  background:transparent;touch-action:none;--track:var(--line);
+}
+.hsl::-webkit-slider-runnable-track{height:12px;border-radius:var(--r-pill);background:var(--track)}
+.hsl::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-8px;
+  border-radius:var(--r-pill);background:var(--text);border:3px solid var(--bg);box-shadow:0 0 0 1px var(--line);
+}
+.hsl::-moz-range-track{height:12px;border-radius:var(--r-pill);background:var(--track)}
+.hsl::-moz-range-thumb{width:22px;height:22px;border-radius:var(--r-pill);background:var(--text);border:3px solid var(--bg)}

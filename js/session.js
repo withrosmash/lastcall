@@ -4,13 +4,49 @@ import * as S from './state.js';
 import { pickDrink, remember } from './drinks.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
+import { createAvatar, DEFAULT_LOOK } from './avatar.js';
+
+/* ---------- avatar ---------- */
+
+export const avatarLook = (ctx) => ({ ...DEFAULT_LOOK, ...(ctx.state.prefs.avatar || {}) });
+
+// The live screen rebuilds on every tap, so its avatar is one canvas carried
+// across renders. A fresh one each time would cut every reaction off mid-way.
+let liveAv = null;
+function liveAvatar(ctx) {
+  if (!liveAv) liveAv = createAvatar({ cell: 3, look: avatarLook(ctx) });
+  liveAv.setLook(avatarLook(ctx));
+  // After mount: the loop stops itself while the canvas is off the page.
+  queueMicrotask(() => liveAv.start());
+  return liveAv;
+}
+
+/** Plays a reaction on the live avatar, if it has been shown. */
+export function react(name, opts) { liveAv?.play(name, opts); }
+
+// How the night is going decides how the avatar idles between reactions. It
+// livens up with water, food, stops and challenges — never with drinks.
+function moodFor(s, prefs, now = Date.now()) {
+  const every = prefs.hydrationEvery;
+  if (every > 0 && S.drinksSinceWater(s) >= every) return 'Thirsty';
+  const h = new Date(now).getHours();
+  if ((h >= 1 && h < 6) || now - s.startedAt > 5 * 3600e3) return 'Sleepy';
+  const recent = (list) => (list || []).filter((e) => now - e.t < 20 * 60e3).length;
+  if (recent(s.waters) + recent(s.meals) + recent(s.pins) + recent(s.challenges) >= 3) return 'Buzzing';
+  return 'Fresh';
+}
 
 /* ---------- 01 start ---------- */
 
 export function startScreen(ctx) {
   const last = ctx.state.sessions.find((s) => s.endedAt);
+  const av = createAvatar({ cell: 4, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' });
+  queueMicrotask(() => av.start());
   return [
     spacer(),
+    el('div', { class: 'avatar-home' },
+      av.canvas,
+      el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')),
     el('div', { class: 'eb eb--mint-dim', text: 'Last Call' }),
     el('h1', { class: 'display', style: 'margin-top:10px' },
       'Track the night.', el('br'), 'Piece it together later.'),
@@ -66,7 +102,13 @@ export function liveScreen(ctx) {
   if (!s) { ctx.go('start'); return []; }
 
   const clock = el('div', { class: 'timer', text: hms(S.elapsedMs(s)) });
-  ctx.tick = () => { clock.textContent = hms(S.elapsedMs(s)); };
+  const av = liveAvatar(ctx);
+  av.setMood(moodFor(s, ctx.state.prefs));
+  ctx.tick = () => {
+    clock.textContent = hms(S.elapsedMs(s));
+    // Moods drift with the clock too: sleepy after 1am, busy spells fade.
+    av.setMood(moodFor(s, ctx.state.prefs));
+  };
 
   const since = S.drinksSinceWater(s);
   const every = ctx.state.prefs.hydrationEvery;
@@ -80,8 +122,9 @@ export function liveScreen(ctx) {
 
   return [
     head({ eyebrow: 'On the night' }),
-    clock,
-    el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` }),
+    el('div', { class: 'live-top' },
+      el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
+      av.canvas),
 
     tiles(
       tile('Drinks', s.drinks.length, { tone: 'drinks' }),
@@ -232,14 +275,27 @@ export function recapScreen(ctx, session) {
   if (!s) { ctx.go('start'); return []; }
   const sum = S.summarise(s);
 
+  // Celebrates any new badge, then yawns and dozes off. Once per night: the
+  // recap re-renders when you come back to it and shouldn't replay.
+  const av = createAvatar({ cell: 3, look: avatarLook(ctx) });
+  av.setMood('Sleepy');
+  if (ctx.recapPlayed !== s.id) {
+    ctx.recapPlayed = s.id;
+    if ((ctx.newBadges || []).length) { av.play('badge'); av.play('end', { queue: true }); }
+    else av.play('end');
+  }
+  queueMicrotask(() => av.start());
+
   return [
     el('div', { class: 'eb', text: 'Last night' }),
     el('h1', { class: 'display', style: 'margin-top:7px', text: 'That was a night.' }),
 
-    el('div', { style: 'display:flex;align-items:baseline;gap:10px;flex-wrap:wrap' },
-      el('div', { class: 'timer timer--ended', text: hms(sum.ms) }),
-      el('div', { class: 'cap', text: `${clockTime(s.startedAt)} — ${clockTime(s.endedAt)}` }),
-    ),
+    el('div', { class: 'live-top' },
+      el('div', { style: 'display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap' },
+        el('div', { class: 'timer timer--ended', text: hms(sum.ms) }),
+        el('div', { class: 'cap', text: `${clockTime(s.startedAt)} — ${clockTime(s.endedAt)}` }),
+      ),
+      av.canvas),
 
     glass(routeSvg(s, 190)),
 
