@@ -1,0 +1,72 @@
+/* Last Call colours, light ("Ice" ground, cobalt bloom).
+   Same token names as colors.css. Scoped to [data-theme="light"], so the app loads both
+   files and sets data-theme on <html>: "light", or unset for dark. Match phone sets it
+   from prefers-color-scheme. Every alias is re-declared here because custom properties
+   resolve where they are declared, not where they are used. */
+[data-theme="light"]{
+  --bg:#EEF2F8;
+  --surface:#FFFFFF;
+  --surface-2:#F7F9FC;
+  --line:#D5DDE9;
+  --text:#0B1526;
+  --muted:#4A576B;
+  --muted-up:#4A576B;
+  --faint:#626E81;
+  --placeholder:#8E99AA;
+
+  /* Mint splits: fill keeps the brand mint, text and lines go deep teal */
+  --mint-fill:#7EE0C0;
+  --mint:#0B6E55;
+  --mint-ink:#04342C;
+  --mint-dim:#0B6E55;
+  --pink:#C92F68;
+  --pink-ink:#FFFFFF;
+  --amber:#A35F00;
+  --amber-ink:#FFFFFF;
+
+  /* Cobalt replaces forest as the depth colour */
+  --cobalt-900:#062A66;
+  --cobalt-700:#003A8C;
+  --cobalt-500:#0047AB;
+  --cobalt-300:#6F9BDB;
+
+  /* Glass: frosted white over cobalt bloom */
+  --glass-1:rgba(0,71,171,.05);
+  --glass-2:rgba(0,71,171,.09);
+  --glass-3:rgba(255,255,255,.62);
+  --glass-line:rgba(0,71,171,.14);
+  --glass-line-strong:rgba(0,71,171,.26);
+
+  --bloom-hero:radial-gradient(70% 30% at 50% 0%,rgba(0,71,171,.14) 0%,rgba(0,71,171,0) 100%),radial-gradient(140% 95% at 50% 0%,rgba(0,71,171,.24) 0%,rgba(0,71,171,.12) 40%,rgba(0,71,171,.04) 68%,rgba(0,71,171,0) 90%); /* @kind color */
+  --bloom-foot:radial-gradient(70% 28% at 50% 100%,rgba(0,71,171,.12) 0%,rgba(0,71,171,0) 100%),radial-gradient(140% 85% at 50% 100%,rgba(0,71,171,.22) 0%,rgba(0,71,171,.10) 40%,rgba(0,71,171,.03) 68%,rgba(0,71,171,0) 90%); /* @kind color */
+  --bloom-mint:radial-gradient(60% 60% at 50% 50%,rgba(11,110,85,.10) 0%,rgba(11,110,85,0) 70%); /* @kind color */
+  --scrim:rgba(11,21,38,.36); /* @kind color */
+  --protect-bottom:linear-gradient(to top,rgba(238,242,248,.95) 0%,rgba(238,242,248,.76) 38%,rgba(238,242,248,0) 100%); /* @kind color */
+  --protect-top:linear-gradient(to bottom,rgba(238,242,248,.85) 0%,rgba(238,242,248,0) 100%); /* @kind color */
+
+  /* Effects that change meaning on a light ground */
+  --glow-mint:0 6px 16px rgba(11,21,38,.14),0 1px 2px rgba(11,21,38,.10); /* @kind shadow */
+  --shadow-sheet:0 -8px 28px rgba(11,21,38,.14);
+  --shadow-inset-glass:inset 0 1px 0 rgba(255,255,255,.85); /* @kind shadow */
+  --grain-opacity:.04; /* @kind other */
+
+  /* Aliases, re-declared */
+  --text-primary:var(--text);
+  --text-secondary:var(--muted);
+  --text-label:var(--faint);
+  --text-on-mint:var(--mint-ink);
+  --surface-screen:var(--bg);
+  --surface-tile:var(--surface);
+  --surface-sheet:var(--surface-2);
+  --surface-card:var(--glass-3);
+  --border-hairline:var(--line);
+  --border-glass:var(--glass-line);
+  --accent-action:var(--mint-fill);
+  --accent-brand:var(--cobalt-500);
+  --data-drinks:var(--pink);
+  --data-hydration:var(--amber);
+  --data-route:#3FC79E;
+  --data-position:var(--text);
+
+  color-scheme:light;
+}

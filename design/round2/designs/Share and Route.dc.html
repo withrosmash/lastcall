@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<link rel="stylesheet" href="tokens/colors.css">
+<link rel="stylesheet" href="tokens/typography.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<script src="share-card.js"></script>
+<style>body{background:#050505;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}[data-lbl2d] [style*="pad-tile"] > span:first-child,[data-lbl2d] label > span:first-child{text-transform:none!important}</style>
+</helmet>
+<section id="turn-7" ref="{{ rootRef }}" data-lbl2d="1" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:56px;background:#050505;min-height:100vh;font-family:var(--font-sans);color:var(--text)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:800px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Round 2 · Piece 3</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0">Share card and route</h1>
+  </div>
+
+  <div id="7a" style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:800px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">7a</span>
+        <span style="font:var(--type-title);letter-spacing:var(--tr-title)">The avatar on the card</span>
+      </div>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0">The card is drawn on a canvas at 1080 × 1350, and the avatar is painted into it pixel by pixel at a whole-number scale, so it stays crisp and never taints the canvas. In Route it has a fixed spot beside the stats, on the same baseline. On your own photo every element can be added, removed and dragged: the title, time, stats, date, route and avatar. Each one snaps to the margins, the centre and a third of the way down. Pinch any element to resize it. The avatar resizes in whole-pixel steps so it stays crisp. In the design preview, scrolling over the card does the same. Text on a photo uses the Halo theme so it holds on any image. The wordmark stays fixed in the bottom corner. Both layouts take an optional title of up to 24 characters. Both layouts come in feed 4:5 (1080 × 1350) and story 9:16 (1080 × 1920). Time out is a stat like the others, the same size and with its own label. The route layout draws the night on the real map, with the route and stops over Esri’s dark tiles and the text on black below. Save for video exports every element as its own see-through PNG, either at full frame so the layers stack in place, or cropped to each element.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+        <sc-for list="{{ boardCards }}" as="bc" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <canvas data-card="{{ bc.card }}" style="width:{{ bc.w }};height:{{ bc.h }};border-radius:11px;border:1px solid var(--line);display:block"></canvas>
+            <span style="font:600 12px/1.2 var(--font-sans)">{{ bc.name }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:10px">
+        <div data-screen-label="Card builder" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+              <span class="lc-num">9:52</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+                <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:0">Your card</h1>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" hint-size="72px,44px">Back</x-import>
+              </div>
+              <div style="display:flex;gap:7px;margin-bottom:9px">
+                <sc-for list="{{ layouts }}" as="l" hint-placeholder-count="2">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ l.selected }}" on-click="{{ l.onClick }}" hint-size="80px,44px">{{ l.label }}</x-import>
+                </sc-for>
+                <span style="width:1px;background:var(--line);margin:8px 2px"></span>
+                <sc-for list="{{ ratios }}" as="r" hint-placeholder-count="2">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ r.selected }}" on-click="{{ r.onClick }}" hint-size="56px,44px">{{ r.label }}</x-import>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:center;flex:0 0 auto">
+                <div style="position:relative;width:{{ pv.w }};height:300px;border-radius:11px;overflow:hidden;border:1px solid var(--line)">
+                  <canvas ref="{{ builderRef }}" style="width:{{ pv.w }};height:300px;display:block"></canvas>
+                  <div onPointerDown="{{ onDown }}" onPointerMove="{{ onMove }}" onPointerUp="{{ onUp }}" onPointerCancel="{{ onUp }}" onWheel="{{ onWheel }}" style="position:absolute;inset:0;touch-action:none;cursor:{{ cursor }}">
+                    <sc-for list="{{ guides }}" as="g" hint-placeholder-count="0">
+                      <div style="position:absolute;left:{{ g.left }};top:{{ g.top }};width:{{ g.w }};height:{{ g.h }};background:var(--mint);opacity:.9"></div>
+                    </sc-for>
+                    <sc-if value="{{ showBox }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute;left:{{ box.left }};top:{{ box.top }};width:{{ box.w }};height:{{ box.h }};border:1px dashed rgba(126,224,192,.8);border-radius:4px"></div>
+                    </sc-if>
+                  </div>
+                </div>
+              </div>
+              <div style="flex:1;min-height:0;overflow-y:auto;margin:0 -14px;padding:12px 14px 12px;display:flex;flex-direction:column;gap:12px;scrollbar-width:none">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Field" label="Title" placeholder="Leaving do" value="{{ title }}" on-change="{{ setTitle }}" dc-props="{{ titleProps }}" hint-size="100%,70px"></x-import>
+                  <span class="lc-num" style="align-self:flex-end;font:var(--type-caption);color:var(--muted-up)">{{ titleCount }}</span>
+                </div>
+                <sc-if value="{{ isPhoto }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">On the card</span>
+                    <div style="display:flex;flex-wrap:wrap;gap:7px">
+                      <sc-for list="{{ elChips }}" as="c" hint-placeholder-count="6">
+                        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ c.selected }}" on-click="{{ c.onClick }}" hint-size="64px,44px">{{ c.label }}</x-import>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Avatar</span>
+                  <div style="display:flex;gap:7px;overflow-x:auto;margin:0 -14px;padding:0 14px;scrollbar-width:none">
+                    <sc-for list="{{ exprs }}" as="e" hint-placeholder-count="6">
+                      <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ e.selected }}" on-click="{{ e.onClick }}" hint-size="64px,44px">{{ e.label }}</x-import>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:grid;gap:7px;padding-top:9px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" hint-size="100%,52px">Next</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" full="{{ true }}" icon="{{ dlIcon }}" on-click="{{ openVideo }}" hint-size="100%,44px">Save for video</x-import>
+              </div>
+            </div>
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+          </div>
+          <x-import component-from-global-scope="LastCallDesignSystem_b253fc.BottomSheet" open="{{ vOpen }}" title="Save for video" on-dismiss="{{ closeVideo }}" footer="{{ vFooter }}" hint-size="0px,0px">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <p style="font:var(--type-body);color:var(--muted-up);margin:0">Each element saves as its own see-through PNG, ready to lay over a video in any editor.</p>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Elements</span>
+                <div style="display:flex;flex-wrap:wrap;gap:7px">
+                  <sc-for list="{{ vLayers }}" as="v" hint-placeholder-count="6">
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ v.selected }}" on-click="{{ v.onClick }}" hint-size="64px,44px">{{ v.label }}</x-import>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Size</span>
+                <div style="display:flex;gap:7px">
+                  <sc-for list="{{ vSizes }}" as="z" hint-placeholder-count="2">
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ z.selected }}" on-click="{{ z.onClick }}" hint-size="96px,44px">{{ z.label }}</x-import>
+                  </sc-for>
+                </div>
+                <span style="font:var(--type-caption);color:var(--muted-up)">{{ vSizeNote }}</span>
+              </div>
+            </div>
+          </x-import>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="7b" style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:800px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">7b</span>
+        <span style="font:var(--type-title);letter-spacing:var(--tr-title)">Walking the route</span>
+      </div>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0">At map scale the full avatar would be a smudge, so it has a 12 × 16 sprite drawn from the same colour slots. It keeps the hair colour, the top colour and the eyes, and hoods keep their colour. The eyes sit one pixel towards the direction of travel, so mirroring the sprite shows which way it is walking. It replaces the white position dot and sits on the same soft halo, so it still reads as you. On the night’s history the slider moves it along the route. It walks a four-frame cycle while you drag, faces the way it is going, and stands still when you let go. Stops are pink ticks on the track, and the stop name shows when the sprite reaches one.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+      <div style="padding:10px">
+        <div data-screen-label="Night detail" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+              <span class="lc-num">12:10</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px">
+                <div style="display:flex;flex-direction:column">
+                  <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Sat 2 Aug</span>
+                  <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 0">5h 12m out</h1>
+                </div>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" hint-size="72px,44px">Back</x-import>
+              </div>
+              <div style="position:relative;height:400px;flex:0 0 auto;border-radius:11px;overflow:hidden;background:#1B1B1B;border:1px solid var(--line)">
+                <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="0">
+                  <div style="position:absolute;left:{{ t.left }};top:{{ t.top }};width:200px;height:200px;background-image:{{ t.bg }};background-size:cover"></div>
+                </sc-for>
+                <svg viewBox="0 0 340 360" width="330" height="350" style="position:absolute;left:16px;top:25px;overflow:visible">
+                  <path d="{{ routeD }}" fill="none" stroke="#7EE0C0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".92"></path>
+                  <sc-for list="{{ stopPins }}" as="s" hint-placeholder-count="0"><circle cx="{{ s.x }}" cy="{{ s.y }}" r="6.5" fill="#F06C9B"></circle></sc-for>
+                </svg>
+                <div style="position:absolute;left:{{ sprite.hx }};top:{{ sprite.hy }};width:40px;height:14px;margin:-7px 0 0 -20px;border-radius:50%;background:rgba(255,255,255,.14)"></div>
+                <canvas data-av="{{ sprite.av }}" style="position:absolute;left:{{ sprite.left }};top:{{ sprite.top }};width:24px;height:32px;image-rendering:pixelated"></canvas>
+                <div style="position:absolute;left:0;right:0;top:0;height:44px;background:var(--protect-top)"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin:12px 0 0">
+                <span class="lc-num" style="font:var(--type-stat);letter-spacing:var(--tr-stat)">{{ clock }}</span>
+                <span style="font:700 13px/1.2 var(--font-sans);color:{{ placeInk }}">{{ place }}</span>
+              </div>
+              <div onPointerDown="{{ sDown }}" onPointerMove="{{ sMove }}" onPointerUp="{{ sUp }}" style="position:relative;height:44px;touch-action:none;cursor:pointer;display:flex;align-items:center">
+                <div style="position:absolute;left:0;right:0;height:4px;border-radius:999px;background:var(--line)"></div>
+                <div style="position:absolute;left:0;width:{{ tPct }};height:4px;border-radius:999px;background:var(--mint)"></div>
+                <sc-for list="{{ ticks }}" as="k" hint-placeholder-count="0">
+                  <div style="position:absolute;left:{{ k.left }};width:8px;height:8px;margin-left:-4px;border-radius:999px;background:#F06C9B"></div>
+                </sc-for>
+                <div style="position:absolute;left:{{ tPct }};width:24px;height:24px;margin-left:-12px;border-radius:999px;background:#FFFFFF;box-shadow:0 0 0 3px var(--bg)"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font:var(--type-caption);color:var(--muted-up)"><span>9:12 pm</span><span>2:24 am</span></div>
+              <div style="flex:1"></div>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" hint-size="100%,52px">Make a card</x-import>
+            </div>
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:560px">
+        <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Map sprite, 12 × 16</span>
+        <div style="position:relative;overflow:hidden;border-radius:20px;background:#000;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+          <sc-for list="{{ miniRows }}" as="mr" hint-placeholder-count="3">
+            <div style="position:relative;display:flex;flex-direction:column;gap:8px">
+              <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint)">{{ mr.name }}</span>
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                <sc-for list="{{ mr.frames }}" as="mf" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+                    <div style="width:84px;height:108px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ mf.av }}" style="width:72px;height:96px;image-rendering:pixelated"></canvas></div>
+                    <span class="lc-num" style="font:var(--type-caption);color:var(--muted-up)">{{ mf.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div style="position:relative;display:flex;flex-direction:column;gap:8px">
+            <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint)">True size on the map (2×)</span>
+            <div style="display:flex;gap:18px;align-items:flex-end">
+              <sc-for list="{{ trueSize }}" as="ts" hint-placeholder-count="4">
+                <canvas data-av="{{ ts }}" style="width:24px;height:32px;image-rendering:pixelated"></canvas>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PTS = [[40, 310], [72, 276], [98, 286], [128, 238], [150, 206], [192, 196], [214, 154], [252, 132], [270, 92], [302, 70]];
+const STOP_IDX = [[2, 'The Grapes'], [5, 'Peveril of the Peak'], [8, 'Night & Day']];
+const SEG = PTS.slice(1).map((p, i) => Math.hypot(p[0] - PTS[i][0], p[1] - PTS[i][1]));
+const TOTAL = SEG.reduce((a, b) => a + b, 0);
+const CUM = [0]; SEG.forEach((s, i) => CUM.push(CUM[i] + s));
+const LOOK = { hair: 'quiff', top: 'tee', glasses: 'round', shoes: 'plain', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true, colors: { skin: '#E8B48F', hair: '#3B2A20', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#21764F', bottoms: '#2D3A4F', shoes: '#EDEDED' } };
+const FEED_ELS = { ...{ title: { on: true, x: 64, y: 72 }, route: { on: true, x: 596, y: 150 }, avatar: { on: true, x: 690, y: 640 }, time: { on: true, x: 64, y: 950 }, stats: { on: true, x: 64, y: 1090 }, water: { on: false, x: 400, y: 950 }, food: { on: false, x: 560, y: 950 }, place: { on: true, x: 64, y: 1236 } }, water: { on: true, x: 400, y: 950 }, food: { on: true, x: 560, y: 950 } };
+const STORY_ELS = { title: { on: true, x: 64, y: 180 }, route: { on: true, x: 330, y: 330 }, avatar: { on: true, x: 380, y: 860 }, time: { on: true, x: 64, y: 1420 }, stats: { on: true, x: 64, y: 1560 }, water: { on: true, x: 400, y: 1420 }, food: { on: true, x: 560, y: 1420 }, place: { on: true, x: 64, y: 1720 } };
+const EXPR = { normal: { eyes: 'open', mouth: 'smile', brows: 'soft' }, happy: { eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }, wink: { eyes: 'wink', mouth: 'smile', brows: 'happy' }, hearts: { eyes: 'heart', mouth: 'open', brows: 'raised', blush: true }, stars: { eyes: 'star', mouth: 'wide', brows: 'raised' }, sleepy: { eyes: 'content', mouth: 'smile', brows: 'soft', blush: true } };
+
+function at(t) {
+  const d = t * TOTAL; let i = 0; while (i < SEG.length - 1 && CUM[i + 1] < d) i++;
+  const k = SEG[i] ? (d - CUM[i]) / SEG[i] : 0;
+  return { x: PTS[i][0] + (PTS[i + 1][0] - PTS[i][0]) * k, y: PTS[i][1] + (PTS[i + 1][1] - PTS[i][1]) * k, dx: PTS[i + 1][0] - PTS[i][0] };
+}
+
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  builderRef = React.createRef();
+  boxes = {};
+  state = {
+    layout: 'photo', expr: 'normal', hidden: false, s: 10, flip: false, drag: null, guides: [], title: 'Leaving do',
+    ratio: 'feed',
+    els: { title: { on: true, x: 64, y: 72 }, route: { on: true, x: 596, y: 150 }, avatar: { on: true, x: 690, y: 640 }, time: { on: true, x: 64, y: 950 }, stats: { on: true, x: 64, y: 1090 }, water: { on: false, x: 400, y: 950 }, food: { on: false, x: 560, y: 950 }, place: { on: true, x: 64, y: 1236 } },
+    sel: 'avatar', t: 0.42, walking: false, vOpen: false, vOff: {}, vFull: true, saving: false,
+  };
+  componentDidMount() {
+    const t = () => {
+      if (!(window.LCAvatar && window.LCCard)) return setTimeout(t, 60);
+      window.LCCard.onReady = () => { const r = this.rootRef.current; r && r.querySelectorAll('canvas[data-card]').forEach(cv => { cv.__k = null; }); this.paint(); };
+      this.paint();
+    };
+    t();
+  }
+  componentDidUpdate() { this.paint(); }
+  paint() {
+    if (!window.LCAvatar || !window.LCCard) return;
+    const root = this.rootRef.current; if (!root) return;
+    window.LCAvatar.drawAll(root);
+    root.querySelectorAll('canvas[data-card]').forEach(cv => { const k = cv.getAttribute('data-card'); if (cv.__k === k) return; window.LCCard.drawCard(cv, JSON.parse(k)); cv.__k = k; });
+    const cv = this.builderRef.current;
+    if (cv) {
+      const b = window.LCCard.drawCard(cv, this.cardOpts());
+      if (JSON.stringify(b) !== JSON.stringify(this.boxes)) { this.boxes = b; this.forceUpdate(); }
+    }
+  }
+  ptrs = new Map();
+  pinch = null;
+  resize(id, f) {
+    if (!id || !isFinite(f)) return;
+    if (id === 'avatar') { this.acc = (this.acc || 1) * f; const step = this.acc > 1.12 ? 2 : this.acc < 0.89 ? -2 : 0; if (step) { this.acc = 1; this.setState(s => ({ s: Math.max(6, Math.min(18, s.s + step)) })); } return; }
+    this.setState(s => { const e = s.els[id]; const k = Math.max(0.5, Math.min(2.5, (e.k || 1) * f)); return { els: { ...s.els, [id]: { ...e, k } } }; });
+  }
+  cardOpts() { const st = this.state; return { ratio: st.ratio, layout: st.layout, title: st.title, elements: st.els, avatar: { look: { ...LOOK, ...EXPR[st.expr] }, hidden: st.hidden, s: st.s, flip: st.flip } }; }
+  toCard(e) { const r = e.currentTarget.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 1080, y: (e.clientY - r.top) / r.height * window.LCCard.heightOf(this.state) }; }
+  snap(x, y, w, h) {
+    const C = window.LCCard, T = 30, g = [], CH = C.heightOf(this.state);
+    let nx = x, ny = y;
+    for (const [i, gv] of [[0, C.M], [1, C.W / 2], [2, C.W - C.M]]) { const v = x + [0, w / 2, w][i]; if (Math.abs(v - gv) < T) { nx = gv - [0, w / 2, w][i]; g.push({ axis: 'x', v: gv }); break; } }
+    for (const [i, gv] of [[0, C.M], [1, CH / 3], [2, CH - C.M]]) { const v = y + [0, h / 2, h][i]; if (Math.abs(v - gv) < T) { ny = gv - [0, h / 2, h][i]; g.push({ axis: 'y', v: gv }); break; } }
+    return { x: Math.round(nx), y: Math.round(ny), guides: g };
+  }
+  videoVals() {
+    const st = this.state, C = window.LCCard, DS = window.LastCallDesignSystem_b253fc || {};
+    if (!C) return { vLayers: [], vSizes: [], vOpen: false };
+    const opts = this.cardOpts();
+    const ids = C.layerIds(opts);
+    const chosen = ids.filter(id => !st.vOff[id]);
+    const save = async () => { this.setState({ saving: true }); await C.exportLayers(opts, { fullFrame: st.vFull, ids: chosen }); this.setState({ saving: false, vOpen: false }); };
+    return {
+      vOpen: st.vOpen, openVideo: () => this.setState({ vOpen: true }), closeVideo: () => this.setState({ vOpen: false }),
+      vLayers: ids.map(id => ({ label: C.LABELS[id], selected: !st.vOff[id], onClick: () => this.setState(s => ({ vOff: { ...s.vOff, [id]: !s.vOff[id] } })) })),
+      vSizes: [[true, 'Full frame'], [false, 'Cropped']].map(([v, label]) => ({ label, selected: st.vFull === v, onClick: () => this.setState({ vFull: v }) })),
+      vSizeNote: st.vFull ? 'Every image is 1080 × 1350, so the layers line up when stacked.' : 'Each image is trimmed to the element, for placing by hand.',
+      vFooter: DS.Button ? React.createElement('div', { style: { display: 'grid', gap: 7 } },
+        React.createElement(DS.Button, { full: true, size: 'lg', disabled: !chosen.length || st.saving, onClick: save }, st.saving ? 'Saving' : `Save ${chosen.length} images`),
+        React.createElement(DS.Button, { variant: 'secondary', full: true, onClick: () => this.setState({ vOpen: false }) }, 'Cancel')) : null,
+      dlIcon: DS.Icon ? React.createElement(DS.Icon, { name: 'download', size: 15, color: 'var(--text)' }) : null,
+    };
+  }
+  renderVals() {
+    const st = this.state;
+    const photo = st.layout === 'photo';
+    const CH = window.LCCard ? window.LCCard.heightOf(st) : 1350;
+    const k = 300 / CH;
+    const setRatio = (r) => this.setState(s => {
+      if (s.ratio === r) return null;
+      const f = (r === 'story' ? 1920 : 1350) / (s.ratio === 'story' ? 1920 : 1350);
+      const els = {}; Object.keys(s.els).forEach(id => { els[id] = { ...s.els[id], y: Math.round(s.els[id].y * f) }; });
+      return { ratio: r, els, guides: [] };
+    });
+    const p = at(st.t);
+    const MX = (x) => 16 + x * 330 / 340, MY = (y) => 25 + y * 350 / 360;
+    const walkFrame = st.walking ? Math.floor(st.t * TOTAL / 5) % 4 : 0;
+    const flipMini = p.dx < 0;
+    const mins = 21 * 60 + 12 + Math.round(st.t * 312);
+    const hh = Math.floor(mins / 60) % 24, mm = mins % 60;
+    const clock = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh >= 12 && hh < 24 ? 'pm' : 'am'}`;
+    const stopT = STOP_IDX.map(([i, name]) => ({ t: CUM[i] / TOTAL, name }));
+    const near = stopT.find(s => Math.abs(s.t - st.t) < 0.025);
+    const setT = (e) => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ t: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) }); };
+    const Z = 16, X0 = 32357, Y0 = 21196, tiles = [];
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) tiles.push({ bg: `url(https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${Z}/${Y0 + j}/${X0 + i})`, left: (i * 200 - 120) + 'px', top: (j * 200 - 60) + 'px' });
+    const MJ = (look, frame, flip, scale = 6) => JSON.stringify({ look, opts: { mini: true, frame, flip, scale } });
+    const card = (o) => JSON.stringify({ ...o, avatar: { look: { ...LOOK, ...(o.expr || EXPR.normal) }, s: 10 } });
+    const selBox = this.boxes[st.sel];
+    const avOn = st.els.avatar.on && !st.hidden;
+    return {
+      rootRef: this.rootRef, builderRef: this.builderRef,
+      boardCards: [
+        { name: 'Route · feed 4:5', w: '288px', h: '360px', card: card({ layout: 'route', title: 'Leaving do' }) },
+        { name: 'Route · story 9:16', w: '288px', h: '512px', card: card({ layout: 'route', ratio: 'story', title: 'Leaving do', expr: EXPR.happy }) },
+        { name: 'Your photo · feed 4:5', w: '288px', h: '360px', card: card({ layout: 'photo', title: 'Leaving do', elements: FEED_ELS, expr: EXPR.stars }) },
+        { name: 'Your photo · story 9:16', w: '288px', h: '512px', card: card({ layout: 'photo', ratio: 'story', title: 'Leaving do', elements: STORY_ELS, expr: EXPR.wink }) },
+      ],
+      pv: { w: Math.round(1080 * k) + 'px' },
+      ratios: [['feed', '4:5'], ['story', '9:16']].map(([r, label]) => ({ label, selected: st.ratio === r, onClick: () => setRatio(r) })),
+      layouts: [['route', 'Route'], ['photo', 'Your photo']].map(([k2, label]) => ({ label, selected: st.layout === k2, onClick: () => this.setState({ layout: k2, guides: [] }) })),
+      isPhoto: photo,
+      title: st.title, setTitle: (v) => this.setState({ title: v.slice(0, 24) }), titleProps: { maxLength: 24 },
+      titleCount: `${st.title.length} / 24`,
+      elChips: [['title', 'Title'], ['time', 'Time out'], ['stats', 'Stats'], ['water', 'Water'], ['food', 'Food'], ['place', 'Date'], ['route', 'Route'], ['avatar', 'Avatar']].map(([id, label]) => ({
+        label, selected: st.els[id].on,
+        onClick: () => this.setState(s => ({ els: { ...s.els, [id]: { ...s.els[id], on: !s.els[id].on } }, sel: id, ...(id === 'avatar' ? { hidden: false } : {}) })) })),
+      exprs: [['normal', 'Normal'], ['happy', 'Happy'], ['wink', 'Wink'], ['hearts', 'Hearts'], ['stars', 'Stars'], ['sleepy', 'Sleepy'], ['none', 'None']].map(([k2, label]) => ({
+        label, selected: k2 === 'none' ? st.hidden : (!st.hidden && st.expr === k2),
+        onClick: () => this.setState(k2 === 'none' ? { hidden: true } : { hidden: false, expr: k2, els: { ...st.els, avatar: { ...st.els.avatar, on: true } } }) })),
+      onWheel: (e) => { if (!photo || !st.sel) return; this.resize(st.sel, Math.exp(-e.deltaY * 0.0015)); },
+      cursor: photo ? (st.drag ? 'grabbing' : 'grab') : 'default',
+      showBox: photo && !!selBox,
+      box: selBox ? { left: selBox[0] * k + 'px', top: selBox[1] * k + 'px', w: selBox[2] * k + 'px', h: selBox[3] * k + 'px' } : { left: '0px', top: '0px', w: '0px', h: '0px' },
+      guides: st.guides.map(g => g.axis === 'x' ? { left: g.v * k + 'px', top: '0px', w: '1px', h: '100%' } : { left: '0px', top: g.v * k + 'px', w: '100%', h: '1px' }),
+      onDown: (e) => {
+        if (!photo) return;
+        this.ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+        e.currentTarget.setPointerCapture(e.pointerId);
+        if (this.ptrs.size === 2 && st.sel) { const [a, b] = [...this.ptrs.values()]; this.pinch = { d0: Math.hypot(a[0] - b[0], a[1] - b[1]), last: 1 }; this.setState({ drag: null }); return; }
+        const c = this.toCard(e);
+        const hit = [...window.LCCard.ORDER].reverse().find(id => { const b = this.boxes[id]; return b && c.x >= b[0] - 16 && c.x <= b[0] + b[2] + 16 && c.y >= b[1] - 16 && c.y <= b[1] + b[3] + 16; });
+        if (!hit) { this.setState({ sel: null }); return; }
+        e.currentTarget.setPointerCapture(e.pointerId);
+        const el = st.els[hit];
+        this.setState({ sel: hit, drag: { id: hit, dx: c.x - el.x, dy: c.y - el.y } });
+      },
+      onMove: (e) => {
+        if (this.ptrs.has(e.pointerId)) this.ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+        if (this.pinch && this.ptrs.size === 2) { const [a, b] = [...this.ptrs.values()]; const r = Math.hypot(a[0] - b[0], a[1] - b[1]) / this.pinch.d0; this.resize(st.sel, r / this.pinch.last); this.pinch.last = r; return; }
+        if (!st.drag) return;
+        const c = this.toCard(e), b = this.boxes[st.drag.id] || [0, 0, 100, 100];
+        const r = this.snap(c.x - st.drag.dx, c.y - st.drag.dy, b[2], b[3]);
+        this.setState({ els: { ...st.els, [st.drag.id]: { ...st.els[st.drag.id], x: r.x, y: r.y } }, guides: r.guides });
+      },
+      onUp: (e) => { this.ptrs.delete(e.pointerId); if (this.ptrs.size < 2) this.pinch = null; this.setState({ drag: null, guides: [] }); },
+      ...this.videoVals(),
+      tiles, routeD: PTS.map((q, i) => (i ? 'L' : 'M') + q[0] + ',' + q[1]).join(' '),
+      stopPins: STOP_IDX.map(([i]) => ({ x: PTS[i][0], y: PTS[i][1] })),
+      sprite: { left: (MX(p.x) - 12) + 'px', top: (MY(p.y) - 30) + 'px', hx: MX(p.x) + 'px', hy: MY(p.y) + 'px', av: MJ(LOOK, walkFrame, flipMini, 2) },
+      clock, place: near ? near.name : 'Between stops', placeInk: near ? '#F06C9B' : 'var(--muted-up)',
+      tPct: (st.t * 100).toFixed(2) + '%',
+      ticks: stopT.map(s => ({ left: (s.t * 100).toFixed(2) + '%' })),
+      sDown: (e) => { e.currentTarget.setPointerCapture(e.pointerId); this.setState({ walking: true }); setT(e); },
+      sMove: (e) => { if (e.buttons) setT(e); },
+      sUp: () => this.setState({ walking: false }),
+      miniRows: [
+        { name: 'Walk cycle, facing right', frames: [0, 1, 2, 3].map(f => ({ label: `Frame ${f + 1}`, av: MJ(LOOK, f, false) })) },
+        { name: 'Facing left (mirrored)', frames: [0, 1, 2, 3].map(f => ({ label: `Frame ${f + 1}`, av: MJ(LOOK, f, true) })) },
+        { name: 'Other looks', frames: [
+          { label: 'Long, pink', av: MJ({ ...LOOK, hair: 'long', colors: { ...LOOK.colors, hair: '#E6C77A', top: '#F06C9B' } }, 0, false) },
+          { label: 'Bald', av: MJ({ ...LOOK, hair: 'bald', colors: { ...LOOK.colors, skin: '#7A4A2A', top: '#E3B23C' } }, 0, false) },
+          { label: 'Duck', av: MJ({ ...LOOK, hat: 'duck' }, 0, false) },
+          { label: 'Crown', av: MJ({ ...LOOK, hat: 'crown' }, 0, false) },
+        ] },
+      ],
+      trueSize: [0, 1, 2, 3].map(f => MJ(LOOK, f, false, 2)),
+    };
+  }
+}
+</script>
+</body>
+</html>

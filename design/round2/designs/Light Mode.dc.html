@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<link rel="stylesheet" href="tokens/colors.css">
+<link rel="stylesheet" href="tokens/colors-light.css">
+<link rel="stylesheet" href="tokens/typography.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<style>body{background:#E4E9F1;margin:0}a{color:#0B6E55}a:hover{color:#0047AB}[data-lbl2d] [style*="pad-tile"] > span:first-child,[data-lbl2d] label > span:first-child{text-transform:none!important}</style>
+</helmet>
+<section id="turn-4" ref="{{ rootRef }}" data-lbl2d="1" data-theme="light" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:48px;background:#E4E9F1;min-height:100vh;font-family:var(--font-sans);color:var(--text)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:780px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Round 2 · Piece 2</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0">Light mode</h1>
+    <p style="font:var(--type-body);color:var(--muted);margin:0">Ice ground, white tiles, navy ink and a cobalt bloom. Mint stays as the primary button fill. Anywhere mint was text or a line, light mode uses deep teal <code>#0B6E55</code>, through a new <code>--mint-fill</code> token that the primary button reads. The two decisions you asked to see both ways are first. Chosen: <a href="#4a">4a</a> frosted glass and <a href="#4c">4c</a> soft shadow. The full screen set below uses both.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+    <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="4">
+      <div id="{{ d.id }}" style="display:flex;flex-direction:column;gap:14px;width:410px">
+        <div style="display:flex;flex-direction:column;gap:6px;min-height:118px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid {{ d.badgeLine }};color:{{ d.badgeInk }}">{{ d.badge }}</span>
+            <span style="font:var(--type-title);letter-spacing:var(--tr-title)">{{ d.name }}</span>
+          </div>
+          <p style="font:var(--type-body);color:var(--muted);margin:0">{{ d.note }}</p>
+        </div>
+        <div style="padding:10px">
+          <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24;--glass-3:{{ d.glass }};--glass-line:{{ d.glassLine }};--glow-mint:{{ d.glow }}">
+            <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+            <div class="lc-grain"></div>
+            <div style="position:relative;height:100%;display:flex;flex-direction:column">
+              <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600;color:var(--text)">
+                <span class="lc-num">{{ d.clock }}</span>
+                <div style="display:flex;gap:5px;align-items:center">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+                </div>
+              </div>
+              <sc-if value="{{ d.isRecap }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+                  <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Last night</span>
+                  <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 9px">That was a night.</h1>
+                  <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 9px">
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ recapStart }}" ended-at="{{ recapEnd }}" hint-size="160px,52px"></x-import>
+                    <span style="font:var(--type-caption);color:var(--muted)">9:12 pm to 2:24 am</span>
+                  </div>
+                  <div style="background:var(--glass-3);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(18px);box-shadow:var(--shadow-inset-glass);padding:10px;display:flex;justify-content:center">
+                    <svg viewBox="0 0 340 360" width="260" height="214" style="display:block;overflow:visible">
+                      <path d="{{ routeD }}" fill="none" stroke="var(--mint)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".35"></path>
+                      <path d="{{ routeD }}" fill="none" stroke="var(--data-route)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <sc-for list="{{ stops }}" as="s" hint-placeholder-count="3"><circle cx="{{ s.x }}" cy="{{ s.y }}" r="7" fill="var(--pink)" stroke="#fff" stroke-width="2"></circle></sc-for>
+                    </svg>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px">
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="7" tone="drinks" hint-size="100%,72px"></x-import>
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="4" hint-size="100%,72px"></x-import>
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="11,204" hint-size="100%,72px"></x-import>
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Stops" value="3" hint-size="100%,72px"></x-import>
+                  </div>
+                  <div style="flex:1"></div>
+                  <div style="display:grid;gap:7px">
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" dc-props="{{ primaryProps }}" hint-size="100%,52px">Make a card</x-import>
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" full="{{ true }}" hint-size="100%,44px">Just save it</x-import>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ d.isStart }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 14px 20px">
+                  <canvas data-av="{{ startAv }}" style="width:96px;height:129px;image-rendering:pixelated;margin:0 0 18px -4px"></canvas>
+                  <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--mint-dim)">Last Call</span>
+                  <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:10px 0 12px">Track the night.<br>Piece it together later.</h1>
+                  <p style="font:var(--type-body);color:var(--muted);margin:0 0 22px;max-width:300px">Steps, stops, drinks and water. Kept on this phone, nowhere else.</p>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" dc-props="{{ primaryProps }}" hint-size="100%,52px">Start night</x-import>
+                </div>
+              </sc-if>
+              <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--muted);opacity:.5"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:6px;max-width:780px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">The screens in light</span>
+    <p style="font:var(--type-body);color:var(--muted);margin:0">Start, live night with the water warning, recap, history, the drink sheet, customise and the map. The status and navigation bars switch to dark icons. On Android that means setting APPEARANCE_LIGHT_STATUS_BARS and APPEARANCE_LIGHT_NAVIGATION_BARS whenever the light theme is on. The tracking notification is Android’s own, so it follows the phone’s theme.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+    <div data-screen-label="Start" style="padding:10px">
+      <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+        <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+        <div class="lc-grain"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column">
+          <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+            <span class="lc-num">20:58</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 14px 20px">
+            <canvas data-av="{{ startAv }}" style="width:96px;height:129px;image-rendering:pixelated;margin:0 0 18px -4px"></canvas>
+            <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--mint-dim)">Last Call</span>
+            <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:10px 0 12px">Track the night.<br>Piece it together later.</h1>
+            <p style="font:var(--type-body);color:var(--muted);margin:0 0 22px;max-width:300px">Steps, stops, drinks and water. Kept on this phone, nowhere else.</p>
+            <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" dc-props="{{ primaryProps }}" hint-size="100%,52px">Start night</x-import>
+          </div>
+          <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--muted);opacity:.5"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-screen-label="Live night" style="padding:10px">
+      <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+        <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+        <div class="lc-grain"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column">
+          <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+            <span class="lc-num">1:42</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+            </div>
+          </div>
+          <div style="flex:0 0 auto;margin:0 10px 4px;padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.78);backdrop-filter:blur(12px);border:1px solid var(--line);display:flex;align-items:center;gap:8px">
+            <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="circle-dot" size="13" color="var(--mint)" hint-size="13px,13px"></x-import>
+            <span style="font:var(--type-caption);color:var(--muted)">Last Call is tracking your night.</span>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;min-width:0">
+                <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint);margin-bottom:9px">On the night</span>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ liveStart }}" hint-size="200px,52px"></x-import>
+                <span style="font:var(--type-caption);color:var(--muted);margin-top:4px">Started 9:12 pm</span>
+              </div>
+              <canvas data-av="{{ liveAv }}" style="width:64px;height:86px;image-rendering:pixelated"></canvas>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="5" tone="drinks" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="0" tone="hydration" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="6,412" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Distance" value="4.1" unit="km" hint-size="100%,72px"></x-import>
+            </div>
+            <x-import component-from-global-scope="LastCallDesignSystem_b253fc.WarningBanner" heading="Five drinks since your last water." body="Takes ten seconds. Tomorrow says thanks." actions="{{ bannerActions }}" dc-props="{{ bannerProps }}" hint-size="100%,130px"></x-import>
+            <div style="flex:1"></div>
+            <div style="display:grid;gap:7px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" icon="{{ plusIcon }}" dc-props="{{ primaryProps }}" hint-size="100%,52px">Add drink</x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="pink" full="{{ true }}" icon="{{ dropIcon }}" hint-size="100%,44px">Hydrate</x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.NavPair" items="{{ liveNav }}" hint-size="100%,44px"></x-import>
+            </div>
+          </div>
+          <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--muted);opacity:.5"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-screen-label="Recap" style="padding:10px">
+      <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+        <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+        <div class="lc-grain"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column">
+          <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+            <span class="lc-num">2:24</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+            <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Last night</span>
+            <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 9px">That was a night.</h1>
+            <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 9px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ recapStart }}" ended-at="{{ recapEnd }}" hint-size="160px,52px"></x-import>
+              <span style="font:var(--type-caption);color:var(--muted)">9:12 pm to 2:24 am</span>
+            </div>
+            <div style="background:var(--glass-3);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(18px);box-shadow:var(--shadow-inset-glass);padding:10px;display:flex;justify-content:center">
+              <svg viewBox="0 0 340 360" width="260" height="214" style="display:block;overflow:visible">
+                <path d="{{ routeD }}" fill="none" stroke="var(--mint)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".35"></path>
+                <path d="{{ routeD }}" fill="none" stroke="var(--data-route)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                <sc-for list="{{ stops }}" as="s" hint-placeholder-count="3"><circle cx="{{ s.x }}" cy="{{ s.y }}" r="7" fill="var(--pink)" stroke="#fff" stroke-width="2"></circle></sc-for>
+              </svg>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="7" tone="drinks" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="4" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="11,204" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Stops" value="3" hint-size="100%,72px"></x-import>
+            </div>
+            <div style="flex:1"></div>
+            <div style="display:grid;gap:7px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" dc-props="{{ primaryProps }}" hint-size="100%,52px">Make a card</x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" full="{{ true }}" hint-size="100%,44px">Just save it</x-import>
+            </div>
+          </div>
+          <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--muted);opacity:.5"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-screen-label="History" style="padding:10px">
+      <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+        <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+        <div class="lc-grain"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column">
+          <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+            <span class="lc-num">11:30</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:9px">
+              <div style="display:flex;flex-direction:column">
+                <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">History</span>
+                <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 0">Eight weeks</h1>
+              </div>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" hint-size="72px,44px">Back</x-import>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Nights out" value="12" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="48" tone="drinks" hint-size="100%,72px"></x-import>
+            </div>
+            <div style="margin-top:9px;background:var(--glass-3);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(18px);box-shadow:var(--shadow-inset-glass);padding:14px 12px 10px">
+              <div style="display:flex;align-items:flex-end;gap:6px;height:92px">
+                <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="8">
+                  <div style="flex:1;display:flex;flex-direction:column;gap:6px;align-items:center">
+                    <div style="width:100%;height:{{ w.h }};border-radius:4px;background:{{ w.bg }}"></div>
+                    <span class="lc-num" style="font:var(--type-caption);font-size:11px;color:var(--muted)">{{ w.n }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint);margin:16px 0 8px">Nights</span>
+            <div style="display:grid;gap:6px">
+              <sc-for list="{{ nights }}" as="n" hint-placeholder-count="4">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.ListRow" date="{{ n.date }}" metrics="{{ n.metrics }}" hint-size="100%,44px"></x-import>
+              </sc-for>
+            </div>
+            <div style="flex:1"></div>
+            <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" full="{{ true }}" icon="{{ downloadIcon }}" hint-size="100%,44px">Export history</x-import>
+          </div>
+          <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--muted);opacity:.5"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-screen-label="Drink sheet" style="padding:10px">
+      <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+        <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+        <div class="lc-grain"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column">
+          <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+            <span class="lc-num">1:43</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+            <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint);margin-bottom:9px">On the night</span>
+            <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ liveStart }}" hint-size="200px,52px"></x-import>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="5" tone="drinks" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="1" hint-size="100%,72px"></x-import>
+            </div>
+          </div>
+        </div>
+        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.BottomSheet" open="{{ true }}" title="What are you having?" footer="{{ sheetFooter }}" hint-size="0px,0px">
+          <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Recent</span>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 14px">
+            <sc-for list="{{ recent }}" as="c" hint-placeholder-count="3">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ c.selected }}" on-click="{{ c.onClick }}" hint-size="64px,44px">{{ c.label }}</x-import>
+            </sc-for>
+          </div>
+          <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">All</span>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 14px">
+            <sc-for list="{{ allDrinks }}" as="c" hint-placeholder-count="4">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ c.selected }}" on-click="{{ c.onClick }}" hint-size="64px,44px">{{ c.label }}</x-import>
+            </sc-for>
+          </div>
+          <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Field" label="Something else" placeholder="Negroni" value="{{ custom }}" on-change="{{ setCustom }}" hint-size="100%,70px"></x-import>
+        </x-import>
+      </div>
+    </div>
+
+    <div data-screen-label="Customise" style="padding:10px">
+      <dc-import name="Customise Screen" theme="light" tab="items" hint-size="390px,845px"></dc-import>
+    </div>
+
+    <div data-screen-label="Map" style="padding:10px">
+      <div style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+        <div style="position:absolute;inset:0;background:var(--bloom-foot);pointer-events:none"></div>
+        <div class="lc-grain"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column">
+          <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+            <span class="lc-num">1:44</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+            </div>
+          </div>
+          <div style="flex:0 0 auto;margin:0 10px 4px;padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.78);backdrop-filter:blur(12px);border:1px solid var(--line);display:flex;align-items:center;gap:8px">
+            <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="circle-dot" size="13" color="var(--mint)" hint-size="13px,13px"></x-import>
+            <span style="font:var(--type-caption);color:var(--muted)">Last Call is tracking your night.</span>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px">
+              <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:0">Tonight</h1>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" icon="{{ backIcon }}" hint-size="90px,44px">Back</x-import>
+            </div>
+            <div style="position:relative;flex:1;min-height:0;border-radius:11px;overflow:hidden;background:#E8E8E6;border:1px solid var(--line)">
+              <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="0">
+                <div style="position:absolute;left:{{ t.left }};top:{{ t.top }};width:200px;height:200px;background-image:{{ t.bg }};background-size:cover"></div>
+              </sc-for>
+              <svg viewBox="0 0 340 360" width="330" height="350" style="position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);overflow:visible">
+                <path d="{{ routeD }}" fill="none" stroke="var(--mint)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="{{ routeD }}" fill="none" stroke="var(--data-route)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <sc-for list="{{ stops }}" as="s" hint-placeholder-count="3">
+                  <circle cx="{{ s.x }}" cy="{{ s.y }}" r="7.5" fill="var(--pink)" stroke="#fff" stroke-width="2.5"></circle>
+                </sc-for>
+                <circle cx="{{ head.x }}" cy="{{ head.y }}" r="16" fill="rgba(11,21,38,.10)"></circle>
+                <circle cx="{{ head.x }}" cy="{{ head.y }}" r="6" fill="var(--text)" stroke="#fff" stroke-width="2"></circle>
+              </svg>
+              <div style="position:absolute;left:50%;top:44%;width:330px;height:350px;transform:translate(-50%,-50%);pointer-events:none">
+                <sc-for list="{{ stops }}" as="s" hint-placeholder-count="0">
+                  <span style="position:absolute;left:{{ s.px }};top:{{ s.py }};font:700 13px/1 var(--font-sans);color:var(--pink);white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff">{{ s.name }}</span>
+                </sc-for>
+              </div>
+              <div style="position:absolute;left:0;right:0;bottom:0;padding:34px 12px 12px;background:var(--protect-bottom);display:flex;gap:18px;align-items:flex-end">
+                <sc-for list="{{ strip }}" as="m" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <span style="font:var(--type-label);color:var(--faint)">{{ m.label }}</span>
+                    <span class="lc-num" style="font:var(--type-stat);letter-spacing:var(--tr-stat);color:{{ m.ink }}">{{ m.value }}</span>
+                  </div>
+                </sc-for>
+                <span style="margin-left:auto;font:var(--type-caption);font-size:11px;color:var(--muted)">Esri</span>
+              </div>
+            </div>
+            <div style="margin-top:9px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" icon="{{ pinIcon }}" dc-props="{{ primaryProps }}" hint-size="100%,52px">Drop pin</x-import>
+            </div>
+          </div>
+          <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--muted);opacity:.5"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:780px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Hand back</span>
+    <p style="font:var(--type-body);color:var(--muted);margin:0"><code>tokens/colors-light.css</code> uses the same token names as <code>colors.css</code>, scoped to <code>[data-theme="light"]</code>, so the app can load both files and switch themes by setting one attribute. That also makes Match phone a single line. <code>tokens/colors.css</code> carries the dark round 2 changes: the 1b bloom, the darker glass and <code>#A3A3A3</code> labels. <code>tokens/typography.css</code> carries the 2d labels. Two component changes go with them. The primary Button reads <code>--mint-fill</code>, and StatTile, Field and the map strip drop their uppercase transform.</p>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  now = Date.now();
+  state = { pick: 'Pint', custom: '' };
+  componentDidMount() { const t = () => window.LCAvatar ? window.LCAvatar.drawAll(this.rootRef.current) : setTimeout(t, 60); t(); }
+  componentDidUpdate() { window.LCAvatar && window.LCAvatar.drawAll(this.rootRef.current); }
+  renderVals() {
+    const DS = window.LastCallDesignSystem_b253fc || {};
+    const icon = (name, size, color) => DS.Icon ? React.createElement(DS.Icon, { name, size, color }) : null;
+    const primaryProps = { style: { background: 'var(--mint-fill, var(--mint))' } };
+    const look = { hair: 'quiff', top: 'tee', glasses: 'round', shoes: 'plain', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true, colors: { skin: '#E8B48F', hair: '#3B2A20', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#0047AB', bottoms: '#2D3A4F', shoes: '#EDEDED' } };
+    const pts = [[40, 310], [72, 276], [98, 286], [128, 238], [150, 206], [192, 196], [214, 154], [252, 132], [270, 92], [302, 70]];
+    const routeD = pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ',' + p[1]).join(' ');
+    const stops = [[98, 286, 'The Grapes'], [192, 196, 'Peveril of the Peak'], [270, 92, 'Night & Day']].map(([x, y, name]) => ({ x, y, name, px: ((x + 14) * 330 / 340).toFixed(1) + 'px', py: ((y - 7) * 350 / 360).toFixed(1) + 'px' }));
+    const Z = 16, X0 = 32357, Y0 = 21196;
+    const tiles = [];
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) tiles.push({ bg: `url(https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${Z}/${Y0 + j}/${X0 + i})`, left: (i * 200 - 120) + 'px', top: (j * 200 - 60) + 'px' });
+    const W = [2, 1, 3, 0, 2, 1, 2, 1], max = 3;
+    const chip = (label) => ({ label, selected: this.state.pick === label, onClick: () => this.setState({ pick: label, custom: '' }) });
+    const glassA = 'rgba(255,255,255,.62)', lineA = 'rgba(0,71,171,.14)';
+    const glow = '0 6px 16px rgba(11,21,38,.14),0 1px 2px rgba(11,21,38,.10)';
+    return {
+      rootRef: this.rootRef,
+      primaryProps,
+      decisions: [
+        { id: '4a', badge: '4a · Chosen', badgeLine: 'var(--mint)', badgeInk: 'var(--mint)', name: 'Frosted glass', note: 'White at 62% with a cobalt hairline and the same 18px blur. The bloom shows faintly through, so glass still means “sits on the light” as it does in dark.', isRecap: true, glass: glassA, glassLine: lineA, glow, clock: '2:24' },
+        { id: '4b', badge: '4b', badgeLine: 'var(--line)', badgeInk: 'var(--faint)', name: 'Plain white card', note: 'Solid white with the neutral hairline. Simpler and cheaper to draw, but it looks the same as a stat tile, so the route card loses its status.', isRecap: true, glass: '#FFFFFF', glassLine: '#D5DDE9', glow, clock: '2:24' },
+        { id: '4c', badge: '4c · Chosen', badgeLine: 'var(--mint)', badgeInk: 'var(--mint)', name: 'Soft shadow under the button', note: 'A navy-tinted shadow, 6px down with 16px blur, replaces the mint glow. The primary button lifts off the Ice ground the way the glow lifts it off black.', isStart: true, glass: glassA, glassLine: lineA, glow, clock: '20:58' },
+        { id: '4d', badge: '4d', badgeLine: 'var(--line)', badgeInk: 'var(--faint)', name: 'No glow', note: 'Flat mint on Ice. It still reads as the primary action, but it sits on the page rather than above it, and next to white tiles it looks lighter than it should.', isStart: true, glass: glassA, glassLine: lineA, glow: 'none', clock: '20:58' },
+      ],
+      startAv: JSON.stringify({ look, opts: { scale: 3 } }),
+      liveAv: JSON.stringify({ look: { ...look, eyes: 'heavy', mouth: 'small', brows: 'soft', blush: false }, opts: { scale: 2 } }),
+      liveStart: this.now - (5 * 3600 + 12 * 60) * 1000,
+      recapStart: this.now - (5 * 3600 + 12 * 60) * 1000, recapEnd: this.now,
+      routeD, stops, head: { x: 302, y: 70 }, tiles,
+      weeks: W.map((v, i) => ({ n: i + 1, h: Math.max(3, v / max * 76) + 'px', bg: v === 0 ? 'var(--line)' : 'var(--mint)' })),
+      nights: [
+        ['Sat 2 Aug', '7 drinks', '5h 12m', '6.8 km'], ['Fri 25 Jul', '4 drinks', '3h 40m', '3.2 km'], ['Sat 19 Jul', '6 drinks', '4h 55m', '5.1 km'], ['Fri 11 Jul', '3 drinks', '2h 30m', '2.4 km'],
+      ].map(([date, d, t, k]) => ({ date, metrics: [{ value: d, tone: 'drinks' }, { value: t }, { value: k }] })),
+      strip: [{ label: 'Stops', value: '3', ink: 'var(--text)' }, { label: 'Drinks', value: '5', ink: 'var(--pink)' }, { label: 'Distance', value: '4.1 km', ink: 'var(--text)' }],
+      bannerProps: { style: { marginTop: 9, background: 'rgba(163,95,0,.06)' } },
+      bannerActions: DS.Button ? React.createElement(React.Fragment, null,
+        React.createElement(DS.Button, { variant: 'pink' }, 'Hydrate'),
+        React.createElement(DS.Button, { variant: 'secondary' }, 'Later')) : null,
+      plusIcon: icon('plus', 16, 'var(--mint-ink)'), dropIcon: icon('droplet', 15, 'var(--pink)'),
+      downloadIcon: icon('download', 15, 'var(--text)'), backIcon: icon('chevron-left', 16, 'var(--text)'), pinIcon: icon('map-pin', 16, 'var(--mint-ink)'),
+      liveNav: [{ label: 'Map', onClick: () => {} }, { label: 'End night', onClick: () => {} }],
+      recent: ['Pint', 'Wine', 'Spirit + mixer'].map(chip),
+      allDrinks: ['Shot', 'Cider', 'Cocktail', 'Low/no'].map(chip),
+      custom: this.state.custom, setCustom: (v) => this.setState({ custom: v }),
+      sheetFooter: DS.Button ? React.createElement(DS.Button, { full: true, style: primaryProps.style }, 'Add drink') : null,
+    };
+  }
+}
+</script>
+</body>
+</html>

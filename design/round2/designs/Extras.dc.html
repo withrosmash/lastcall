@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<link rel="stylesheet" href="tokens/colors.css">
+<link rel="stylesheet" href="tokens/colors-light.css">
+<link rel="stylesheet" href="tokens/typography.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<script src="share-card.js"></script>
+<style>body{background:#050505;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}</style>
+</helmet>
+<section id="turn-8" ref="{{ rootRef }}" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:64px;background:#050505;min-height:100vh;font-family:var(--font-sans);color:var(--text)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:800px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Round 2 · Piece 4</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0">Appearance, light card, first launch, icon</h1>
+  </div>
+
+  <div id="8a" style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:14px;width:410px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">8a</span>
+          <span style="font:var(--type-title);letter-spacing:var(--tr-title)">Settings · Appearance</span>
+        </div>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">Two choices, each with a small preview. Tapping one switches the whole screen straight away, so the choice is its own preview. Dark is the default.</p>
+      </div>
+      <div style="padding:10px">
+        <div data-theme="{{ appTheme }}" data-screen-label="Appearance" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24;color:var(--text);transition:background 240ms cubic-bezier(.16,.84,.44,1)">
+          <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+              <span class="lc-num">18:20</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+                <div style="display:flex;flex-direction:column">
+                  <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Settings</span>
+                  <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 0">Appearance</h1>
+                </div>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" hint-size="72px,44px">Back</x-import>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+                <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ t.onClick }}" aria-pressed="{{ t.selected }}" style="background:var(--surface);border:1px solid {{ t.border }};border-radius:11px;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text)" style-active="transform:scale(.98)">
+                    <div style="position:relative;width:64px;height:118px;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--line);background:{{ t.bgA }}">
+                      <div style="position:absolute;inset:0;background:{{ t.bgB }};clip-path:{{ t.clip }}"></div>
+                      <div style="position:absolute;left:8px;right:8px;top:14px;height:6px;border-radius:3px;background:{{ t.ink }};opacity:.8"></div>
+                      <div style="position:absolute;left:8px;width:22px;top:30px;height:18px;border-radius:4px;background:{{ t.tile }}"></div>
+                      <div style="position:absolute;right:8px;width:22px;top:30px;height:18px;border-radius:4px;background:{{ t.tile }}"></div>
+                      <div style="position:absolute;left:8px;right:8px;bottom:12px;height:12px;border-radius:4px;background:#7EE0C0"></div>
+                    </div>
+                    <span style="font:600 12px/1.2 var(--font-sans);color:{{ t.labelInk }}">{{ t.label }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <p style="font:var(--type-body);color:var(--muted);margin:16px 0 0">{{ themeNote }}</p>
+              <div style="flex:1"></div>
+            </div>
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="8b" style="display:flex;flex-direction:column;gap:14px;max-width:720px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">8b</span>
+          <span style="font:var(--type-title);letter-spacing:var(--tr-title)">Light share card</span>
+        </div>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">The Route card on the Ice ground, over Esri’s light grey map, with a cobalt bloom rising from the foot. The route is mint on a deep teal under-stroke, and stops and drinks use the darker pink. It is a card setting, separate from the app theme, so it becomes a Dark and Light pair of chips in the card builder. Photo cards keep their own text themes.</p>
+      </div>
+      <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+        <sc-for list="{{ lightCards }}" as="lc" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <canvas data-card="{{ lc.card }}" style="width:{{ lc.w }};height:{{ lc.h }};border-radius:11px;display:block"></canvas>
+            <span style="font:600 12px/1.2 var(--font-sans)">{{ lc.name }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div id="8c" style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:14px;width:410px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">8c</span>
+          <span style="font:var(--type-title);letter-spacing:var(--tr-title)">First launch</span>
+        </div>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">Four steps, one idea per screen. The avatar introduces itself and stays at the top of every step, reacting to each one. Each permission step says why the permission is needed and what still works without it. Tap through it.</p>
+      </div>
+      <div style="padding:10px">
+        <div data-screen-label="First launch" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+              <span class="lc-num">17:02</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px 20px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ stepDots }}" as="d" hint-placeholder-count="4"><span style="width:18px;height:4px;border-radius:999px;background:{{ d.bg }}"></span></sc-for>
+                </div>
+                <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" on-click="{{ back }}" hint-size="72px,44px">Back</x-import>
+                </sc-if>
+              </div>
+              <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center">
+                <canvas data-av="{{ step.av }}" style="width:128px;height:172px;image-rendering:pixelated"></canvas>
+              </div>
+              <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--mint-dim)">{{ step.eyebrow }}</span>
+              <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:10px 0 12px">{{ step.title }}</h1>
+              <p style="font:var(--type-body);color:var(--muted-up);margin:0 0 10px">{{ step.body }}</p>
+              <p style="font:var(--type-caption);color:var(--mint-dim);margin:0 0 22px">{{ step.note }}</p>
+              <div style="display:grid;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" on-click="{{ next }}" hint-size="100%,52px">{{ step.primary }}</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" full="{{ true }}" on-click="{{ skip }}" hint-size="100%,44px">{{ step.secondary }}</x-import>
+              </div>
+            </div>
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;max-width:560px">
+      <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">All four steps</span>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ stepList }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;gap:14px;align-items:center;background:#141414;border-radius:11px;padding:12px">
+            <canvas data-av="{{ s.av }}" style="width:48px;height:64px;image-rendering:pixelated;flex:0 0 auto"></canvas>
+            <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+              <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint)">{{ s.n }} · {{ s.eyebrow }}</span>
+              <span style="font:var(--type-body);font-weight:700">{{ s.title }}</span>
+              <span style="font:var(--type-caption);color:var(--muted-up)">{{ s.system }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div id="8d" style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:800px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">8d</span>
+        <span style="font:var(--type-title);letter-spacing:var(--tr-title)">App icon, splash and notification icon</span>
+      </div>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0">Three directions, each shown as a launcher icon with Android’s circle and rounded-square masks, at launcher size and at 48 px, plus the one-colour notification icon at true size (24 px) and enlarged. All three sit on the forest bloom. They don’t change with light mode, because Android launcher icons don’t follow the app theme. The notification icon doubles as the themed-icon layer for Material You.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+      <sc-for list="{{ icons }}" as="ic" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:14px;width:380px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid {{ ic.badgeLine }};color:{{ ic.badgeInk }};white-space:nowrap">{{ ic.badge }}</span>
+            <span style="font:var(--type-title);letter-spacing:var(--tr-title)">{{ ic.name }}</span>
+          </div>
+          <p style="font:var(--type-body);color:var(--muted-up);margin:0;min-height:88px">{{ ic.note }}</p>
+          <div style="display:flex;gap:16px;align-items:flex-end;background:#141414;border-radius:11px;padding:16px">
+            <canvas data-icon="{{ ic.big }}" style="width:144px;height:144px"></canvas>
+            <canvas data-icon="{{ ic.sq }}" style="width:96px;height:96px"></canvas>
+            <canvas data-icon="{{ ic.small }}" style="width:48px;height:48px"></canvas>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;background:#141414;border-radius:11px;padding:12px 16px">
+            <div style="display:flex;align-items:center;gap:8px;background:#000;border-radius:999px;padding:6px 12px">
+              <canvas data-icon="{{ ic.mono }}" style="width:24px;height:24px"></canvas>
+              <span style="font:var(--type-caption);color:#E6E6E6">Last Call is tracking your night.</span>
+            </div>
+            <canvas data-icon="{{ ic.monoBig }}" style="width:72px;height:72px;image-rendering:pixelated"></canvas>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div id="8e" style="display:flex;flex-direction:column;gap:10px">
+      <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Your face or the default face</span>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0;max-width:800px">The launcher icon and the system splash can’t be the user’s own face. Both platforms read them from a fixed file in the app, before any of the app’s code runs. So A uses a default face: the same character, in the brand colours. The hand-off is where it becomes yours. The system splash shows the default face in the icon circle. The app’s first frame then draws the user’s own avatar in the same spot, at the same size, and it waves. The notification’s large image and the recap are drawn by the app, so they use the user’s face too.</p>
+      <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+        <sc-for list="{{ splashes }}" as="sp" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="position:relative;width:234px;height:507px;border-radius:30px;overflow:hidden;background:{{ sp.bg }};box-shadow:0 0 0 6px #0b0f0d,0 0 0 7px #1d2a24;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <sc-if value="{{ sp.isIcon }}" hint-placeholder-val="{{ true }}"><canvas data-icon="{{ sp.icon }}" style="width:96px;height:96px"></canvas></sc-if>
+              <sc-if value="{{ sp.isAvatar }}" hint-placeholder-val="{{ false }}">
+                <div style="width:96px;height:96px;border-radius:50%;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background:{{ sp.disc }}">
+                  <canvas data-av="{{ sp.av }}" style="width:64px;height:86px;image-rendering:pixelated;margin-bottom:-18px"></canvas>
+                </div>
+              </sc-if>
+              <span style="position:absolute;bottom:34px;font:700 15px/1 var(--font-sans);letter-spacing:-.02em;color:{{ sp.mark }}">Last Call</span>
+            </div>
+            <span style="font:600 12px/1.2 var(--font-sans)">{{ sp.name }}</span>
+            <span style="font:var(--type-caption);color:var(--muted-up);max-width:234px">{{ sp.sub }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const LOOK = { hair: 'quiff', top: 'tee', glasses: 'round', shoes: 'plain', eyes: 'open', mouth: 'smile', brows: 'soft', colors: { skin: '#E8B48F', hair: '#3B2A20', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#21764F', bottoms: '#2D3A4F', shoes: '#EDEDED' } };
+const RP = [[40, 310], [72, 276], [98, 286], [128, 238], [150, 206], [192, 196], [214, 154], [252, 132], [270, 92], [302, 70]];
+const USER = { hair: 'pigtails', top: 'hoodie', glasses: 'none', hat: 'catears', colors: { skin: '#A96F45', hair: '#D95B7C', eyes: '#3D6FB0', cheeks: '#F4A6C0', top: '#E3B23C', bottoms: '#1E1E1E', shoes: '#EDEDED' } };
+const STEPS = [
+  { eyebrow: 'Last Call', title: 'This is you, roughly.', body: 'It lives on this phone and keeps you company on nights out. You can change how it looks whenever you like.', note: 'No account, no sign-up. Everything stays on the phone.', primary: 'Hello', secondary: 'Change the look first', av: { pose: 'wave', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }, system: 'No system prompt' },
+  { eyebrow: 'Location', title: 'Your phone will be in your pocket', body: 'Your phone will ask about location. Choose the option that allows it all the time, so the map keeps drawing with the screen off.', note: 'Your location never leaves the phone. Without it there’s no map, but drinks, water and time still work.', primary: 'Allow location', secondary: 'Skip, track without the map', av: { eyes: 'lookUp', mouth: 'ooh', brows: 'raised' }, system: 'Android: ACCESS_FINE_LOCATION, then ACCESS_BACKGROUND_LOCATION. iOS: When In Use, then Always' },
+  { eyebrow: 'Steps', title: 'Counting steps', body: 'Your phone will ask about motion and activity. That is the step counter, which is how the night gets its steps and the walk gets its pace.', note: 'Without it, there are no steps. Everything else still works.', primary: 'Allow steps', secondary: 'Skip steps', av: { eyes: 'wide', mouth: 'small', brows: 'raised' }, system: 'Android: ACTIVITY_RECOGNITION. iOS: Motion & Fitness' },
+  { eyebrow: 'Notifications', title: 'One quiet notification', body: 'While a night is running, a notification stays on your lock screen. It keeps tracking going, and you can log a drink or water from it without opening the app.', note: 'There are no other notifications and no reminders sent from anywhere else.', primary: 'Allow and start', secondary: 'Not now', av: { eyes: 'content', mouth: 'smile', brows: 'soft', blush: true }, system: 'Android: POST_NOTIFICATIONS and the tracking service notification. iOS: notifications and a Live Activity' },
+];
+
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  state = { theme: 'dark', step: 0 };
+  componentDidMount() {
+    const t = () => {
+      if (!(window.LCAvatar && window.LCCard)) return setTimeout(t, 60);
+      window.LCCard.onReady = () => { const r = this.rootRef.current; r && r.querySelectorAll('canvas[data-card]').forEach(cv => { cv.__k = null; }); this.paint(); };
+      this.paint();
+    };
+    t();
+    this.mq = window.matchMedia('(prefers-color-scheme: dark)');
+    this.mqh = () => this.forceUpdate(); this.mq.addEventListener && this.mq.addEventListener('change', this.mqh);
+  }
+  componentWillUnmount() { this.mq && this.mq.removeEventListener && this.mq.removeEventListener('change', this.mqh); }
+  componentDidUpdate() { this.paint(); }
+  paint() {
+    const root = this.rootRef.current; if (!root || !window.LCAvatar) return;
+    window.LCAvatar.drawAll(root);
+    root.querySelectorAll('canvas[data-card]').forEach(cv => { const k = cv.getAttribute('data-card'); if (cv.__k === k) return; window.LCCard.drawCard(cv, JSON.parse(k)); cv.__k = k; });
+    root.querySelectorAll('canvas[data-icon]').forEach(cv => { const k = cv.getAttribute('data-icon'); if (cv.__k === k) return; this.icon(cv, JSON.parse(k)); cv.__k = k; });
+  }
+  icon(cv, o) {
+    const S = o.px, d = window.devicePixelRatio || 1, P = Math.round(S * d);
+    cv.width = P; cv.height = P;
+    const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.clearRect(0, 0, P, P);
+    if (o.mono) return this.mono(c, P, o);
+    c.save();
+    c.beginPath();
+    if (o.mask === 'circle') c.arc(P / 2, P / 2, P / 2, 0, 7);
+    else { const r = P * .3; c.moveTo(r, 0); c.arcTo(P, 0, P, P, r); c.arcTo(P, P, 0, P, r); c.arcTo(0, P, 0, 0, r); c.arcTo(0, 0, P, 0, r); }
+    c.clip();
+    c.fillStyle = '#061710'; c.fillRect(0, 0, P, P);
+    let g = c.createRadialGradient(P / 2, P * .15, 0, P / 2, P * .15, P * .95);
+    g.addColorStop(0, '#35A26F'); g.addColorStop(.45, '#17553B'); g.addColorStop(1, '#061710');
+    c.fillStyle = g; c.fillRect(0, 0, P, P);
+    const route = (x, y, w, lw, pin = true) => {
+      const s = w / 340; c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round';
+      c.strokeStyle = '#04342C'; c.lineWidth = (lw + lw * .6) / s; c.beginPath(); RP.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+      c.strokeStyle = '#7EE0C0'; c.lineWidth = lw / s; c.stroke();
+      if (pin) { c.fillStyle = '#F06C9B'; c.beginPath(); c.arc(192, 196, lw * 1.25 / s, 0, 7); c.fill(); c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(302, 70, lw * 1.05 / s, 0, 7); c.fill(); }
+      c.restore();
+    };
+    if (o.kind === 'face') {
+      const s = Math.max(1, Math.floor(P * .66 / 28));
+      const off = document.createElement('canvas');
+      window.LCAvatar.draw(off, { ...LOOK, glasses: 'none', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }, { scale: s, crop: [2, 3, 28, 27] });
+      c.drawImage(off, Math.round((P - off.width) / 2), Math.round((P - off.height) / 2));
+    }
+    if (o.kind === 'route') route(P * .16, P * .15, P * .68, P * .075);
+    if (o.kind === 'combo') {
+      route(P * .1, P * .38, P * .8, P * .06, false);
+      const s = Math.max(1, Math.floor(P * .5 / 43));
+      window.LCAvatar.paint(c, { ...LOOK, glasses: 'none', eyes: 'happy', mouth: 'cat', brows: 'happy' }, (P - 32 * s) / 2 + P * .12, P * .72 - 43 * s * .8, s, false);
+    }
+    c.restore();
+  }
+  mono(c, P, o) {
+    const col = o.ink || '#FFFFFF';
+    if (o.kind === 'route') {
+      const s = P / 24; c.save(); c.scale(s, s); c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = col; c.lineWidth = 2.2;
+      c.beginPath(); [[3, 20], [6.5, 16.5], [8.5, 17.5], [11, 12.5], [14.5, 11.5], [16, 8], [20.5, 4]].forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+      c.fillStyle = col; c.beginPath(); c.arc(20.5, 4, 2.3, 0, 7); c.fill(); c.restore(); return;
+    }
+    const G = o.kind === 'combo'
+      ? ['....HHHH....', '..HHHHHHHH..', '.HHHHHHHHHH.', '.HHHHHHHHHH.', '.HH.HHHH.HH.', '.HH.HHHH.HH.', '.HHHHHHHHHH.', '..HHHHHHHH..', '...HHHHHH...', '............', 'HHH......HHH', '..HHHHHHHH..']
+      : ['....HHHH....', '..HHHHHHHH..', '.HHHHHHHHHH.', '.HHHHHHHHHH.', '.HH.HHHH.HH.', '.HH.HHHH.HH.', '.HHHHHHHHHH.', '.HHHH..HHHH.', '..HHHHHHHH..', '...HHHHHH...', '............', '............'];
+    const s = P / 12; c.fillStyle = col;
+    G.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'H') c.fillRect(x * s, (y + (o.kind === 'combo' ? 0 : 1)) * s, s, s); }));
+  }
+  renderVals() {
+    const st = this.state;
+    const sysDark = this.mq ? this.mq.matches : true;
+    const appTheme = st.theme;
+    const TH = [
+      { k: 'dark', label: 'Dark', bgA: '#000000', bgB: '#000000', clip: 'none', ink: '#FFFFFF', tile: '#141414' },
+      { k: 'light', label: 'Light', bgA: '#EEF2F8', bgB: '#EEF2F8', clip: 'none', ink: '#0B1526', tile: '#FFFFFF' },
+    ];
+    const s = STEPS[st.step];
+    const J = (o, sc = 4) => JSON.stringify({ look: { ...LOOK, ...o }, opts: { scale: sc } });
+    const IC = (kind, px, mask, extra) => JSON.stringify({ kind, px, mask, ...extra });
+    const card = (ratio) => JSON.stringify({ layout: 'route', theme: 'light', ratio, title: 'Leaving do', avatar: { look: { ...LOOK, eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true } } });
+    return {
+      rootRef: this.rootRef, appTheme,
+      themes: TH.map(t => ({ ...t, selected: st.theme === t.k, border: st.theme === t.k ? 'var(--mint)' : 'transparent', labelInk: st.theme === t.k ? 'var(--mint)' : 'var(--text)', onClick: () => this.setState({ theme: t.k }) })),
+      themeNote: st.theme === 'light' ? 'Easier to read in daylight. Dark saves battery on most phones and is kinder to your eyes in a dark room.' : 'The default. Saves battery on most phones and is kinder to your eyes in a dark room.',
+      lightCards: [
+        { name: 'Light · feed 4:5', w: '288px', h: '360px', card: card('feed') },
+        { name: 'Light · story 9:16', w: '288px', h: '512px', card: card('story') },
+      ],
+      step: { ...s, av: J(s.av) },
+      stepDots: STEPS.map((_, i) => ({ bg: i <= st.step ? 'var(--mint)' : 'var(--line)' })),
+      canBack: st.step > 0,
+      back: () => this.setState(x => ({ step: Math.max(0, x.step - 1) })),
+      next: () => this.setState(x => ({ step: (x.step + 1) % STEPS.length })),
+      skip: () => this.setState(x => ({ step: (x.step + 1) % STEPS.length })),
+      stepList: STEPS.map((x, i) => ({ ...x, n: i + 1, av: J(x.av, 1.5 > 1 ? 1 : 1) })).map((x, i) => ({ ...x, av: JSON.stringify({ look: { ...LOOK, ...STEPS[i].av }, opts: { scale: 3, crop: [0, 0, 32, 43] } }) })),
+      icons: [
+        { badge: 'A · Pick', badgeLine: 'var(--mint)', badgeInk: 'var(--mint)', name: 'The face', kind: 'face', note: 'The avatar’s face on the forest bloom. It is the one thing in the app nobody else has, it holds up at 48 px because it is already pixel art, and it ties the icon to what people see on every screen.' },
+        { badge: 'B', badgeLine: 'var(--line)', badgeInk: 'var(--faint)', name: 'The route', kind: 'route', note: 'The placeholder, finished: a mint route with a deep teal edge, a pink stop and the white position dot. It says what the app does, but route-line icons are common among run and walk trackers.' },
+        { badge: 'C', badgeLine: 'var(--line)', badgeInk: 'var(--faint)', name: 'Walking the route', kind: 'combo', note: 'The avatar standing on its route. It tells the most story, but the figure gets small at 48 px, and two ideas in one icon read as busy on a crowded home screen.' },
+      ].map(x => ({ ...x, big: IC(x.kind, 144, 'circle'), sq: IC(x.kind, 96, 'squircle'), small: IC(x.kind, 48, 'circle'), mono: IC(x.kind, 24, null, { mono: true }), monoBig: IC(x.kind, 72, null, { mono: true }) })),
+      splashes: [
+        { name: '1 · System splash, dark', sub: 'Drawn by the phone. Default face, true black.', bg: '#000000', mark: '#7EE0C0', isIcon: true, isAvatar: false, icon: IC('face', 96, 'circle') },
+        { name: '2 · First app frame, dark', sub: 'Drawn by the app. The user’s avatar takes the same spot and waves, then the home screen fades in.', bg: '#000000', mark: '#7EE0C0', isIcon: false, isAvatar: true, disc: 'radial-gradient(circle at 50% 15%,#35A26F,#17553B 45%,#061710)', av: J({ ...USER, pose: 'wave', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }, 2) },
+        { name: '1 · System splash, light', sub: 'Shown when the app is set to Light. Ice ground.', bg: '#EEF2F8', mark: '#0B6E55', isIcon: true, isAvatar: false, icon: IC('face', 96, 'circle') },
+        { name: '2 · First app frame, light', sub: 'Same hand-off on Ice, with the disc in cobalt.', bg: '#EEF2F8', mark: '#0B6E55', isIcon: false, isAvatar: true, disc: 'radial-gradient(circle at 50% 15%,#6F9BDB,#0047AB 55%,#062A66)', av: J({ ...USER, pose: 'wave', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }, 2) },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+/* Last Call — colour system.
+   Ground is true black (OLED battery + night vision, see readme).
+   Forest green is the brand hero: it owns depth, glass and glow.
+   Mint owns action. Pink and amber are data colours only. */
+:root{
+  /* Ground + neutrals (from the build's existing stylesheet) */
+  --bg:#000000;
+  --surface:#141414;
+  --surface-2:#0D0D0D;
+  --line:#262626;
+  --text:#FFFFFF;
+  --muted:#6B6B6B;
+  --muted-up:#8A8A8A; /* muted below 14px */
+  --faint:#4D4D4D;
+  --placeholder:#3A3A3A;
+
+  /* Forest — the hero ramp */
+  --forest-950:#030A07;
+  --forest-900:#061710;
+  --forest-800:#0A2419;
+  --forest-700:#0F3626;
+  --forest-600:#17553B;
+  --forest-500:#21764F; /* hero */
+  --forest-400:#35A26F;
+  --forest-300:#5FC79A;
+
+  /* Action + data */
+  --mint:#7EE0C0;
+  --mint-ink:#04342C;
+  --mint-dim:#4FB495;
+  --pink:#F06C9B;
+  --pink-ink:#3A0A1C;
+  --amber:#EF9F27;
+  --amber-ink:#2E1B00;
+
+  /* Forest glass — translucent surfaces that sit over bloom */
+  --glass-1:rgba(33,118,79,.10);
+  --glass-2:rgba(33,118,79,.18);
+  --glass-3:rgba(15,54,38,.55);
+  --glass-line:rgba(126,224,192,.14);
+  --glass-line-strong:rgba(126,224,192,.28);
+
+  /* Semantic aliases — prefer these in components */
+  --text-primary:var(--text);
+  --text-secondary:var(--muted);
+  --text-label:var(--faint);
+  --text-on-mint:var(--mint-ink);
+  --surface-screen:var(--bg);
+  --surface-tile:var(--surface);
+  --surface-sheet:var(--surface-2);
+  --surface-card:var(--glass-3);
+  --border-hairline:var(--line);
+  --border-glass:var(--glass-line);
+  --accent-action:var(--mint);
+  --accent-brand:var(--forest-500);
+  --data-drinks:var(--pink);
+  --data-hydration:var(--amber);
+  --data-route:var(--mint);
+  --data-position:var(--text);
+
+  /* Bloom — the ambient green light behind content */
+  --bloom-hero:radial-gradient(120% 80% at 50% 0%,rgba(33,118,79,.55) 0%,rgba(10,36,25,.35) 42%,rgba(0,0,0,0) 78%); /* @kind color */
+  --bloom-foot:radial-gradient(100% 60% at 50% 100%,rgba(33,118,79,.40) 0%,rgba(0,0,0,0) 70%); /* @kind color */
+  --bloom-mint:radial-gradient(60% 60% at 50% 50%,rgba(126,224,192,.28) 0%,rgba(126,224,192,0) 70%); /* @kind color */
+  --scrim:rgba(0,0,0,.62); /* @kind color */
+  --protect-bottom:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.70) 38%,rgba(0,0,0,0) 100%); /* @kind color */
+  --protect-top:linear-gradient(to bottom,rgba(0,0,0,.80) 0%,rgba(0,0,0,0) 100%); /* @kind color */
+}

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<style>body{background:#000;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}[data-lbl] [style*="pad-tile"] > span:first-child{text-transform:var(--lbl-tf)!important;font-variant-caps:var(--lbl-caps)!important}</style>
+</helmet>
+<section id="turn-2" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:40px;background:#050505;border-bottom:1px solid var(--line)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:760px">
+    <span style="font:600 12px/1.2 var(--font-sans);color:var(--mint-dim)">Round 2 · Piece 1, part 2</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0;color:var(--text)">Labels without spaced capitals</h1>
+    <p style="font:var(--type-body);color:var(--muted-up);margin:0">All four use the <a href="#1b">1b</a> bloom. Label grey goes up to <code>#A3A3A3</code>. Where “On the night” sits on the bloom that is about 4.9:1, compared with about 3.6:1 for <code>#8A8A8A</code>, and 7.3:1 on tiles. The same treatment applies to the eyebrow, the wordmark and the tile keys. Buttons keep their capitals for now.</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+    <sc-for list="{{ labelOpts }}" as="o" hint-placeholder-count="4">
+      <div id="{{ o.id }}" data-lbl="{{ o.id }}" style="display:flex;flex-direction:column;gap:20px;width:800px;--lbl-font:{{ o.font }};--lbl-tr:{{ o.tr }};--lbl-tf:{{ o.tf }};--lbl-caps:{{ o.caps }};--type-label:{{ o.tileFont }};--tr-label:{{ o.tileTr }};--faint:#A3A3A3">
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:640px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:#A3A3A3">{{ o.id }}</span>
+            <span style="font:var(--type-title);letter-spacing:var(--tr-title);color:var(--text)">{{ o.name }}</span>
+          </div>
+          <p style="font:var(--type-body);color:var(--muted-up);margin:0">{{ o.note }}</p>
+        </div>
+        <div style="display:flex;gap:20px">
+          <div style="position:relative;width:390px;height:845px;background:#000;border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+            <div style="position:absolute;inset:0;background:{{ heroB }};pointer-events:none"></div>
+            <div class="lc-grain"></div>
+            <div style="position:relative;height:100%;display:flex;flex-direction:column">
+              <div style="height:30px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600;color:var(--text)">
+                <span class="lc-num">1:42</span>
+                <div style="display:flex;gap:5px;align-items:center">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+                </div>
+              </div>
+              <div style="margin:0 10px 4px;padding:7px 10px;border-radius:9px;background:rgba(20,20,20,.72);backdrop-filter:blur(12px);border:1px solid var(--line);display:flex;align-items:center;gap:8px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="circle-dot" size="13" color="var(--mint)" hint-size="13px,13px"></x-import>
+                <span style="font:var(--type-caption);color:var(--muted-up)">Last Call is tracking your night.</span>
+              </div>
+              <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+                <span style="font:var(--lbl-font);letter-spacing:var(--lbl-tr);text-transform:var(--lbl-tf);font-variant-caps:var(--lbl-caps);color:#A3A3A3;margin-bottom:9px">On the night</span>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ startedAt }}" hint-size="100%,52px"></x-import>
+                <span style="font:var(--type-caption);color:var(--muted-up);display:block;margin:4px 0 9px">Started 9:12 pm</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="5" tone="drinks" hint-size="100%,72px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="1" hint-size="100%,72px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="6,412" hint-size="100%,72px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Distance" value="4.1" unit="km" hint-size="100%,72px"></x-import>
+                </div>
+                <div style="flex:1"></div>
+                <div style="display:grid;gap:7px">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" icon="{{ plusIcon }}" hint-size="100%,52px">Add drink</x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="pink" full="{{ true }}" icon="{{ dropIcon }}" hint-size="100%,44px">Hydrate</x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.NavPair" items="{{ liveNav }}" hint-size="100%,44px"></x-import>
+                </div>
+              </div>
+              <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:#2A2A2A"></div></div>
+            </div>
+          </div>
+          <div style="position:relative;width:390px;height:845px;background:#000;border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+            <div style="position:absolute;inset:0;background:{{ heroB }};pointer-events:none"></div>
+            <div class="lc-grain"></div>
+            <div style="position:relative;height:100%;display:flex;flex-direction:column">
+              <div style="height:30px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600;color:var(--text)">
+                <span class="lc-num">20:58</span>
+                <div style="display:flex;gap:5px;align-items:center">
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+                </div>
+              </div>
+              <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 14px 20px">
+                <span style="font:var(--lbl-font);letter-spacing:var(--lbl-tr);text-transform:var(--lbl-tf);font-variant-caps:var(--lbl-caps);color:var(--mint-dim)">Last Call</span>
+                <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:10px 0 12px;color:var(--text)">Track the night.<br>Piece it together later.</h1>
+                <p style="font:var(--type-body);color:var(--muted-up);margin:0 0 22px;max-width:300px">Steps, stops, drinks and water. Kept on this phone, nowhere else.</p>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" hint-size="100%,52px">Start night</x-import>
+              </div>
+              <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:#2A2A2A"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+<section id="turn-1" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:40px;background:#050505;min-height:100vh">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:760px">
+    <span class="lc-label" style="color:var(--mint-dim)">Round 2 · Piece 1</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0;color:var(--text)">A stronger forest bloom</h1>
+    <p style="font:var(--type-body);color:var(--muted-up);margin:0">Today’s bloom, then three stronger ones on the Live, Start and Recap screens. Each column has its <code>--bloom-hero</code>, <code>--bloom-foot</code> and glass values. Contrast is measured at the brightest point of each bloom. I recommend <a href="#1b">1b</a>.</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+    <sc-for list="{{ options }}" as="opt" hint-placeholder-count="4">
+      <div id="{{ opt.id }}" style="display:flex;flex-direction:column;gap:20px;width:390px">
+        <div style="display:flex;flex-direction:column;gap:10px;min-height:250px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;padding:5px 9px;border-radius:9px;border:1px solid {{ opt.badgeLine }};color:{{ opt.badgeInk }}">{{ opt.badge }}</span>
+            <span style="font:var(--type-title);letter-spacing:var(--tr-title);color:var(--text)">{{ opt.name }}</span>
+          </div>
+          <p style="font:var(--type-body);color:var(--muted-up);margin:0">{{ opt.note }}</p>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
+            <div style="background:#141414;border-radius:11px;padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="lc-label" style="color:#8A8A8A">Clock</span><span class="lc-num" style="font:var(--type-stat);letter-spacing:var(--tr-stat);color:var(--text)">{{ opt.cWhite }}</span></div>
+            <div style="background:#141414;border-radius:11px;padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="lc-label" style="color:#8A8A8A">Label, faint</span><span class="lc-num" style="font:var(--type-stat);letter-spacing:var(--tr-stat);color:{{ opt.faintInk }}">{{ opt.cFaint }}</span></div>
+            <div style="background:#141414;border-radius:11px;padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="lc-label" style="color:#8A8A8A">Label, up</span><span class="lc-num" style="font:var(--type-stat);letter-spacing:var(--tr-stat);color:var(--text)">{{ opt.cUp }}</span></div>
+          </div>
+        </div>
+        <div style="position:relative;width:390px;height:845px;background:#000;border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:{{ opt.hero }};pointer-events:none"></div>
+          <sc-if value="{{ grain }}" hint-placeholder-val="{{ true }}"><div class="lc-grain"></div></sc-if>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600;color:var(--text)">
+              <span class="lc-num">1:42</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="margin:0 10px 4px;padding:7px 10px;border-radius:9px;background:rgba(20,20,20,.72);backdrop-filter:blur(12px);border:1px solid var(--line);display:flex;align-items:center;gap:8px">
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="circle-dot" size="13" color="var(--mint)" hint-size="13px,13px"></x-import>
+              <span style="font:var(--type-caption);color:var(--muted-up)">Last Call is tracking your night.</span>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <span class="lc-label" style="color:{{ labelColor }};margin-bottom:9px">On the night</span>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ startedAt }}" hint-size="100%,52px"></x-import>
+              <span style="font:var(--type-caption);color:var(--muted-up);display:block;margin:4px 0 9px">Started 9:12 pm</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="5" tone="drinks" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="1" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="6,412" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Distance" value="4.1" unit="km" hint-size="100%,72px"></x-import>
+              </div>
+              <div style="flex:1"></div>
+              <div style="display:grid;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" icon="{{ plusIcon }}" hint-size="100%,52px">Add drink</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="pink" full="{{ true }}" icon="{{ dropIcon }}" hint-size="100%,44px">Hydrate</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.NavPair" items="{{ liveNav }}" hint-size="100%,44px"></x-import>
+              </div>
+            </div>
+            <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:#2A2A2A"></div></div>
+          </div>
+        </div>
+        <div style="position:relative;width:390px;height:845px;background:#000;border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:{{ opt.hero }};pointer-events:none"></div>
+          <sc-if value="{{ grain }}" hint-placeholder-val="{{ true }}"><div class="lc-grain"></div></sc-if>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600;color:var(--text)">
+              <span class="lc-num">20:58</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 14px 20px">
+              <span class="lc-label" style="color:var(--mint-dim)">Last Call</span>
+              <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:10px 0 12px;color:var(--text)">Track the night.<br>Piece it together later.</h1>
+              <p style="font:var(--type-body);color:var(--muted-up);margin:0 0 22px;max-width:300px">Steps, stops, drinks and water. Kept on this phone, nowhere else.</p>
+              <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" hint-size="100%,52px">Start night</x-import>
+            </div>
+            <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:#2A2A2A"></div></div>
+          </div>
+        </div>
+        <div style="position:relative;width:390px;height:845px;background:#000;border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:{{ opt.foot }};pointer-events:none"></div>
+          <sc-if value="{{ grain }}" hint-placeholder-val="{{ true }}"><div class="lc-grain"></div></sc-if>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600;color:var(--text)">
+              <span class="lc-num">2:24</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <span class="lc-label" style="color:{{ labelColor }}">Recap</span>
+              <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 9px;color:var(--text)">Sat 2 August · Deansgate</h1>
+              <div class="lc-num" style="font:var(--type-timer);letter-spacing:var(--tr-timer);color:var(--text);margin-bottom:9px">5:12:40</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="7" tone="drinks" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="4" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="11,204" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Distance" value="6.8" unit="km" hint-size="100%,72px"></x-import>
+              </div>
+              <div style="flex:1"></div>
+              <div style="background:{{ opt.glass }};border:1px solid {{ opt.glassLine }};border-radius:20px;backdrop-filter:blur(18px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);padding:14px;display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+                <span class="lc-label" style="color:var(--muted-up)">Stops · 3</span>
+                <sc-for list="{{ stops }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="map-pin" size="15" color="var(--pink)" hint-size="15px,15px"></x-import>
+                    <span style="font:var(--type-body);color:var(--text);flex:1">{{ s.name }}</span>
+                    <span class="lc-num" style="font:var(--type-caption);color:var(--muted-up)">{{ s.time }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:grid;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" icon="{{ shareIcon }}" hint-size="100%,52px">Make a card</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.NavPair" items="{{ recapNav }}" hint-size="100%,44px"></x-import>
+              </div>
+            </div>
+            <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:#2A2A2A"></div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span class="lc-label" style="color:#8A8A8A">Tokens</span>
+          <pre style="margin:0;padding:12px;background:#0D0D0D;border:1px solid var(--line);border-radius:11px;font:11.5px/1.6 ui-monospace,Menlo,monospace;color:var(--muted-up);white-space:pre-wrap;word-break:break-word">{{ opt.css }}</pre>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;grain&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Check&quot;},&quot;labelStepUp&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Check&quot;}}">
+class Component extends DCLogic {
+  startedAt = Date.now() - (5 * 3600 + 12 * 60) * 1000;
+  lum(hex) {
+    const c = hex.map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+    return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+  }
+  ratio(a, b) { const x = this.lum(a), y = this.lum(b); return ((Math.max(x, y) + .05) / (Math.min(x, y) + .05)).toFixed(1) + ':1'; }
+  // colour at the bloom core = layered stops composited over black
+  core(layers) {
+    let c = [0, 0, 0];
+    layers.forEach(([r, g, b, a]) => { c = [c[0] + (r - c[0]) * a, c[1] + (g - c[1]) * a, c[2] + (b - c[2]) * a]; });
+    return c.map(Math.round);
+  }
+  renderVals() {
+    const { Icon } = window.LastCallDesignSystem_b253fc || {};
+    const icon = (name, size, color) => Icon ? React.createElement(Icon, { name, size, color }) : null;
+    const raw = [
+      { id: 'ref', badge: 'Today', name: 'Current', note: 'For reference. The glow fades out before the stat tiles.',
+        core: [[33,118,79,.55]],
+        hero: 'radial-gradient(120% 80% at 50% 0%,rgba(33,118,79,.55) 0%,rgba(10,36,25,.35) 42%,rgba(0,0,0,0) 78%)',
+        foot: 'radial-gradient(100% 60% at 50% 100%,rgba(33,118,79,.40) 0%,rgba(0,0,0,0) 70%)',
+        glass: 'rgba(15,54,38,.55)', glassLine: 'rgba(126,224,192,.14)' },
+      { id: '1a', badge: '1a', name: 'Brief mock-up', note: 'The starting point from the brief, unchanged. Foot bloom scaled to match. The bright core washes out the top of the screen.',
+        core: [[53,162,111,.62]],
+        hero: 'radial-gradient(135% 95% at 50% 0%,rgba(53,162,111,.62) 0%,rgba(33,118,79,.44) 30%,rgba(10,36,25,.30) 60%,rgba(0,0,0,0) 88%)',
+        foot: 'radial-gradient(135% 80% at 50% 100%,rgba(53,162,111,.50) 0%,rgba(33,118,79,.36) 30%,rgba(10,36,25,.24) 60%,rgba(0,0,0,0) 88%)',
+        glass: 'rgba(15,54,38,.55)', glassLine: 'rgba(126,224,192,.16)' },
+      { id: '1b', badge: '1b · Recommended', name: 'Deep canopy', note: 'Two layers: a wide forest body that reaches past the tiles, plus a small brighter core at the top. More green overall than 1a, with less glare behind the clock. Glass goes slightly darker so it still stands off the bloom.',
+        core: [[33,118,79,.58],[53,162,111,.34]],
+        hero: 'radial-gradient(70% 34% at 50% 0%,rgba(53,162,111,.34) 0%,rgba(53,162,111,0) 100%),radial-gradient(140% 100% at 50% 0%,rgba(33,118,79,.58) 0%,rgba(23,85,59,.40) 34%,rgba(10,36,25,.26) 64%,rgba(0,0,0,0) 90%)',
+        foot: 'radial-gradient(70% 30% at 50% 100%,rgba(53,162,111,.26) 0%,rgba(53,162,111,0) 100%),radial-gradient(140% 85% at 50% 100%,rgba(33,118,79,.52) 0%,rgba(23,85,59,.34) 34%,rgba(10,36,25,.20) 64%,rgba(0,0,0,0) 90%)',
+        glass: 'rgba(6,23,16,.58)', glassLine: 'rgba(126,224,192,.18)' },
+      { id: '1c', badge: '1c', name: 'Full field', note: 'Green covers the whole screen and never quite goes black. The most brand colour, but tiles begin to look grey against it, and on OLED you give back some of the battery saving.',
+        core: [[53,162,111,.72]],
+        hero: 'radial-gradient(150% 110% at 50% 0%,rgba(53,162,111,.72) 0%,rgba(33,118,79,.52) 32%,rgba(15,54,38,.38) 62%,rgba(6,23,16,.22) 82%,rgba(0,0,0,0) 100%)',
+        foot: 'radial-gradient(150% 95% at 50% 100%,rgba(53,162,111,.62) 0%,rgba(33,118,79,.46) 32%,rgba(15,54,38,.32) 62%,rgba(0,0,0,0) 100%)',
+        glass: 'rgba(3,10,7,.60)', glassLine: 'rgba(126,224,192,.22)' }
+    ];
+    const options = raw.map(o => {
+      const bg = this.core(o.core);
+      const cFaint = this.ratio([77,77,77], bg);
+      return { ...o,
+        badgeLine: o.id === '1b' ? 'var(--mint)' : 'var(--line)',
+        badgeInk: o.id === '1b' ? 'var(--mint)' : '#8A8A8A',
+        cWhite: this.ratio([255,255,255], bg), cFaint, cUp: this.ratio([138,138,138], bg),
+        faintInk: parseFloat(cFaint) < 3 ? 'var(--amber)' : 'var(--text)',
+        css: `--bloom-hero: ${o.hero};\n\n--bloom-foot: ${o.foot};\n\n--glass-3: ${o.glass};\n--glass-line: ${o.glassLine};`
+      };
+    });
+    const labelOpts = [
+      { id: '2a', name: 'Sentence case', note: 'Written the way it reads: “On the night”, “Drinks”. 12px semibold with no tracking. The plainest option, and it matches the voice rule of sentence case in prose.',
+        font: '600 12px/1.2 var(--font-sans)', tr: '0', tf: 'none', caps: 'normal', tileFont: '600 12px/1.2 var(--font-sans)', tileTr: '0' },
+      { id: '2b', name: 'Small caps', note: 'Keeps the formal register of capitals at lowercase height, with light tracking. Roboto has true small caps (the smcp feature), so this needs no extra font. Check on a device, because some Android builds fake it.',
+        font: '600 12px/1.2 var(--font-sans)', tr: '.08em', tf: 'none', caps: 'all-small-caps', tileFont: '600 12px/1.2 var(--font-sans)', tileTr: '.08em' },
+      { id: '2c', name: 'Lowercase', note: 'Everything lowercase and slightly tightened: “on the night”, “last call”. Dry and understated, which suits the voice. It also contrasts with the tight headline type the way the spaced capitals used to.',
+        font: '500 13px/1.2 var(--font-sans)', tr: '-.01em', tf: 'lowercase', caps: 'normal', tileFont: '500 13px/1.2 var(--font-sans)', tileTr: '-.01em' },
+      { id: '2d', name: 'Quiet heading', note: 'The eyebrow becomes a small bold heading in label grey (15px, −0.02em), so the top of the screen reads as two sizes of one voice. Tile keys drop to 12px semibold so they stay below the numbers.',
+        font: '700 15px/1.2 var(--font-sans)', tr: '-.02em', tf: 'none', caps: 'normal', tileFont: '600 12px/1.2 var(--font-sans)', tileTr: '0' }
+    ];
+    return {
+      labelOpts,
+      heroB: raw[2].hero,
+      options,
+      startedAt: this.startedAt,
+      grain: this.props.grain ?? true,
+      labelColor: (this.props.labelStepUp ?? true) ? 'var(--muted-up)' : 'var(--faint)',
+      plusIcon: icon('plus', 16, 'var(--mint-ink)'),
+      dropIcon: icon('droplet', 15, 'var(--pink)'),
+      shareIcon: icon('share-2', 16, 'var(--mint-ink)'),
+      liveNav: [{ label: 'Map', onClick: () => {} }, { label: 'End night', onClick: () => {} }],
+      recapNav: [{ label: 'History', onClick: () => {} }, { label: 'Home', onClick: () => {} }],
+      stops: [{ name: 'The Grapes', time: '9:40 pm' }, { name: 'Peveril of the Peak', time: '11:05 pm' }, { name: 'Night & Day', time: '12:30 am' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

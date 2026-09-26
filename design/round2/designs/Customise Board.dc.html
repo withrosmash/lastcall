@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<style>body{background:#050505;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}</style>
+</helmet>
+<section id="turn-3" ref="{{ rootRef }}" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:40px;background:#050505;min-height:100vh;font-family:var(--font-sans)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:760px">
+    <span style="font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:#A3A3A3">Round 2 · Customise screen</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0;color:var(--text)">Customise</h1>
+    <p style="font:var(--type-body);color:var(--muted-up);margin:0">One screen shown in four states, and each phone works. The preview stays at the top on the bloom, and tapping it cycles through expressions so you can check them against glasses. The chip row switches sections. Locked items show as grey silhouettes with the badge that earns them, and tapping one opens a sheet with your progress. Colours keep the quick swatches and add three sliders for colour, strength and shade.</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+    <sc-for list="{{ states }}" as="st" hint-placeholder-count="4">
+      <div id="{{ st.id }}" data-screen-label="{{ st.label }}" style="display:flex;flex-direction:column;gap:14px;width:410px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:#A3A3A3">{{ st.id }}</span>
+          <span style="font:var(--type-title);letter-spacing:var(--tr-title);color:var(--text)">{{ st.label }}</span>
+        </div>
+        <div style="padding:10px">
+          <dc-import name="Customise Screen" tab="{{ st.tab }}" sheet="{{ st.sheet }}" hint-size="390px,845px"></dc-import>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <sc-for list="{{ sheets }}" as="sh" hint-placeholder-count="2">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:6px;max-width:760px">
+        <span style="font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:#A3A3A3">{{ sh.title }}</span>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">{{ sh.note }}</p>
+      </div>
+      <div style="position:relative;overflow:hidden;border-radius:20px;padding:28px 24px 24px;background:#000;display:flex;flex-wrap:wrap;gap:22px 14px">
+        <div style="position:absolute;inset:0;background:radial-gradient(70% 34% at 50% 0%,rgba(53,162,111,.34) 0%,rgba(53,162,111,0) 100%),radial-gradient(140% 100% at 50% 0%,rgba(33,118,79,.58) 0%,rgba(23,85,59,.40) 34%,rgba(10,36,25,.26) 64%,rgba(0,0,0,0) 90%);pointer-events:none"></div>
+        <sc-for list="{{ sh.items }}" as="c" hint-placeholder-count="8">
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:104px">
+            <canvas data-av="{{ c.av }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas>
+            <span style="font:600 12px/1.2 var(--font-sans);color:var(--text)">{{ c.name }}</span>
+            <span style="font:var(--type-caption);color:var(--muted-up);text-align:center">{{ c.sub }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:760px">
+      <span style="font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:#A3A3A3">Before light mode</span>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0">The avatar on black with the 1b bloom and on the Ice ground with the cobalt bloom. Its outlines are darker tones of each part, so it holds on both grounds with no changes. Very dark part colours are the risky case on black, because a darker outline disappears. When a part is near black, the engine now lightens its outline instead of darkening it, which you can see on the second avatar. This needs a decision in the art pass.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:20px">
+      <sc-for list="{{ grounds }}" as="gr" hint-placeholder-count="2">
+        <div style="position:relative;overflow:hidden;border-radius:20px;width:640px;max-width:100%;padding:28px 24px 20px;background:{{ gr.bg }};display:flex;flex-direction:column;gap:16px">
+          <div style="position:absolute;inset:0;background:{{ gr.bloom }};pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <span style="position:relative;font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:{{ gr.ink }}">{{ gr.name }}</span>
+          <div style="position:relative;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <sc-for list="{{ gr.avs }}" as="a" hint-placeholder-count="5">
+              <canvas data-av="{{ a }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  componentDidMount() { const t = () => window.LCAvatar ? window.LCAvatar.drawAll(this.rootRef.current) : setTimeout(t, 60); t(); }
+  componentDidUpdate() { window.LCAvatar && window.LCAvatar.drawAll(this.rootRef.current); }
+  renderVals() {
+    const base = { hair: 'quiff', top: 'tee', glasses: 'round', shoes: 'plain', eyes: 'open', mouth: 'smile', brows: 'soft', colors: { skin: '#E8B48F', hair: '#3B2A20', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#21764F', bottoms: '#2D3A4F', shoes: '#EDEDED' } };
+    const looks = [
+      base,
+      { ...base, hair: 'curly', glasses: 'none', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true, colors: { ...base.colors, skin: '#7A4A2A', hair: '#1E1A18', top: '#1E1E1E', bottoms: '#1E1E1E', shoes: '#1E1E1E' } },
+      { ...base, hair: 'long', glasses: 'none', hat: 'party', eyes: 'heart', mouth: 'open', brows: 'raised', colors: { ...base.colors, skin: '#F6D5BD', hair: '#E6C77A', top: '#EDEDED', bottoms: '#3D6FB0', shoes: '#F06C9B' } },
+      { ...base, hair: 'bun', glasses: 'sun', top: 'hoodie', colors: { ...base.colors, skin: '#D19A6E', hair: '#D95B7C', top: '#E3B23C', bottoms: '#1E1E1E' } },
+      { ...base, hair: 'bald', glasses: 'browline', top: 'jacket', held: 'bottle', eyes: 'star', mouth: 'wide', brows: 'raised', colors: { ...base.colors, skin: '#A96F45', hair: '#1E1A18', top: '#8B3A3A', bottoms: '#EDEDED' } },
+    ];
+    const avs = looks.map(look => JSON.stringify({ look, opts: { scale: 3 } }));
+    const A = (o) => JSON.stringify({ look: { ...base, glasses: 'none', ...o }, opts: { scale: 3 } });
+    const hairs = [['short', 'Short'], ['long', 'Long'], ['bun', 'Bun'], ['quiff', 'Quiff', 'Redrawn'], ['curly', 'Curly', 'Redrawn'], ['scruffy', 'Scruffy', 'New'], ['mohawk', 'Mohawk', 'New'], ['pigtails', 'Pigtails', 'New'], ['bald', 'Bald']];
+    const items = [
+      ['Sunglasses', 'First Dare', { glasses: 'sun' }], ['Cap', 'Early Doors', { hat: 'cap' }], ['Party hat', 'Game On', { hat: 'party' }],
+      ['Headphones', 'No Notes', { hat: 'headphones' }], ['Bucket hat', 'Ringleader', { hat: 'bucket' }], ['Cowboy hat', 'Long Haul', { hat: 'cowboy', hair: 'long' }],
+      ['Crown', 'Hidden badge', { hat: 'crown' }], ['Cat ears', 'Nine Lives', { hat: 'catears', hair: 'bun' }], ['Duck', 'Just Add Water', { hat: 'duck', eyes: 'happy', mouth: 'cat', blush: true }],
+      ['Dinosaur', 'Big Stomp', { hat: 'dino', mouth: 'open', brows: 'determined' }], ['Panda', 'Snack Break', { hat: 'panda', eyes: 'content', mouth: 'cat', blush: true }],
+      ['Elvis', 'Left the Building', { costume: 'elvis', mouth: 'smile', brows: 'raised' }], ['Water bottle', 'Hydro Homie', { held: 'bottle' }], ['Pizza slice', 'Late Bite', { held: 'pizza', mouth: 'open' }],
+      ['Balloon', 'Anniversary', { held: 'balloon', eyes: 'star', mouth: 'wide' }], ['Trainers', '10K · redrawn', { shoes: 'trainers' }],
+      ['Dress', 'Redrawn top', { top: 'dress', hair: 'pigtails', colors: { ...base.colors, top: '#F06C9B' } }],
+    ];
+    return {
+      sheets: [
+        { title: 'Hair styles', note: 'Nine styles. Quiff and curly are redrawn, and scruffy, mohawk and pigtails are new.', items: hairs.map(([k, name, sub]) => ({ name, sub: sub || '', av: A({ hair: k }) })) },
+        { title: 'Every item, worn', note: 'Every item in full colour, as it looks once earned. Dinosaur, panda, pizza slice and balloon are new. Cat ears and trainers are redrawn. Locked items stay as silhouettes on the customise screen.', items: items.map(([name, sub, o]) => ({ name, sub, av: A(o) })) },
+      ],
+      rootRef: this.rootRef,
+      states: [
+        { id: '3a', label: 'Hair', tab: 'hair', sheet: '' },
+        { id: '3b', label: 'Items', tab: 'items', sheet: '' },
+        { id: '3c', label: 'Colours', tab: 'colours', sheet: '' },
+        { id: '3d', label: 'Locked item', tab: 'items', sheet: 'party' },
+      ],
+      grounds: [
+        { name: 'Dark · black with 1b bloom', bg: '#000', ink: '#A3A3A3', avs,
+          bloom: 'radial-gradient(70% 34% at 50% 0%,rgba(53,162,111,.34) 0%,rgba(53,162,111,0) 100%),radial-gradient(140% 100% at 50% 0%,rgba(33,118,79,.58) 0%,rgba(23,85,59,.40) 34%,rgba(10,36,25,.26) 64%,rgba(0,0,0,0) 90%)' },
+        { name: 'Light · Ice with cobalt bloom', bg: '#EEF2F8', ink: '#4A576B', avs,
+          bloom: 'radial-gradient(120% 80% at 50% 0%,rgba(0,71,171,.30) 0%,rgba(0,71,171,.12) 45%,rgba(0,71,171,0) 80%)' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<link rel="stylesheet" href="tokens/colors.css">
+<link rel="stylesheet" href="tokens/typography.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<style>body{background:#050505;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}</style>
+</helmet>
+<section id="turn-5" ref="{{ rootRef }}" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:56px;background:#050505;min-height:100vh;font-family:var(--font-sans);color:var(--text)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:800px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Round 2 · Piece 3</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0">Avatar reference</h1>
+    <p style="font:var(--type-body);color:var(--muted-up);margin:0">Every head item on every hair style, then every expression at phone and watch size. All art is drawn live from <code>avatar-draw.js</code> on the 32 × 43 grid, so what you see here is what the engine draws.</p>
+  </div>
+
+  <div id="5a" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:800px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">5a</span>
+        <span style="font:var(--type-title);letter-spacing:var(--tr-title)">Head items × hair styles</span>
+      </div>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0">Items with a brim (cap, bucket hat, cowboy hat) cut the hair off above the brim line, so only hair that sticks out below it shows: curly and long at the sides, pigtails in their bunches. Hoods (duck, dinosaur, panda) replace the hair completely. Party hat, crown, cat ears and headphones sit on top, so the whole style still shows. The bun is hidden under brims and under the party hat. The headphone band is now a lighter grey, so it reads against dark hair.</p>
+    </div>
+    <div style="position:relative;overflow:hidden;border-radius:20px;background:#000;padding:20px;width:max-content">
+      <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+      <div class="lc-grain"></div>
+      <div style="position:relative;display:grid;grid-template-columns:96px repeat(9,76px);gap:6px;align-items:center">
+        <span></span>
+        <sc-for list="{{ hairCols }}" as="h" hint-placeholder-count="9">
+          <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint);text-align:center;padding-bottom:4px">{{ h }}</span>
+        </sc-for>
+        <sc-for list="{{ grid }}" as="row" hint-placeholder-count="10">
+          <span style="font:600 12px/1.2 var(--font-sans);color:var(--text)">{{ row.name }}</span>
+          <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="9">
+            <div style="height:68px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center">
+              <canvas data-av="{{ c }}" style="width:64px;height:60px;image-rendering:pixelated"></canvas>
+            </div>
+          </sc-for>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div id="5b" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:800px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">5b</span>
+        <span style="font:var(--type-title);letter-spacing:var(--tr-title)">Expressions</span>
+      </div>
+      <p style="font:var(--type-body);color:var(--muted-up);margin:0">Each named expression at phone size (3×, 96 px wide), with ordinary glasses and with sunglasses, and at watch size, where the face crop (24 × 20) is the whole character at 1×. Glasses frames sit outside the 4 × 5 eye, so hearts and stars show through. Sunglasses hide the eyes, so for big reactions (hearts, stars, surprised, puppy) they push up onto the head, and for small ones the brows carry the expression. The watch column is shown at true size and at 3×.</p>
+    </div>
+    <div style="position:relative;overflow:hidden;border-radius:20px;background:#000;padding:20px;width:max-content">
+      <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+      <div class="lc-grain"></div>
+      <div style="position:relative;display:grid;grid-template-columns:120px repeat(3,104px) 40px 84px;gap:8px 10px;align-items:center">
+        <span></span>
+        <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint);text-align:center">Phone</span>
+        <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint);text-align:center">Glasses</span>
+        <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint);text-align:center">Sunglasses</span>
+        <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint);text-align:center">Watch</span>
+        <span style="font:600 12px/1.2 var(--font-sans);color:var(--faint);text-align:center">Watch 3×</span>
+        <sc-for list="{{ expressions }}" as="e" hint-placeholder-count="12">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font:600 12px/1.2 var(--font-sans);color:var(--text)">{{ e.name }}</span>
+            <span style="font:var(--type-caption);color:var(--muted-up)">{{ e.key }}</span>
+          </div>
+          <div style="height:136px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ e.plain }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas></div>
+          <div style="height:136px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ e.glasses }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas></div>
+          <div style="height:136px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ e.sun }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas></div>
+          <div style="height:136px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ e.watch }}" style="width:24px;height:20px;image-rendering:pixelated"></canvas></div>
+          <div style="height:136px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ e.watch3 }}" style="width:72px;height:60px;image-rendering:pixelated"></canvas></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  componentDidMount() { const t = () => window.LCAvatar ? window.LCAvatar.drawAll(this.rootRef.current) : setTimeout(t, 60); t(); }
+  componentDidUpdate() { window.LCAvatar && window.LCAvatar.drawAll(this.rootRef.current); }
+  renderVals() {
+    const base = { hair: 'short', top: 'tee', glasses: 'none', shoes: 'plain', eyes: 'open', mouth: 'smile', brows: 'soft', colors: { skin: '#E8B48F', hair: '#7A4B2A', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#3D6FB0', bottoms: '#8B3A3A', shoes: '#EDEDED' } };
+    const J = (look, opts) => JSON.stringify({ look, opts });
+    const HAIRS = [['short', 'Short'], ['long', 'Long'], ['bun', 'Bun'], ['quiff', 'Quiff'], ['curly', 'Curly'], ['scruffy', 'Scruffy'], ['mohawk', 'Mohawk'], ['pigtails', 'Pigtails'], ['bald', 'Bald']];
+    const HATS = [['', 'No item'], ['cap', 'Cap'], ['bucket', 'Bucket hat'], ['cowboy', 'Cowboy hat'], ['party', 'Party hat'], ['crown', 'Crown'], ['headphones', 'Headphones'], ['catears', 'Cat ears'], ['duck', 'Duck'], ['dino', 'Dinosaur'], ['panda', 'Panda']];
+    const head = [0, 0, 32, 30];
+    const grid = HATS.map(([hat, name]) => ({ name, cells: HAIRS.map(([h]) => J({ ...base, hair: h, hat: hat || null }, { scale: 2, crop: head })) }));
+    const EX = [
+      ['Resting', 'open', 'smile', 'soft'], ['Happy', 'happy', 'cat', 'happy', true], ['Content', 'content', 'smile', 'soft', true],
+      ['Surprised', 'wide', 'ooh', 'raised', false, true], ['Puppy', 'puppy', 'small', 'raised', false, true], ['Hearts', 'heart', 'open', 'raised', true, true],
+      ['Stars', 'star', 'wide', 'raised', false, true], ['Wink', 'wink', 'smile', 'happy'], ['Heavy lids', 'heavy', 'flat', 'soft'],
+      ['Blink', 'shut', 'smile', 'soft'], ['Look left', 'lookL', 'smile', 'soft'], ['Look right', 'lookR', 'smile', 'soft'], ['Look up', 'lookUp', 'ooh', 'raised'],
+      ['Determined', 'heavy', 'flat', 'determined'],
+    ];
+    const face = [4, 10, 24, 20];
+    const expressions = EX.map(([name, eyes, mouth, brows, blush, big]) => {
+      const l = { ...base, eyes, mouth, brows, blush: !!blush };
+      return {
+        name, key: `${eyes} · ${mouth} · ${brows}`,
+        plain: J(l, { scale: 3 }),
+        glasses: J({ ...l, glasses: 'round' }, { scale: 3 }),
+        sun: J({ ...l, glasses: 'sun', glassesUp: !!big }, { scale: 3 }),
+        watch: J(l, { scale: 1, crop: face }),
+        watch3: J(l, { scale: 3, crop: face }),
+      };
+    });
+    return { rootRef: this.rootRef, hairCols: HAIRS.map(h => h[1]), grid, expressions };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<link rel="stylesheet" href="tokens/colors.css">
+<link rel="stylesheet" href="tokens/colors-light.css">
+<link rel="stylesheet" href="tokens/typography.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<style>body{background:#000;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}</style>
+</helmet>
+<div ref="{{ rootRef }}" data-theme="{{ theme }}" data-screen-label="Customise" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24;font-family:var(--font-sans);color:var(--text)">
+  <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+  <div class="lc-grain"></div>
+  <div style="position:relative;height:100%;display:flex;flex-direction:column">
+    <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+      <span class="lc-num">18:04</span>
+      <div style="display:flex;gap:5px;align-items:center">
+        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+      </div>
+    </div>
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px 0">
+      <span style="font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:var(--faint)">Customise</span>
+      <button type="button" onClick="{{ onPoke }}" style="flex:0 0 auto;height:188px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;padding:0 0 4px" style-active="transform:scale(.98)">
+        <canvas data-av="{{ previewAv }}" style="width:128px;height:172px;image-rendering:pixelated"></canvas>
+      </button>
+      <span style="font:var(--type-caption);color:var(--muted-up);text-align:center;margin:4px 0 12px">{{ exprName }} · tap for another face</span>
+      <div style="display:flex;gap:7px;overflow-x:auto;flex:0 0 auto;margin:0 -14px;padding:0 14px 9px;scrollbar-width:none">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+          <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ t.selected }}" on-click="{{ t.onClick }}" hint-size="64px,44px">{{ t.label }}</x-import>
+        </sc-for>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;margin:0 -14px;padding:0 14px 12px;scrollbar-width:none">
+        <sc-if value="{{ showGrid }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
+            <sc-for list="{{ tiles }}" as="it" hint-placeholder-count="6">
+              <sc-if value="{{ it.isHeader }}" hint-placeholder-val="{{ false }}">
+                <span style="grid-column:1 / -1;font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:var(--faint);padding:7px 0 2px">{{ it.name }}</span>
+              </sc-if>
+              <sc-if value="{{ it.isTile }}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{ it.onClick }}" style="background:var(--surface);border:1px solid {{ it.border }};border-radius:11px;padding:10px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:112px;text-align:center" style-active="transform:scale(.98)">
+                <div style="height:{{ it.boxH }};display:flex;align-items:center;justify-content:center">
+                  <canvas data-av="{{ it.av }}" style="image-rendering:pixelated"></canvas>
+                </div>
+                <span style="font:600 12px/1.2 var(--font-sans);color:{{ it.nameInk }}">{{ it.name }}</span>
+                <sc-if value="{{ it.hasSub }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:flex;align-items:center;gap:4px;font:var(--type-caption);color:var(--muted-up)">
+                    <sc-if value="{{ it.locked }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="lock" size="11" color="var(--muted-up)" hint-size="11px,11px"></x-import></sc-if>
+                    {{ it.sub }}
+                  </span>
+                </sc-if>
+              </button>
+              </sc-if>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isColours }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:7px;overflow-x:auto;margin:0 -14px;padding:0 14px;scrollbar-width:none">
+              <sc-for list="{{ slots }}" as="s" hint-placeholder-count="7">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Chip" selected="{{ s.selected }}" on-click="{{ s.onClick }}" hint-size="64px,44px">
+                  <span style="width:12px;height:12px;border-radius:999px;background:{{ s.hex }};box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)"></span>{{ s.label }}
+                </x-import>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <sc-for list="{{ swatches }}" as="w" hint-placeholder-count="8">
+                <button type="button" onClick="{{ w.onClick }}" aria-label="{{ w.hex }}" style="width:44px;height:44px;border-radius:999px;border:1px solid {{ w.ring }};display:flex;align-items:center;justify-content:center" style-active="transform:scale(.98)">
+                  <span style="width:32px;height:32px;border-radius:999px;background:{{ w.hex }};box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)"></span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <sc-for list="{{ sliders }}" as="sl" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column">
+                  <div style="display:flex;justify-content:space-between;font:600 12px/1.2 var(--font-sans);color:var(--faint)"><span>{{ sl.label }}</span><span class="lc-num" style="color:var(--muted-up);font-weight:400">{{ sl.value }}</span></div>
+                  <div onPointerDown="{{ sl.onDown }}" onPointerMove="{{ sl.onMove }}" style="position:relative;height:44px;touch-action:none;cursor:pointer;display:flex;align-items:center">
+                    <div style="position:absolute;left:0;right:0;height:10px;border-radius:999px;background:{{ sl.track }};box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)"></div>
+                    <div style="position:absolute;left:{{ sl.pct }};width:24px;height:24px;margin-left:-12px;border-radius:999px;background:{{ sl.thumb }};box-shadow:0 0 0 3px var(--bg),0 0 0 4px var(--faint)"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="flex:0 0 auto;display:grid;gap:7px;padding:9px 0 16px">
+        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" dc-props="{{ primaryProps }}" on-click="{{ onSave }}" hint-size="100%,52px">{{ saveLabel }}</x-import>
+        <x-import component-from-global-scope="LastCallDesignSystem_b253fc.NavPair" items="{{ nav }}" hint-size="100%,44px"></x-import>
+      </div>
+    </div>
+    <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+  </div>
+  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.BottomSheet" open="{{ sheetOpen }}" title="{{ sheet.name }}" on-dismiss="{{ closeSheet }}" footer="{{ sheetFooter }}" hint-size="0px,0px">
+    <div style="display:flex;gap:14px;align-items:center">
+      <div style="flex:0 0 auto;width:104px;height:104px;border-radius:11px;background:var(--surface);display:flex;align-items:center;justify-content:center">
+        <canvas data-av="{{ sheet.av }}" style="image-rendering:pixelated"></canvas>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+        <span style="font:700 15px/1.2 var(--font-sans);letter-spacing:-.02em;color:var(--faint)">{{ sheet.badge }}</span>
+        <p style="font:var(--type-body);color:var(--text);margin:0">{{ sheet.req }}</p>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">{{ sheet.progress }}</p>
+      </div>
+    </div>
+  </x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:410,&quot;height&quot;:865},&quot;tab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;hair&quot;,&quot;glasses&quot;,&quot;top&quot;,&quot;items&quot;,&quot;colours&quot;],&quot;default&quot;:&quot;hair&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sheet&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;&quot;,&quot;party&quot;,&quot;headphones&quot;,&quot;trainers&quot;,&quot;bucket&quot;,&quot;crown&quot;],&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const SW = {
+  skin: ['#F6D5BD', '#E8B48F', '#D19A6E', '#A96F45', '#7A4A2A', '#4E2F1C'],
+  hair: ['#1E1A18', '#3B2A20', '#7A4B2A', '#C98A4B', '#E6C77A', '#B9B4AE', '#D95B7C', '#4B7BD9'],
+  eyes: ['#2B2B2B', '#5B3A24', '#4A7A5C', '#3D6FB0', '#7A6A9E', '#8A8A8A'],
+  cheeks: ['#F08A8A', '#F4A6C0', '#E07A5F', '#C85A7A'],
+  cloth: ['#EDEDED', '#1E1E1E', '#21764F', '#7EE0C0', '#F06C9B', '#3D6FB0', '#E3B23C', '#8B3A3A'],
+};
+const SLOTS = [['skin', 'Skin'], ['hair', 'Hair & brows'], ['eyes', 'Eyes'], ['cheeks', 'Cheeks'], ['top', 'Top'], ['bottoms', 'Bottoms'], ['shoes', 'Shoes']];
+const EXPR = [
+  { n: 'Resting', eyes: 'open', mouth: 'smile', brows: 'soft' },
+  { n: 'Happy', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true },
+  { n: 'Hearts', eyes: 'heart', mouth: 'open', brows: 'raised', blush: true },
+  { n: 'Stars', eyes: 'star', mouth: 'wide', brows: 'raised' },
+  { n: 'Wink', eyes: 'wink', mouth: 'smile', brows: 'happy' },
+  { n: 'Surprised', eyes: 'wide', mouth: 'ooh', brows: 'raised' },
+  { n: 'Puppy', eyes: 'puppy', mouth: 'small', brows: 'raised' },
+  { n: 'Content', eyes: 'content', mouth: 'smile', brows: 'soft', blush: true },
+];
+const HAIR = [['short', 'Short'], ['long', 'Long'], ['bun', 'Bun'], ['quiff', 'Quiff'], ['curly', 'Curly'], ['scruffy', 'Scruffy'], ['mohawk', 'Mohawk'], ['pigtails', 'Pigtails'], ['bald', 'Bald']];
+const GLASSES = [['none', 'None'], ['round', 'Round'], ['square', 'Square'], ['browline', 'Browline'], ['sun', 'Sunglasses', 'First Dare']];
+const TOPS = [['tee', 'T-shirt'], ['hoodie', 'Hoodie'], ['shirt', 'Shirt'], ['jacket', 'Jacket'], ['dress', 'Dress']];
+const ITEMS = [
+  { group: 'Hats' },
+  { id: 'cap', slot: 'hat', name: 'Cap', badge: 'Early Doors', req: 'Start a night before 5pm.', unlocked: true },
+  { id: 'party', slot: 'hat', name: 'Party hat', badge: 'Game On', req: 'Three challenges in one night.', progress: 'Your best night so far is two.' },
+  { id: 'headphones', slot: 'hat', name: 'Headphones', badge: 'No Notes', req: 'Five challenges in one night.', progress: 'Your best night so far is two.' },
+  { id: 'bucket', slot: 'hat', name: 'Bucket hat', badge: 'Ringleader', req: '25 challenges, all time.', progress: '12 so far.' },
+  { id: 'cowboy', slot: 'hat', name: 'Cowboy hat', badge: 'Long Haul', req: 'Walk 50 km, all time.', progress: '32 km so far.' },
+  { id: 'crown', slot: 'hat', name: 'Crown', badge: 'Hidden badge', req: 'Comes with a badge that stays hidden until you earn it.', progress: 'Keep doing challenges.' },
+  { group: 'Costumes' },
+  { id: 'catears', slot: 'hat', name: 'Cat ears', badge: 'Nine Lives', req: 'Nine nights out.', unlocked: true },
+  { id: 'panda', slot: 'hat', name: 'Panda', badge: 'Snack Break', req: 'Log food three times in one night.', unlocked: true },
+  { id: 'dino', slot: 'hat', name: 'Dinosaur', badge: 'Big Stomp', req: '20,000 steps in one night.', progress: 'Your best so far is 7,840.' },
+  { id: 'duck', slot: 'hat', name: 'Duck', badge: 'Just Add Water', req: '50 waters, all time.', progress: '31 so far.' },
+  { id: 'elvis', slot: 'costume', name: 'Elvis', badge: 'Left the Building', req: 'Five stops in one night.', progress: 'Your best night so far is three.' },
+  { group: 'Other' },
+  { id: 'bottle', slot: 'held', name: 'Water bottle', badge: 'Hydro Homie', req: 'Log more waters than drinks in a night.', unlocked: true },
+  { id: 'pizza', slot: 'held', name: 'Pizza slice', badge: 'Late Bite', req: 'Log food after midnight.', unlocked: true },
+  { id: 'balloon', slot: 'held', name: 'Balloon', badge: 'Anniversary', req: 'One year since your first night out.', progress: 'Eight months so far.' },
+  { id: 'trainers', slot: 'shoes', name: 'Trainers', badge: '10K', req: '10,000 steps in one night.', progress: 'Your best so far is 7,840.' },
+];
+const CROP = { head: [0, 0, 32, 30], body: [0, 24, 32, 19], held: [14, 24, 16, 14], shoes: [6, 36, 20, 7] };
+const DEFAULT = { hair: 'quiff', top: 'tee', glasses: 'round', hat: null, held: null, costume: null, shoes: 'plain', colors: { skin: '#E8B48F', hair: '#3B2A20', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#21764F', bottoms: '#2D3A4F', shoes: '#EDEDED' } };
+
+function toHsl(h) {
+  let [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let hh = 0, s = 0; const l = (mx + mn) / 2;
+  if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+    hh = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hh *= 60; }
+  return [hh, s * 100, l * 100];
+}
+function toHex(h, s, l) {
+  s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))))).toString(16).padStart(2, '0');
+  return ('#' + f(0) + f(8) + f(4)).toUpperCase();
+}
+
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  state = { look: DEFAULT, tab: this.props.tab || 'hair', slot: 'hair', sheet: this.props.sheet || null, expr: 0, saved: false };
+  componentDidMount() {
+    const tick = () => { if (window.LCAvatar) window.LCAvatar.drawAll(this.rootRef.current); else setTimeout(tick, 60); };
+    tick();
+  }
+  componentDidUpdate() { if (window.LCAvatar) window.LCAvatar.drawAll(this.rootRef.current); }
+  setLook(patch) { this.setState(s => ({ look: { ...s.look, ...patch }, saved: false })); }
+  setColor(slot, hex) { this.setState(s => ({ look: { ...s.look, colors: { ...s.look.colors, [slot]: hex } }, saved: false })); }
+  av(look, opts) { return JSON.stringify({ look, opts }); }
+  tile(o) {
+    const scale = o.scale || 2, c = o.crop;
+    return { border: o.selected ? 'var(--mint)' : 'transparent', nameInk: o.locked ? 'var(--muted-up)' : o.selected ? 'var(--mint)' : 'var(--text)',
+      w: c[2] * scale + 'px', h: c[3] * scale + 'px', boxH: o.boxH || '60px', opacity: 1, hasSub: !!o.sub, locked: !!o.locked, ...o };
+  }
+  renderVals() {
+    const { look, tab, slot, sheet, expr } = this.state;
+    const light = this.props.theme === 'light';
+    const sil = light ? '#C3CCD9' : '#3A3A3A', sil2 = light ? '#AEB9C8' : '#4D4D4D';
+    const face = EXPR[expr];
+    const base = { ...look, costume: null, eyes: 'open', mouth: 'smile', brows: 'soft' };
+    const tabs = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['items', 'Items'], ['colours', 'Colours']]
+      .map(([k, label]) => ({ label, selected: tab === k, onClick: () => this.setState({ tab: k }) }));
+    let tiles = [];
+    if (tab === 'hair') tiles = HAIR.map(([k, name]) => this.tile({ name, crop: CROP.head, selected: look.hair === k,
+      av: this.av({ ...base, hair: k, hat: null, glasses: 'none' }, { scale: 2, crop: CROP.head }), onClick: () => this.setLook({ hair: k }) }));
+    if (tab === 'glasses') tiles = GLASSES.map(([k, name, badge]) => this.tile({ name, crop: CROP.head, selected: look.glasses === k, sub: badge,
+      av: this.av({ ...base, glasses: k, hat: null }, { scale: 2, crop: CROP.head }), onClick: () => this.setLook({ glasses: k }) }));
+    if (tab === 'top') tiles = TOPS.map(([k, name]) => this.tile({ name, crop: CROP.body, scale: 3, boxH: '60px', selected: look.top === k,
+      av: this.av({ ...base, top: k, held: null }, { scale: 3, crop: CROP.body }), onClick: () => this.setLook({ top: k }) }));
+    if (tab === 'items') tiles = ITEMS.map(it => {
+      if (it.group) return { isHeader: true, isTile: false, name: it.group };
+      const crop = CROP.head, scale = 2;
+      const on = look[it.slot] === it.id;
+      const worn = { ...base, hat: it.slot === 'hat' ? it.id : null, held: it.slot === 'held' ? it.id : null, costume: it.slot === 'costume' ? it.id : null, shoes: it.slot === 'shoes' ? it.id : 'plain', glasses: 'none' };
+      const onHead = it.slot === 'hat' || it.slot === 'costume';
+      const opts = !it.unlocked ? (onHead ? { scale: 2, crop: CROP.head, only: it.id, silhouette: sil } : { fit: [72, 56], only: it.id, silhouette: sil }) : onHead ? { scale: 2, crop: CROP.head } : { fit: [72, 56], only: it.id };
+      return this.tile({ name: it.name, crop, scale, selected: on, locked: !it.unlocked, sub: it.badge, av: this.av(worn, opts),
+        onClick: () => it.unlocked ? this.setLook({ [it.slot]: on ? (it.slot === 'shoes' ? 'plain' : null) : it.id }) : this.setState({ sheet: it.id }) });
+    });
+    tiles = tiles.map(t => t.isHeader ? t : { ...t, isHeader: false, isTile: true });
+    const cur = look.colors[slot];
+    const [h, s, l] = toHsl(cur);
+    const pool = SW[slot] || SW.cloth;
+    const slider = (key, label, pct, value, track, set) => {
+      const upd = e => { const r = e.currentTarget.getBoundingClientRect(); set(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); };
+      return { label, value, track, thumb: cur, pct: (pct * 100).toFixed(1) + '%',
+        onDown: e => { e.currentTarget.setPointerCapture(e.pointerId); upd(e); }, onMove: e => { if (e.buttons) upd(e); } };
+    };
+    const hueStops = [0, 60, 120, 180, 240, 300, 360].map(x => toHex(x, Math.max(s, 40), 50)).join(',');
+    const sliders = [
+      slider('h', 'Colour', h / 360, Math.round(h) + '°', `linear-gradient(90deg,${hueStops})`, t => this.setColor(slot, toHex(t * 360, s, l))),
+      slider('s', 'Strength', s / 100, Math.round(s) + '%', `linear-gradient(90deg,${toHex(h, 0, l)},${toHex(h, 100, l)})`, t => this.setColor(slot, toHex(h, t * 100, l))),
+      slider('l', 'Shade', (l - 8) / 84, Math.round(l) + '%', `linear-gradient(90deg,${toHex(h, s, 8)},${toHex(h, s, 50)},${toHex(h, s, 92)})`, t => this.setColor(slot, toHex(h, s, 8 + t * 84))),
+    ];
+    const sh = ITEMS.find(i => i.id === sheet) || ITEMS[2];
+    const shWorn = { ...base, hat: sh.slot === 'hat' ? sh.id : null, held: sh.slot === 'held' ? sh.id : null, costume: sh.slot === 'costume' ? sh.id : null, shoes: sh.slot === 'shoes' ? sh.id : 'plain' };
+    const shCrop = sh.slot === 'hat' ? CROP.head : sh.slot === 'held' ? CROP.held : CROP.shoes;
+    const shScale = sh.slot === 'hat' ? 3 : 5;
+    const { Button } = window.LastCallDesignSystem_b253fc || {};
+    const rand = a => a[Math.floor(Math.random() * a.length)];
+    return {
+      rootRef: this.rootRef,
+      theme: light ? 'light' : 'dark',
+      primaryProps: { style: { background: 'var(--mint-fill, var(--mint))' } },
+      previewAv: this.av({ ...look, ...face }, { scale: 4 }),
+      exprName: face.n,
+      onPoke: () => this.setState(st => ({ expr: (st.expr + 1) % EXPR.length })),
+      tabs, tiles, showGrid: tab !== 'colours', isColours: tab === 'colours',
+      slots: SLOTS.map(([k, label]) => ({ label, hex: look.colors[k], selected: slot === k, onClick: () => this.setState({ slot: k }) })),
+      swatches: pool.map(hex => ({ hex, ring: hex.toUpperCase() === cur.toUpperCase() ? 'var(--mint)' : 'transparent', onClick: () => this.setColor(slot, hex) })),
+      sliders,
+      sheetOpen: !!sheet,
+      sheet: { ...sh, av: this.av(shWorn, { fit: [88, 88], only: sh.id, silhouette: sil2 }),
+        w: Math.min(96, shCrop[2] * shScale) + 'px', h: Math.min(96, shCrop[2] * shScale) * shCrop[3] / shCrop[2] + 'px', progress: sh.progress || '' },
+      closeSheet: () => this.setState({ sheet: null }),
+      sheetFooter: Button ? React.createElement(Button, { variant: 'secondary', full: true, onClick: () => this.setState({ sheet: null }) }, 'Close') : null,
+      saveLabel: this.state.saved ? 'Saved' : 'Save look',
+      onSave: () => this.setState({ saved: true }),
+      nav: [
+        { label: 'Shuffle', onClick: () => this.setState(st => ({ saved: false, look: { ...st.look, hair: rand(HAIR)[0], top: rand(TOPS)[0], colors: { ...st.look.colors, skin: rand(SW.skin), hair: rand(SW.hair), eyes: rand(SW.eyes), top: rand(SW.cloth), bottoms: rand(SW.cloth) } } })) },
+        { label: 'Cancel', onClick: () => this.setState({ look: DEFAULT, saved: false, expr: 0 }) },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

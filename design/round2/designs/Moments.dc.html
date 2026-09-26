@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/styles.css">
+<link rel="stylesheet" href="tokens/colors.css">
+<link rel="stylesheet" href="tokens/typography.css">
+<script src="_ds/last-call-design-system-b253fc53-7088-4f51-a96f-6c72ac381754/_ds_bundle.js"></script>
+<script src="avatar-draw.js"></script>
+<style>body{background:#050505;margin:0}a{color:var(--mint)}a:hover{color:var(--forest-300)}[data-lbl2d] [style*="pad-tile"] > span:first-child{text-transform:none!important}</style>
+</helmet>
+<section id="turn-6" ref="{{ rootRef }}" data-lbl2d="1" style="padding:56px 48px 80px;display:flex;flex-direction:column;gap:56px;background:#050505;min-height:100vh;font-family:var(--font-sans);color:var(--text)">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:800px">
+    <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Round 2 · Piece 3</span>
+    <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:0">Unlock and morning after</h1>
+  </div>
+
+  <div id="6a" style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:14px;width:410px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">6a</span>
+          <span style="font:var(--type-title);letter-spacing:var(--tr-title)">The unlock</span>
+        </div>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">Badges earned during the night wait for the recap, so nothing interrupts logging a drink. The catch animation plays once when the sheet opens. After that you page through the new badges, each showing its item on the avatar. Wear it puts the item on and moves to the next badge, and Next badge skips it.</p>
+      </div>
+      <div style="padding:10px">
+        <div data-screen-label="Unlock" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+              <span class="lc-num">2:24</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+                <div style="display:flex;flex-direction:column">
+                  <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Last night</span>
+                  <h1 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:7px 0 9px">That was a night.</h1>
+                  <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Timer" started-at="{{ t0 }}" ended-at="{{ t1 }}" hint-size="160px,52px"></x-import>
+                  <span style="font:var(--type-caption);color:var(--muted-up);margin-top:4px">9:12 pm to 2:24 am</span>
+                </div>
+                <canvas data-av="{{ recapAv }}" style="width:64px;height:86px;image-rendering:pixelated"></canvas>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="7" tone="drinks" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="4" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Challenges" value="3" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Stops" value="3" hint-size="100%,72px"></x-import>
+              </div>
+              <div style="flex:1"></div>
+              <div style="display:grid;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" hint-size="100%,52px">Make a card</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="secondary" full="{{ true }}" on-click="{{ replay }}" hint-size="100%,44px">{{ replayLabel }}</x-import>
+              </div>
+            </div>
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+          </div>
+          <x-import component-from-global-scope="LastCallDesignSystem_b253fc.BottomSheet" open="{{ sheetOpen }}" on-dismiss="{{ notNow }}" footer="{{ sheetFooter }}" hint-size="0px,0px">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div style="position:relative;height:168px;border-radius:11px;background:var(--surface);overflow:hidden;display:flex;align-items:center;justify-content:center">
+                <div style="position:absolute;inset:0;background:var(--bloom-mint);opacity:.6"></div>
+                <canvas data-av="{{ badge.av }}" style="position:relative;width:96px;height:129px;image-rendering:pixelated"></canvas>
+                <span class="lc-num" style="position:absolute;right:10px;top:10px;font:var(--type-caption);color:var(--muted-up)">{{ badge.count }}</span>
+                <div style="position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:6px">
+                  <sc-for list="{{ dots }}" as="d" hint-placeholder-count="2"><span style="width:6px;height:6px;border-radius:999px;background:{{ d.bg }}"></span></sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">New badge</span>
+                <h2 style="font:var(--type-title);letter-spacing:var(--tr-title);margin:0">{{ badge.name }}</h2>
+                <p style="font:var(--type-body);color:var(--muted-up);margin:0">{{ badge.body }}</p>
+              </div>
+            </div>
+          </x-import>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;max-width:560px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Badge earned, frame by frame</span>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">It looks up as the badge falls, catches it in one hand, holds it up while it sparkles, then puts the item on and wears the badge as a pin. It runs at 12 frames a second, and the numbers are how many frames each pose holds. With reduce motion on, it skips straight to the last frame with no sparkles.</p>
+      </div>
+      <div style="position:relative;overflow:hidden;border-radius:20px;background:#000;padding:20px;display:flex;gap:10px;flex-wrap:wrap">
+        <div style="position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none"></div>
+        <sc-for list="{{ unlockFrames }}" as="f" hint-placeholder-count="4">
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:112px">
+            <div style="height:140px;width:112px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ f.av }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas></div>
+            <span style="font:600 12px/1.2 var(--font-sans)">{{ f.name }}</span>
+            <span class="lc-num" style="font:var(--type-caption);color:var(--muted-up)">{{ f.hold }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div id="6b" style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:14px;width:410px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font:600 12px/1.2 var(--font-sans);padding:5px 9px;border-radius:9px;border:1px solid var(--line);color:var(--faint)">6b</span>
+          <span style="font:var(--type-title);letter-spacing:var(--tr-title)">Morning after</span>
+        </div>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">This replaces the start screen on the first open after a night, until midday. It shows the night’s numbers and one action, making the card, because this is when people post. The bloom moves to the foot, as on the recap. It follows the light or dark setting.</p>
+      </div>
+      <div style="padding:10px">
+        <div data-screen-label="Morning after" style="position:relative;width:390px;height:845px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 0 0 10px #0b0f0d,0 0 0 11px #1d2a24">
+          <div style="position:absolute;inset:0;background:var(--bloom-foot);pointer-events:none"></div>
+          <div class="lc-grain"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column">
+            <div style="height:30px;flex:0 0 auto;padding:0 18px;display:flex;align-items:center;justify-content:space-between;font:var(--type-caption);font-weight:600">
+              <span class="lc-num">9:48</span>
+              <div style="display:flex;gap:5px;align-items:center">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="signal" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="wifi" size="13" hint-size="13px,13px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Icon" name="battery-medium" size="16" hint-size="16px,16px"></x-import>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 14px">
+              <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Sat 2 August · Deansgate</span>
+              <h1 style="font:var(--type-display);letter-spacing:var(--tr-display);margin:10px 0 0">Morning.</h1>
+              <button type="button" onClick="{{ pokeMorning }}" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.98)">
+                <canvas data-av="{{ morningAv }}" style="width:128px;height:172px;image-rendering:pixelated"></canvas>
+              </button>
+              <p style="font:var(--type-body);color:var(--muted-up);margin:0 0 9px">You were out 5 hours 12 minutes and home by 2:24 am.</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Drinks" value="7" tone="drinks" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Water" value="4" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Steps" value="11,204" hint-size="100%,72px"></x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.StatTile" label="Stops" value="3" hint-size="100%,72px"></x-import>
+              </div>
+              <div style="display:grid;gap:7px;margin-top:16px">
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.Button" variant="primary" size="lg" full="{{ true }}" icon="{{ shareIcon }}" hint-size="100%,52px">Make a card</x-import>
+                <x-import component-from-global-scope="LastCallDesignSystem_b253fc.NavPair" items="{{ morningNav }}" hint-size="100%,44px"></x-import>
+              </div>
+            </div>
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center"><div style="width:108px;height:4px;border-radius:999px;background:var(--line)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;max-width:560px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span style="font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)">Morning loop</span>
+        <p style="font:var(--type-body);color:var(--muted-up);margin:0">Pyjamas, a sleep cap, messy hair and a mug in both hands. It sips, gives a slow blink, and every few loops lets go with one hand for a small wave. Five poses, within the six-frame limit. The pyjamas and sleep cap take the top colour slot, so they follow whatever the user has picked. The cap replaces any hat for this screen only. Tapping the avatar on the screen plays the wave.</p>
+      </div>
+      <div style="position:relative;overflow:hidden;border-radius:20px;background:#000;padding:20px;display:flex;gap:10px;flex-wrap:wrap">
+        <div style="position:absolute;inset:0;background:var(--bloom-foot);pointer-events:none"></div>
+        <sc-for list="{{ morningFrames }}" as="f" hint-placeholder-count="5">
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;width:112px">
+            <div style="height:140px;width:112px;border-radius:11px;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center"><canvas data-av="{{ f.av }}" style="width:96px;height:129px;image-rendering:pixelated"></canvas></div>
+            <span style="font:600 12px/1.2 var(--font-sans)">{{ f.name }}</span>
+            <span class="lc-num" style="font:var(--type-caption);color:var(--muted-up)">{{ f.hold }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  now = Date.now();
+  state = { idx: 0, open: true, worn: null, wave: false, f: 0 };
+  play() {
+    (this._t || []).forEach(clearTimeout);
+    const holds = [3, 2, 6];
+    let at = 400; this.setState({ f: 0 });
+    this._t = holds.map((h, i) => { at += h * 83 + (i === 2 ? 400 : 0); return setTimeout(() => this.setState({ f: i + 1 }), at); });
+  }
+  componentDidMount() { const t = () => window.LCAvatar ? window.LCAvatar.drawAll(this.rootRef.current) : setTimeout(t, 60); t(); this.play(); }
+  componentWillUnmount() { (this._t || []).forEach(clearTimeout); }
+  componentDidUpdate() { window.LCAvatar && window.LCAvatar.drawAll(this.rootRef.current); }
+  renderVals() {
+    const DS = window.LastCallDesignSystem_b253fc || {};
+    const base = { hair: 'quiff', top: 'tee', glasses: 'round', shoes: 'plain', eyes: 'open', mouth: 'smile', brows: 'soft', colors: { skin: '#E8B48F', hair: '#3B2A20', eyes: '#4A7A5C', cheeks: '#F08A8A', top: '#21764F', bottoms: '#2D3A4F', shoes: '#EDEDED' } };
+    const J = (o, s = 3) => JSON.stringify({ look: { ...base, ...o }, opts: { scale: s } });
+    const BADGES = [
+      { name: 'Game On', body: 'Three challenges in one night. Comes with the party hat.', slot: 'hat', id: 'party' },
+      { name: 'Hydro Homie', body: 'More waters than drinks. Comes with the water bottle.', slot: 'held', id: 'bottle' },
+    ];
+    const { idx, open, worn } = this.state;
+    const b = BADGES[Math.min(idx, BADGES.length - 1)];
+    const next = (wear) => this.setState(s => {
+      const w = wear ? { ...(s.worn || {}), [b.slot]: b.id } : s.worn;
+      return s.idx + 1 < BADGES.length ? { idx: s.idx + 1, worn: w } : { open: false, worn: w };
+    });
+    const wornLook = { ...(worn || {}) };
+    const FR = [
+      { eyes: 'lookUp', mouth: 'ooh', brows: 'raised', badge: 'falling' },
+      { pose: 'wave', badge: 'held', eyes: 'wide', mouth: 'open', brows: 'raised' },
+      { pose: 'wave', badge: 'held', eyes: 'star', mouth: 'wide', brows: 'raised', sparkles: true },
+    ];
+    const pj = { top: 'pyjamas', messy: true, held: 'mug', hat: 'nightcap', glasses: 'round', colors: { ...base.colors, top: '#3D6FB0' } };
+    return {
+      rootRef: this.rootRef,
+      t0: this.now - (5 * 3600 + 12 * 60) * 1000, t1: this.now,
+      recapAv: J({ ...wornLook, badge: worn ? 'pin' : null, eyes: open ? 'wide' : 'content', mouth: open ? 'ooh' : 'smile', brows: open ? 'raised' : 'soft', blush: !open }, 2),
+      sheetOpen: open,
+      badge: { ...b, count: `${Math.min(idx, BADGES.length - 1) + 1} of ${BADGES.length}`, av: J(idx === 0 && this.state.f < 3 ? FR[this.state.f] : { [b.slot]: b.id, badge: 'pin', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }) },
+      dots: BADGES.map((_, i) => ({ bg: i === idx ? 'var(--text)' : 'var(--line)' })),
+      sheetFooter: DS.Button ? React.createElement('div', { style: { display: 'grid', gap: 7 } },
+        React.createElement(DS.Button, { full: true, size: 'lg', onClick: () => next(true) }, 'Wear it'),
+        React.createElement(DS.Button, { variant: 'secondary', full: true, onClick: () => next(false) }, idx + 1 < BADGES.length ? 'Next badge' : 'Done')) : null,
+      notNow: () => next(false),
+      replay: () => { this.setState({ idx: 0, open: true, worn: null }); this.play(); },
+      replayLabel: open ? 'Just save it' : 'Replay unlock',
+      unlockFrames: [
+        { name: 'Looks up', hold: '3 frames', av: J({ eyes: 'lookUp', mouth: 'ooh', brows: 'raised', badge: 'falling' }) },
+        { name: 'Catches it', hold: '2 frames', av: J({ pose: 'wave', badge: 'held', eyes: 'wide', mouth: 'open', brows: 'raised' }) },
+        { name: 'Holds it up', hold: '6 frames', av: J({ pose: 'wave', badge: 'held', eyes: 'star', mouth: 'wide', brows: 'raised', sparkles: true }) },
+        { name: 'Wears it', hold: 'rest', av: J({ hat: 'party', badge: 'pin', eyes: 'happy', mouth: 'cat', brows: 'happy', blush: true }) },
+      ],
+      morningAv: J({ ...pj, ...(this.state.wave ? { pose: 'wave', eyes: 'happy', mouth: 'cat', brows: 'happy' } : { eyes: 'content', mouth: 'smile' }) }, 4),
+      pokeMorning: () => { this.setState({ wave: true }); clearTimeout(this._w); this._w = setTimeout(() => this.setState({ wave: false }), 1200); },
+      morningFrames: [
+        { name: 'Sips', hold: '6 frames', av: J({ ...pj, eyes: 'content', mouth: 'small' }) },
+        { name: 'Holds', hold: '12 frames', av: J({ ...pj, eyes: 'heavy', mouth: 'smile' }) },
+        { name: 'Slow blink', hold: '2 · 4 · 2', av: J({ ...pj, eyes: 'shut', mouth: 'smile' }) },
+        { name: 'Opens', hold: '8 frames', av: J({ ...pj, eyes: 'open', mouth: 'smile' }) },
+        { name: 'Small wave', hold: '6 frames, rare', av: J({ ...pj, pose: 'wave', eyes: 'happy', mouth: 'cat', brows: 'happy' }) },
+      ],
+      shareIcon: DS.Icon ? React.createElement(DS.Icon, { name: 'share-2', size: 16, color: 'var(--mint-ink)' }) : null,
+      morningNav: [{ label: 'See the night', onClick: () => {} }, { label: 'Not now', onClick: () => {} }],
+    };
+  }
+}
+</script>
+</body>
+</html>

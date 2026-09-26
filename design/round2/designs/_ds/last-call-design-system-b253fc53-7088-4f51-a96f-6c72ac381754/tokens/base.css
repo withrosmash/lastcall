@@ -1,0 +1,12 @@
+/* Last Call — minimal ground rules. Consumers get these for free. */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:var(--type-body);-webkit-font-smoothing:antialiased}
+body{text-wrap:pretty}
+button,input,select,textarea{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:var(--mint);text-decoration:none}
+a:hover{color:var(--forest-300)}
+[data-tabular],.lc-num{font-variant-numeric:tabular-nums}
+.lc-label{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--faint)}
+.lc-bloom{position:absolute;inset:0;background:var(--bloom-hero);pointer-events:none}
+.lc-grain{position:absolute;inset:0;background-image:var(--grain);opacity:var(--grain-opacity);pointer-events:none;mix-blend-mode:overlay}
