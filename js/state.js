@@ -52,6 +52,9 @@ export function addPin(s, { lat, lng, name, note }, now = Date.now()) {
 // ten-hour night stays a few hundred entries rather than tens of thousands.
 export function addFix(s, { lat, lng, t = Date.now() }) {
   const last = s.trail[s.trail.length - 1];
+  // Fixes carry the phone's own timestamps now; never let one run backwards,
+  // since everything that reads the trail assumes it's in time order.
+  if (last && t < last.t) t = last.t;
   if (last) {
     const d = haversineM(last.lat, last.lng, lat, lng);
     if (d < TRAIL_MIN_M && t - last.t < TRAIL_MIN_MS) return false;

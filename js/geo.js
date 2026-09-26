@@ -19,6 +19,19 @@ export function isNative() {
   try { return Capacitor.isNativePlatform(); } catch { return false; }
 }
 
+// When the phone took the fix, not when the app heard about it. With the screen
+// locked Android can hold fixes back and hand them over in one batch when the
+// app is next opened; stamped on arrival, a whole walk shared one time and the
+// history slider jumped straight across it. Anything implausible falls back to
+// now, which is exactly the old behaviour.
+function fixTime(time) {
+  const now = Date.now();
+  const t = Number(time);
+  if (!Number.isFinite(t) || t <= 0) return now;
+  const ms = t < 1e12 ? t * 1000 : t;
+  return ms > now + 60_000 || ms < now - 12 * 3600_000 ? now : ms;
+}
+
 export async function start({ onFix, onStatus }) {
   listeners = { fix: onFix || listeners.fix, status: onStatus || listeners.status };
   listeners.status('waiting');
@@ -42,7 +55,7 @@ export async function start({ onFix, onStatus }) {
           }
           if (!location) return;
           listeners.status('live');
-          listeners.fix({ lat: location.latitude, lng: location.longitude, t: Date.now() });
+          listeners.fix({ lat: location.latitude, lng: location.longitude, t: fixTime(location.time) });
         },
       );
       native = true;

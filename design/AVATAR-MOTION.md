@@ -60,7 +60,12 @@ cuteness lives.
 - **Eyebrows**: raised, soft, determined and happy. A lot of the acting is here.
 - **Blush**: its own colour, so it works on every skin tone. Warms up for happy
   moments.
-- **Mouths**: smile, cat (ω), open with tongue, ooh, wide, flat, small.
+- **Mouths**: smile, cat (ω), open with tongue, ooh, wide, flat, small. The
+  resting smile is a 3-row U whose corners join the line diagonally; the first
+  2-row version read as teeth at phone size.
+- **Facial hair**: none, stubble, moustache, goatee, beard, full beard. Drawn
+  before the mouth so expressions stay visible, with a skin window round the
+  mouth under beards. Has its own colour slot, which follows the hair until set.
 - **Hair**: short, long, bun, quiff, curly and bald. Bald gets a rounder dome and
   the hair shine moves onto the scalp; brows keep the hair colour, so that
   swatch is labelled "Hair & brows".

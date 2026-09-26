@@ -4,7 +4,7 @@
 // doesn't reliably give a picker for.
 
 import { el, btn, head, foot } from './ui.js';
-import { createAvatar, PARTS, STYLES, toHsl, fromHsl, randomLook } from './avatar.js';
+import { createAvatar, PARTS, STYLES, FACIAL, toHsl, fromHsl, randomLook } from './avatar.js';
 import { avatarLook } from './session.js';
 
 export function avatarScreen(ctx) {
@@ -28,6 +28,19 @@ export function avatarScreen(ctx) {
   const paintStyles = () => styleChips.replaceChildren(...STYLES.map((st) =>
     chip(st, look.style === st, () => { look.style = st; commit(); paintStyles(); })));
 
+  const facialChips = el('div', { class: 'chips' });
+  const paintFacial = () => facialChips.replaceChildren(...FACIAL.map((f) =>
+    chip(f, (look.facial || 'None') === f, () => {
+      look.facial = f;
+      // The beard colour slot only exists while there's a beard to colour.
+      if (f === 'None' && part === 'beard') part = PARTS[0].key;
+      commit(); paintFacial(); paintPart();
+    })));
+
+  // A beard with no colour of its own follows the hair.
+  const colourOf = (k) => look[k] || look.hair;
+  const visibleParts = () => PARTS.filter((p) => p.key !== 'beard' || (look.facial && look.facial !== 'None'));
+
   const partChips = el('div', { class: 'chips' });
   const swatches = el('div', { class: 'swatches' });
   const slider = (min, max, label) => el('input', { type: 'range', class: 'hsl', min, max, step: 1, 'aria-label': label });
@@ -42,17 +55,17 @@ export function avatarScreen(ctx) {
     lit.style.setProperty('--track', `linear-gradient(to right,hsl(${h} ${s}% 10%),hsl(${h} ${s}% 50%),hsl(${h} ${s}% 92%))`);
   }
   function markSwatch() {
-    const cur = look[part].toLowerCase();
+    const cur = colourOf(part).toLowerCase();
     for (const b of swatches.children) b.setAttribute('aria-pressed', b.dataset.c === cur ? 'true' : 'false');
   }
   function paintPart() {
-    partChips.replaceChildren(...PARTS.map((p) => chip(p.label, p.key === part, () => { part = p.key; paintPart(); })));
+    partChips.replaceChildren(...visibleParts().map((p) => chip(p.label, p.key === part, () => { part = p.key; paintPart(); })));
     swatches.replaceChildren(...PARTS.find((p) => p.key === part).presets.map((c) =>
       el('button', {
         class: 'swatch press', type: 'button', 'aria-label': c, 'data-c': c.toLowerCase(),
         style: `--c:${c}`, onclick: () => { look[part] = c; commit(); paintPart(); },
       })));
-    const [h, s, l] = toHsl(look[part]);
+    const [h, s, l] = toHsl(colourOf(part));
     hue.value = h; sat.value = s; lit.value = l;
     paintTracks();
     markSwatch();
@@ -72,6 +85,7 @@ export function avatarScreen(ctx) {
   lit.addEventListener('input', fromSliders);
 
   paintStyles();
+  paintFacial();
   paintPart();
 
   const labelled = (text, input) => el('label', { class: 'stack', style: 'gap:2px' },
@@ -83,6 +97,8 @@ export function avatarScreen(ctx) {
     el('p', { class: 'cap', style: 'margin:0', text: 'Tap them to say hello. Any colour works — drag the sliders past the swatches.' }),
     el('div', { class: 'eb', text: 'Hair' }),
     styleChips,
+    el('div', { class: 'eb', text: 'Facial hair' }),
+    facialChips,
     el('div', { class: 'eb', text: 'Colours' }),
     partChips,
     swatches,
@@ -93,8 +109,10 @@ export function avatarScreen(ctx) {
       btn('Done', 'btn--pri', () => ctx.back(), { lg: true }),
       btn('Surprise me', 'btn--sec', () => {
         Object.assign(look, randomLook());
+        if (part === 'beard' && look.facial === 'None') part = PARTS[0].key;
         commit();
         paintStyles();
+        paintFacial();
         paintPart();
         av.play('cheer');
       }),

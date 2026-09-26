@@ -13,10 +13,13 @@
 const GW = 32, GH = 43;
 
 export const STYLES = ['Short', 'Long', 'Bun', 'Quiff', 'Curly', 'Bald'];
+export const FACIAL = ['None', 'Stubble', 'Moustache', 'Goatee', 'Beard', 'Full beard'];
 
 export const DEFAULT_LOOK = {
   skin: '#E8B08A', hair: '#3A2A22', eye: '#3FA88A', cheek: '#F58FA8',
   top: '#7EE0C0', legs: '#3E5173', shoes: '#F06C9B', style: 'Short',
+  // null: the beard follows the hair colour until someone picks its own.
+  facial: 'None', beard: null,
 };
 
 // Quick picks per part. The sliders on the customise screen reach every other
@@ -24,6 +27,7 @@ export const DEFAULT_LOOK = {
 export const PARTS = [
   { key: 'skin', label: 'Skin', presets: ['#FBE3CF', '#F3C9A5', '#E8B08A', '#D19A6E', '#B07A4F', '#8D5A3B', '#6B4128', '#4A2C1B'] },
   { key: 'hair', label: 'Hair & brows', presets: ['#1E1612', '#3A2A22', '#6B4428', '#A8703A', '#D9B26A', '#B8452A', '#9A9A9A', '#EDEDED'] },
+  { key: 'beard', label: 'Beard', presets: ['#1E1612', '#3A2A22', '#6B4428', '#A8703A', '#D9B26A', '#B8452A', '#9A9A9A', '#EDEDED'] },
   { key: 'eye', label: 'Eyes', presets: ['#3FA88A', '#3E6FB8', '#6B4428', '#2E2E2E', '#7A9A3A', '#8A5AC8', '#C8A03A', '#D94A7A'] },
   { key: 'cheek', label: 'Cheeks', presets: ['#F58FA8', '#F2A07B', '#E86A7F', '#F7B6CB', '#D98FD9', '#C9745A'] },
   { key: 'top', label: 'Top', presets: ['#7EE0C0', '#F06C9B', '#F2C14E', '#3E6FB8', '#FFFFFF', '#222222', '#E8633A', '#8A5AC8'] },
@@ -58,6 +62,7 @@ function palette(look, liquid) {
   const { skin, hair, eye } = look;
   return {
     skin, hair, hairL: shade(hair, 0.38), brow: shade(hair, -0.3),
+    beard: look.beard || hair, stubble: mix(skin, look.beard || hair, 0.42),
     iris: eye, irisD: shade(eye, -0.66), white: '#FFFFFF',
     lash: shade(skin, -0.74), mouth: shade(skin, -0.6), tongue: '#E8697F', cheek: look.cheek,
     top: look.top, legs: look.legs, shoes: look.shoes,
@@ -133,7 +138,9 @@ const LOOK = {
   wink: { m: 'open', wink: true, brows: 'happy' },
 };
 const MOUTH = {
-  smile: ['M....M', '.MMMM.'],
+  // Corners one step up from the line, joined diagonally, so it reads as a
+  // smile at phone size; the old 2-row version read as teeth.
+  smile: ['M......M', '.M....M.', '..MMMM..'],
   cat: ['M.MM.M', '.M..M.'],
   open: ['MMMM', 'MTTM', '.MM.'],
   ooh: ['.MM.', 'M..M', '.MM.'],
@@ -206,6 +213,71 @@ function hairFront(style, cx, cy, p) {
     const x = Math.floor(cx + dx), y = Math.floor(top + dy + (style === 'Bun' ? 1 : 0));
     if (get(x, y)?.part === 'hair') set(x, y, p.hairL, 'hair');
   });
+}
+
+/* ================= facial hair ================= */
+// Drawn on the face before the mouth, so every expression still shows. Beards
+// that surround the mouth leave a window of skin round it, or a dark beard
+// would swallow the smile.
+
+function facialHair(kind, hx, hy, p, mouth) {
+  if (!kind || kind === 'None') return;
+  const onFace = (x, y) => get(x, y)?.part === 'head';
+  const mw = mouth[0].length, mh = mouth.length;
+  const mx0 = Math.floor(hx - mw / 2), my0 = hy + 6;
+  const inMouth = (x, y, pad) => x >= mx0 - pad && x < mx0 + mw + pad && y >= my0 - pad && y < my0 + mh + pad;
+  const dx = (x) => x + 0.5 - hx;
+
+  if (kind === 'Stubble') {
+    for (let y = hy + 3; y <= hy + 10; y++) {
+      for (let x = hx - 11; x <= hx + 11; x++) {
+        const edge = Math.abs(dx(x)) > 7 || y >= hy + 5;
+        if (edge && onFace(x, y) && !inMouth(x, y, 0) && (x + y) % 2 === 0) set(x, y, p.stubble, 'head');
+      }
+    }
+    return;
+  }
+
+  const moustache = () => {
+    for (let x = hx - 4; x < hx + 4; x++) set(x, hy + 5, p.beard, 'head');
+    set(hx - 5, hy + 6, p.beard, 'head');
+    set(hx + 4, hy + 6, p.beard, 'head');
+  };
+
+  if (kind === 'Moustache') { moustache(); return; }
+
+  if (kind === 'Goatee') {
+    moustache();
+    for (let y = my0 + mh; y <= hy + 10; y++) {
+      for (let x = hx - 3; x < hx + 3; x++) if (onFace(x, y) || y <= hy + 10) set(x, y, p.beard, 'head');
+    }
+    return;
+  }
+
+  // Beard: the lower face from the mouth down, with sideburns. Full beard
+  // climbs the cheeks too and hangs a little further below the chin.
+  const full = kind === 'Full beard';
+  for (let y = hy - 1; y <= hy + 12; y++) {
+    for (let x = hx - 12; x <= hx + 12; x++) {
+      const side = Math.abs(dx(x));
+      const cover = full
+        ? (y >= hy + 4) || (side > 8.2 && y >= hy - 1)
+        : (y >= hy + 6) || (side > 8.6 && y >= hy + 1) || (side > 7 && y >= hy + 4);
+      if (!cover || inMouth(x, y, 1)) continue;
+      // Below the chin it tapers to a rounded point rather than a block.
+      const rows = y - (hy + 9);
+      const below = rows >= 1 && side < (full ? [0, 6, 4, 2] : [0, 4, 2, 0])[Math.min(rows, 3)];
+      if (onFace(x, y) || below) set(x, y, p.beard, 'head');
+    }
+  }
+  moustache();
+  // Skin window round the mouth so the expression stays readable.
+  for (let y = my0 - 1; y < my0 + mh + 1; y++) {
+    for (let x = mx0 - 1; x < mx0 + mw + 1; x++) {
+      if (y === hy + 5 && x >= hx - 4 && x < hx + 4) continue;
+      if (onFace(x, y) && (full || y > hy + 5)) set(x, y, p.skin, 'head');
+    }
+  }
 }
 
 /* ================= body ================= */
@@ -298,6 +370,7 @@ function build(look, st, lid, me) {
   eye('L', ex1, ey, st.eyes, lid, p);
   eye('R', ex2, ey, st.eyes, lid, p);
   const mm = MOUTH[st.mouth] || MOUTH.smile;
+  facialHair(look.facial, hx, hy, p, mm);
   stamp(mm, hx - mm[0].length / 2, hy + 6, { M: p.mouth, T: p.tongue }, 'head');
 
   hairFront(style, hx, hy + hairDY, p);
@@ -660,5 +733,8 @@ export function randomLook() {
     hair: any(), eye: any(), cheek: PARTS[3].presets[Math.floor(Math.random() * 4)],
     top: any(), legs: any(), shoes: any(),
     style: STYLES[Math.floor(Math.random() * STYLES.length)],
+    // Facial hair on roughly one surprise in three.
+    facial: Math.random() < 0.33 ? FACIAL[1 + Math.floor(Math.random() * (FACIAL.length - 1))] : 'None',
+    beard: null,
   };
 }

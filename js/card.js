@@ -132,6 +132,9 @@ export function shareScreen(ctx, session) {
     foot(
       btn('Share', 'btn--pri', () => shareCard(), { iconName: 'share-2', lg: true }),
       btn('Save to photos', 'btn--sec', () => saveCard(), { iconName: 'download' }),
+      btn('Save for video', 'btn--sec', () => saveVideoPack()),
+      el('p', { class: 'cap', style: 'margin:0;text-align:center',
+        text: 'Saves each element as a see-through image, plus the whole layout, for CapCut or any video editor.' }),
     ),
   ];
 }
@@ -252,12 +255,19 @@ function sizeCanvas() {
   ui.canvas.style.aspectRatio = `${w} / ${h}`;
 }
 
+// Keeps a grabbable piece of every element on the card (160 px across, 80
+// down) but lets big ones hang off any edge. The old fixed limits held the left
+// edge at 0 whatever the size, so a scaled-up element that overflowed the right
+// could never be pulled back into view.
 function clampAll() {
   const [w, h] = RATIOS[ui.ratio];
-  for (const e of Object.values(ui.elements)) {
+  for (const [key, e] of Object.entries(ui.elements)) {
     if (e.x == null) continue;
-    e.x = Math.min(Math.max(e.x, 0), w - 140);
-    e.y = Math.min(Math.max(e.y, 0), h - 60);
+    const b = ui.bounds.get(key);
+    const bw = b ? b.w : 140, bh = b ? b.h : 60;
+    const keepX = Math.min(bw, 160), keepY = Math.min(bh, 80);
+    e.x = Math.min(Math.max(e.x, keepX - bw), w - keepX);
+    e.y = Math.min(Math.max(e.y, keepY - bh), h - keepY);
   }
 }
 
@@ -321,7 +331,13 @@ function attachDrag(canvas) {
     if (pointers.size === 2 && ui.selected) {
       const [a, b] = [...pointers.values()];
       ui.drag = null;
-      ui.pinch = { key: ui.selected, baseDist: Math.max(dist(a, b), 1), baseScale: ui.elements[ui.selected].scale || 1 };
+      const bb = ui.bounds.get(ui.selected);
+      ui.pinch = {
+        key: ui.selected, baseDist: Math.max(dist(a, b), 1), baseScale: ui.elements[ui.selected].scale || 1,
+        // Pinching grows the element around its middle, not its top-left corner.
+        cx: bb ? bb.x + bb.w / 2 : null, cy: bb ? bb.y + bb.h / 2 : null,
+        bw: bb?.w, bh: bb?.h,
+      };
       return;
     }
 
@@ -357,7 +373,14 @@ function attachDrag(canvas) {
 
     if (ui.pinch && pointers.size >= 2) {
       const [a, b] = [...pointers.values()];
-      ui.elements[ui.pinch.key].scale = clampScale(ui.pinch.baseScale * (dist(a, b) / ui.pinch.baseDist));
+      const pn = ui.pinch, node = ui.elements[pn.key];
+      node.scale = clampScale(pn.baseScale * (dist(a, b) / pn.baseDist));
+      if (pn.cx != null) {
+        const k = node.scale / pn.baseScale;
+        node.x = pn.cx - (pn.bw * k) / 2;
+        node.y = pn.cy - (pn.bh * k) / 2;
+      }
+      clampAll();
       draw();
       return;
     }
@@ -403,31 +426,34 @@ function attachDrag(canvas) {
 /* Snapping. The dragged element's left edge, centre and right edge are tested
    against the card margins, the card's centre line, and every other element's
    edges and centre — and the same vertically. Within reach, it jumps into line
-   and a guide shows what it locked to. 28 card px is about 9 screen px: firm
-   enough to catch, loose enough not to fight a deliberate placement. */
-const SNAP = 28;
+   and a guide shows what it locked to. Edges only meet their own kind — left
+   to left, centre to centre, right to right. Matching every edge against every
+   other edge left almost no free space on a busy card, so big elements jumped
+   between snap points instead of going where they were put. */
+const SNAP = 24;
 
 function snap(key, x, y) {
   const [w, h] = RATIOS[ui.ratio];
   const b = ui.bounds.get(key);
   if (!b) return { x, y, guides: [] };
 
-  const xs = [PAD, w / 2, w - PAD];
-  const ys = [PAD, h / 2, h - PAD];
+  const xs = [[PAD], [w / 2], [w - PAD]];
+  const ys = [[PAD], [h / 2], [h - PAD]];
   for (const [k, o] of ui.bounds) {
     if (k === key) continue;
-    xs.push(o.x, o.x + o.w / 2, o.x + o.w);
-    ys.push(o.y, o.y + o.h / 2, o.y + o.h);
+    xs[0].push(o.x); xs[1].push(o.x + o.w / 2); xs[2].push(o.x + o.w);
+    ys[0].push(o.y); ys[1].push(o.y + o.h / 2); ys[2].push(o.y + o.h);
   }
 
+  // edges[i] (start, middle, end of the dragged element) only tests lines[i].
   const nearest = (edges, lines) => {
     let hit = null;
-    for (const edge of edges) {
-      for (const line of lines) {
+    edges.forEach((edge, i) => {
+      for (const line of lines[i]) {
         const d = line - edge;
         if (Math.abs(d) <= SNAP && (!hit || Math.abs(d) < Math.abs(hit.d))) hit = { d, line };
       }
-    }
+    });
     return hit;
   };
 
@@ -526,8 +552,10 @@ const abbrev = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 // Faint reads fine on the black preset card but disappears over a photograph,
 // so labels step up whenever there's an image behind them — and the chosen
 // text theme decides how far.
-const labelInk = () => (ui.photo && ui.mode === 'photo' ? theme().labelInk : C.faint);
-const mutedInk = () => (ui.photo && ui.mode === 'photo' ? theme().muted : C.muted);
+// Video exports get the same step-up: they'll sit over footage, not black.
+const overImage = () => ui.overlay || (ui.photo && ui.mode === 'photo');
+const labelInk = () => (overImage() ? theme().labelInk : C.faint);
+const mutedInk = () => (overImage() ? theme().muted : C.muted);
 
 // Date only. The place was the first stop's name, which on most nights is
 // either "Unnamed stop" or a venue that says nothing about the night.
@@ -544,6 +572,13 @@ function draw({ forExport = false } = {}) {
   ui.bounds.clear();
 
   g.clearRect(0, 0, w, h);
+  // The video overlay keeps the layout and drops everything behind it.
+  if (ui.overlay) {
+    if (ui.mode === 'preset') drawPreset(g, w, h);
+    else drawFree(g, w, h, forExport);
+    drawWordmark(g, h);
+    return;
+  }
   g.fillStyle = C.bg;
   g.fillRect(0, 0, w, h);
 
@@ -561,7 +596,11 @@ function draw({ forExport = false } = {}) {
   if (ui.mode === 'preset') drawPreset(g, w, h);
   else drawFree(g, w, h, forExport);
 
-  // The wordmark is the one fixed element — always mint, always present.
+  drawWordmark(g, h);
+}
+
+// The wordmark is the one fixed element — always mint, always present.
+function drawWordmark(g, h) {
   drawText(g, 'Last Call', PAD, h - PAD - 26, { size: 26, weight: 700, color: C.mint, spacing: 1 });
 }
 
@@ -603,7 +642,7 @@ function drawPreset(g, w, h) {
   const stackTop = h - PAD - 26 - 30 - stackH;
   const region = { x: PAD, y: PAD + 60, w: w - PAD * 2, h: stackTop - PAD - 100 };
 
-  const frame = on.map.on ? drawMapBackground(g, w, h, region, stackTop) : null;
+  const frame = on.map.on && !ui.overlay ? drawMapBackground(g, w, h, region, stackTop) : null;
 
   if (on.route.on) {
     if (frame) drawMapRoute(g, frame);
@@ -920,13 +959,94 @@ function blobToBase64(blob) {
   });
 }
 
-function download(blob) {
+function download(blob, name = filename()) {
   const url = URL.createObjectURL(blob);
-  const a = el('a', { href: url, download: filename() });
+  const a = el('a', { href: url, download: name });
   document.body.append(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- video pack ----------
+   Transparent PNGs for a video editor: the whole layout with nothing behind it,
+   plus every element on its own at twice card size, so it stays sharp when
+   scaled up over footage. No photo and no map tiles are drawn, so nothing
+   cross-origin can taint the export. */
+
+const PACK_SCALE = 2;
+const PACK_MARGIN = 40; // room for the Halo glow and descenders
+
+const canvasBlob = (c) => new Promise((resolve, reject) =>
+  c.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob returned null'))), 'image/png'));
+
+async function overlayBlob() {
+  ui.overlay = true;
+  try {
+    draw({ forExport: true });
+    return await canvasBlob(ui.canvas);
+  } finally {
+    ui.overlay = false;
+    draw();
+  }
+}
+
+// Draws one element alone, measuring it first on a scratch canvas.
+async function pieceBlob(paint) {
+  const [w] = RATIOS[ui.ratio];
+  const scratch = document.createElement('canvas');
+  scratch.width = w; scratch.height = 1600;
+  ui.overlay = true;
+  try {
+    const box = paint(scratch.getContext('2d'), w);
+    if (!box?.w || !box?.h) return null;
+    const c = document.createElement('canvas');
+    c.width = Math.ceil((box.w + PACK_MARGIN * 2) * PACK_SCALE);
+    c.height = Math.ceil((box.h + PACK_MARGIN * 2) * PACK_SCALE);
+    const g = c.getContext('2d');
+    g.scale(PACK_SCALE, PACK_SCALE);
+    g.translate(PACK_MARGIN, PACK_MARGIN);
+    paint(g, w);
+    return await canvasBlob(c);
+  } finally {
+    ui.overlay = false;
+  }
+}
+
+async function buildVideoPack() {
+  const base = filename().replace(/\.png$/, '');
+  const files = [];
+  files.push([`${base}-layout.png`, await overlayBlob()]);
+  for (const t of TYPES) {
+    if (t.presetOnly || !ui.elements[t.key]?.on) continue;
+    const blob = await pieceBlob((g, w) => DRAW[t.key](g, 0, 0, w));
+    if (blob) files.push([`${base}-${t.key}.png`, blob]);
+  }
+  files.push([`${base}-wordmark.png`, await pieceBlob((g) => ({
+    w: drawText(g, 'Last Call', 0, 0, { size: 26, weight: 700, color: C.mint, spacing: 1 }), h: 32,
+  }))]);
+  return files;
+}
+
+async function saveVideoPack() {
+  let files;
+  try { files = await buildVideoPack(); } catch {
+    toast('The video images didn’t render.');
+    return;
+  }
+
+  try {
+    let native = true;
+    for (const [name, blob] of files) {
+      if (!native || !(await saveImage(await blobToBase64(blob), name))) { native = false; download(blob, name); }
+    }
+    window.dispatchEvent(new Event('lc:card-exported'));
+    toast(native
+      ? `Saved ${files.length} see-through images to Pictures › Last Call.`
+      : `Downloaded ${files.length} see-through images.`, 4000);
+  } catch {
+    toast('Saving to the gallery failed partway. Try again.');
+  }
 }
 
 // Exposed so verification can prove toBlob works — the exact thing that fails
@@ -934,4 +1054,5 @@ function download(blob) {
 // element geometry the pointer gestures mutate.
 export function __renderForTest() { return render(); }
 export function __stateForTest() { return ui; }
+export function __videoPackForTest() { return buildVideoPack(); }
 export { icon, km };

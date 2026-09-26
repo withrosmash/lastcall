@@ -296,6 +296,38 @@ function initAtlas(host, done) {
    drives it from a slider. */
 
 // Where you were at time t: interpolated between the two fixes either side.
+// Nights recorded before fixes kept their own time have runs of points that
+// all share the moment the app was reopened. Spread each run back over the
+// time since the point before it, in proportion to distance walked, so the
+// rewind slider moves along the route instead of leaping to the end of the run.
+// Display only: the stored night is untouched.
+const BURST_MS = 3000;
+export function retime(trail) {
+  const out = trail.map((p) => ({ ...p }));
+  let i = 1;
+  while (i < out.length) {
+    let j = i;
+    while (j + 1 < out.length && out[j + 1].t - out[j].t < BURST_MS) j++;
+    const prev = out[i - 1];
+    const span = out[j].t - prev.t;
+    if (j > i && span > BURST_MS) {
+      const legs = [];
+      let total = 0;
+      for (let k = i; k <= j; k++) {
+        total += S.haversineM(out[k - 1].lat, out[k - 1].lng, out[k].lat, out[k].lng);
+        legs.push(total);
+      }
+      const end = out[j].t;
+      for (let k = i; k <= j; k++) {
+        const f = total > 0 ? legs[k - i] / total : (k - i + 1) / (j - i + 1);
+        out[k].t = Math.round(prev.t + (end - prev.t) * f);
+      }
+    }
+    i = j + 1;
+  }
+  return out;
+}
+
 export function positionAt(trail, t) {
   if (!trail.length) return null;
   if (t <= trail[0].t) return { lat: trail[0].lat, lng: trail[0].lng, i: 0 };
@@ -319,7 +351,8 @@ export function nightMap(host, s) {
     map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
     L.tileLayer(TILES, TILE_OPTS).addTo(map);
 
-    const all = s.trail.map((p) => [p.lat, p.lng]);
+    const trail = retime(s.trail);
+    const all = trail.map((p) => [p.lat, p.lng]);
     L.polyline(all, { color: '#7EE0C0', weight: 4, opacity: 0.3, lineCap: 'round', lineJoin: 'round' }).addTo(map);
     const walked = L.polyline(all, { color: '#7EE0C0', weight: 4, lineCap: 'round', lineJoin: 'round' }).addTo(map);
     for (const pin of s.pins) addPinMarker(pin);
@@ -334,7 +367,7 @@ export function nightMap(host, s) {
     setTimeout(() => map?.invalidateSize(), 60);
 
     controller.setTime = (t) => {
-      const pos = positionAt(s.trail, t);
+      const pos = positionAt(trail, t);
       if (!pos || !map) return;
       here.setLatLng([pos.lat, pos.lng]);
       walked.setLatLngs([...all.slice(0, pos.i), [pos.lat, pos.lng]]);
