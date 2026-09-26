@@ -2,7 +2,9 @@
 
 1. **`HANDOFF.md`** and **`../css/tokens/*.css`** — the current source of truth, from the Claude Design system package. Token files are copied in verbatim so a future design update is a file swap, not a merge.
 2. **`screenshots/`** — the 13 screens and 3 share-card layouts as rendered by the design prototype. Use these to check the build against intent.
-3. **`BRIEF.md`** and **`handoff.html`** — the original brief and first-pass handoff written before the design system existed. Kept as history. Superseded; do not build from these.
+3. **`BRIEF-ROUND-2.md`** — the second brief (September 2026): stronger forest bloom, light mode with a cobalt bloom, the avatar art pass and unlockable items. Overrides the original brief's "no light mode" rule.
+4. **`AVATAR-MOTION.md`** — the avatar's grid, expressions, movements and rules.
+5. **`BRIEF.md`** and **`handoff.html`** — the original brief and first-pass handoff written before the design system existed. Kept as history. Superseded; do not build from these.
 
 ## Where the build knowingly differs
 
