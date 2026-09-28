@@ -2,7 +2,7 @@
 // over stored data — no new tracking exists to serve a badge.
 
 import { BADGES } from './badges-data.js';
-import { el, btn, spacer, foot, head } from './ui.js';
+import { el, btn, spacer, foot, head, currentTheme } from './ui.js';
 import * as S from './state.js';
 
 const H = 60 * 60 * 1000;
@@ -120,7 +120,10 @@ export function evaluate({ sessions, prefs, flags = {} }) {
 
 /* ---------- UI ---------- */
 
-export const badgeSrc = (slug) => `./icons/badges/badge-${slug}.svg`;
+// Light-theme versions are generated from these by scripts/light-badges.mjs.
+// The share card isn't themed, so it asks for the dark art explicitly.
+export const badgeSrc = (slug, theme = currentTheme()) =>
+  `./icons/badges/${theme === 'light' ? 'light/' : ''}badge-${slug}.svg`;
 
 const ACCENTS = { mint: '#7EE0C0', pink: '#F06C9B', amber: '#EF9F27', forest: '#35A26F' };
 
@@ -145,7 +148,8 @@ export function badgeChip(slug, { size = 64, earned = true } = {}) {
     src: badgeSrc(slug),
     alt: meta ? meta.name : slug,
     width: size, height: size,
-    style: `width:${size}px;height:${size}px;border-radius:50%${earned ? '' : ';filter:grayscale(1) brightness(.55)'}`,
+    class: earned ? '' : 'badge--locked',
+    style: `width:${size}px;height:${size}px;border-radius:50%`,
   });
   img.addEventListener('error', () => wrap.replaceChildren(placeholder(meta, size, earned)));
   wrap.append(img);

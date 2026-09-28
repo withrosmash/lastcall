@@ -1,0 +1,9 @@
+/* Round 2, label decision 2d: tile keys and field labels become 12px semibold sentence case.
+   Components still set text-transform: uppercase inline. Remove it there (StatTile, Field, Strip). */
+:root{
+  --fs-label:12px;
+  --type-label:600 12px/1.2 var(--font-sans); /* @kind font */
+  --tr-label:0; /* @kind other */
+  --type-eyebrow:700 15px/1.2 var(--font-sans); /* @kind font */
+  --tr-eyebrow:-.02em; /* @kind other */
+}

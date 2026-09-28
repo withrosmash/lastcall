@@ -3,9 +3,33 @@
    file swap, not a merge. Everything below is the app's component layer, built
    only from those tokens. */
 @import url("./tokens/colors.css");
+@import url("./tokens/colors-round2.css");
 @import url("./tokens/typography.css");
+@import url("./tokens/typography-round2.css");
 @import url("./tokens/spacing.css");
 @import url("./tokens/effects.css");
+/* Last, so its [data-theme="light"] values beat the :root ones above,
+   effects included. Dark is the default: no attribute on <html>. */
+@import url("./tokens/colors-light.css");
+
+/* App-level values the design tokens don't cover: translucent chrome and map
+   furniture that was hard-coded for a black ground. */
+:root{
+  --chrome-bg:rgba(20,20,20,.72);
+  --chrome-bg-strong:rgba(20,20,20,.92);
+  --attrib-bg:rgba(0,0,0,.55);
+  --me-halo:0 0 0 4px rgba(255,255,255,.18);
+  --stop-halo:0 0 0 4px rgba(240,108,155,.18);
+  --map-ground:var(--forest-950);
+}
+[data-theme="light"]{
+  --chrome-bg:rgba(255,255,255,.72);
+  --chrome-bg-strong:rgba(255,255,255,.94);
+  --attrib-bg:rgba(255,255,255,.72);
+  --me-halo:0 0 0 4px rgba(11,21,38,.14);
+  --stop-halo:0 0 0 2px #FFFFFF,0 0 0 5px rgba(201,47,104,.18);
+  --map-ground:#E6EBF2;
+}
 
 /* ---------- ground ---------- */
 
@@ -53,7 +77,7 @@ input::placeholder{color:var(--placeholder)}
 
 /* ---------- type ---------- */
 
-.eb{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--faint)}
+.eb{font:var(--type-eyebrow);letter-spacing:var(--tr-eyebrow);color:var(--faint)}
 .eb--mint{color:var(--mint)}
 .eb--mint-dim{color:var(--mint-dim)}
 .eb--pink{color:var(--pink)}
@@ -73,7 +97,7 @@ input::placeholder{color:var(--placeholder)}
    is mirrored here so the tracking state is legible without pulling the shade. */
 .service{
   margin:0 10px 4px;padding:7px 10px;border-radius:var(--r-chip);
-  background:rgba(20,20,20,.72);backdrop-filter:blur(var(--blur-chrome));
+  background:var(--chrome-bg);backdrop-filter:blur(var(--blur-chrome));
   border:var(--hairline) solid var(--line);
   display:flex;align-items:center;gap:8px;
   font:var(--type-caption);color:var(--muted-up);
@@ -100,7 +124,7 @@ input::placeholder{color:var(--placeholder)}
   text-align:center;
 }
 .btn--lg{min-height:var(--tap-lg)}
-.btn--pri{background:var(--mint);color:var(--mint-ink);box-shadow:var(--glow-mint)}
+.btn--pri{background:var(--mint-fill);color:var(--mint-ink);box-shadow:var(--glow-mint)}
 .btn--sec{border:var(--hairline) solid var(--line);color:var(--text)}
 .btn--pink{border:var(--hairline) solid var(--pink);color:var(--pink)}
 .btn[disabled]{opacity:.38;pointer-events:none}
@@ -113,7 +137,7 @@ input::placeholder{color:var(--placeholder)}
    glass only ever sits over bloom or imagery. */
 
 .tile{background:var(--surface-tile);border-radius:var(--r-tile);padding:var(--pad-tile)}
-.tile__k{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--muted)}
+.tile__k{font:var(--type-label);letter-spacing:var(--tr-label);color:var(--muted)}
 .tile__v{font:var(--type-stat);letter-spacing:var(--tr-stat);font-variant-numeric:tabular-nums;margin-top:2px}
 .tile__v--drinks{color:var(--pink)}
 .tile__v--hydration{color:var(--amber)}
@@ -168,7 +192,7 @@ input::placeholder{color:var(--placeholder)}
 
 .field{border-bottom:var(--hairline) solid var(--line);padding-bottom:6px;transition:border-color var(--dur-fast) var(--ease-out)}
 .field:focus-within{border-color:var(--mint)}
-.field__k{font:var(--type-label);letter-spacing:var(--tr-label);text-transform:uppercase;color:var(--muted)}
+.field__k{font:var(--type-label);letter-spacing:var(--tr-label);color:var(--muted)}
 .field input{font-size:16px;padding:7px 0 2px}
 
 /* ---------- warning ---------- */
@@ -207,12 +231,12 @@ input::placeholder{color:var(--placeholder)}
 
 .map-wrap{flex:1;min-height:200px;position:relative;border-radius:var(--r-card);overflow:hidden;border:var(--hairline) solid var(--glass-line)}
 #map{position:absolute;inset:0;background:var(--forest-950)}
-.leaflet-container{background:var(--forest-950);font:var(--type-caption)}
-.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:var(--faint)!important;font-size:9px}
+.leaflet-container{background:var(--map-ground);font:var(--type-caption)}
+.leaflet-control-attribution{background:var(--attrib-bg)!important;color:var(--faint)!important;font-size:9px}
 .leaflet-control-attribution a{color:var(--muted)!important}
 .leaflet-bar,.leaflet-bar a{background:var(--surface);color:var(--text);border-color:var(--line)}
-.dot-me{width:14px;height:14px;border-radius:var(--r-pill);background:var(--text);box-shadow:0 0 0 4px rgba(255,255,255,.18)}
-.dot-stop{width:11px;height:11px;border-radius:var(--r-pill);background:var(--pink);box-shadow:0 0 0 4px rgba(240,108,155,.18)}
+.dot-me{width:14px;height:14px;border-radius:var(--r-pill);background:var(--text);box-shadow:var(--me-halo)}
+.dot-stop{width:11px;height:11px;border-radius:var(--r-pill);background:var(--pink);box-shadow:var(--stop-halo)}
 /* Chrome over the map sits on a protection gradient, never a capsule. */
 .map-foot{
   position:absolute;left:0;right:0;bottom:0;z-index:500;
@@ -239,7 +263,7 @@ input::placeholder{color:var(--placeholder)}
 .toast{
   position:fixed;left:50%;transform:translateX(-50%);
   bottom:calc(20px + var(--safe-bottom));z-index:60;
-  background:rgba(20,20,20,.92);backdrop-filter:blur(var(--blur-chrome));
+  background:var(--chrome-bg-strong);backdrop-filter:blur(var(--blur-chrome));
   border:var(--hairline) solid var(--line);border-radius:var(--r-pill);
   padding:10px 18px;font:var(--type-caption);color:var(--text);
   max-width:86vw;text-align:center;animation:fade var(--dur-fast) var(--ease-out);
@@ -297,3 +321,22 @@ canvas.avatar{
 }
 .hsl::-moz-range-track{height:12px;border-radius:var(--r-pill);background:var(--track)}
 .hsl::-moz-range-thumb{width:22px;height:22px;border-radius:var(--r-pill);background:var(--text);border:3px solid var(--bg)}
+
+/* ---------- appearance ---------- */
+.theme-pick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-tight)}
+.theme-tile{
+  background:var(--surface);border:1px solid transparent;border-radius:11px;
+  padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text);
+}
+.theme-tile[aria-pressed="true"]{border-color:var(--mint)}
+.theme-tile[aria-pressed="true"] .theme-tile__name{color:var(--mint)}
+.theme-tile__name{font:600 12px/1.2 var(--font-sans)}
+.mini{position:relative;width:64px;height:118px;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+.mini i{position:absolute;display:block}
+.mini .mini__title{left:8px;right:8px;top:14px;height:6px;border-radius:3px;opacity:.8}
+.mini .mini__tile{width:22px;top:30px;height:18px;border-radius:4px}
+.mini .mini__btn{left:8px;right:8px;bottom:12px;height:12px;border-radius:4px;background:#7EE0C0}
+/* Locked badges fade to grey; on the white light-mode discs, darkening reads
+   as dirty, so they go translucent instead. */
+.badge--locked{filter:grayscale(1) brightness(.55)}
+[data-theme="light"] .badge--locked{filter:grayscale(1) opacity(.45)}

@@ -1,12 +1,12 @@
 import * as store from './storage.js';
 import * as S from './state.js';
-import { mount, toast, buzz, dismissSheet, serviceNotice } from './ui.js';
+import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme } from './ui.js';
 import { startScreen, liveScreen, recapScreen, primingScreen, react } from './session.js';
 import { avatarScreen } from './avatarscreen.js';
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
-import { historyScreen, detailScreen, settingsScreen } from './history.js';
+import { historyScreen, detailScreen, settingsScreen, appearanceScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as badges from './badges.js';
 import { atlasScreen } from './map.js';
@@ -31,6 +31,7 @@ const ctx = {
   permissions: null,
   go, back, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
+  setTheme,
 };
 
 const SCREENS = {
@@ -47,6 +48,7 @@ const SCREENS = {
   badges: { build: badges.badgesScreen, bloom: 'hero' },
   atlas: { build: atlasScreen, bloom: 'none' },
   avatar: { build: avatarScreen, bloom: 'none' },
+  appearance: { build: appearanceScreen, bloom: 'hero' },
 };
 
 // Screens the hardware back button should leave rather than unwind into: a
@@ -219,7 +221,7 @@ window.addEventListener('lc:card-exported', () => {
   const fresh = syncBadges();
   if (fresh.length) {
     const meta = badges.BADGES.find((b) => b.slug === fresh[0].slug);
-    if (meta) toast(`Badge earned — ${meta.name}.`);
+    if (meta) toast(`Badge earned: ${meta.name}.`);
   }
 });
 
@@ -418,8 +420,18 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------- boot ---------- */
 
+// Takes effect at once: the whole UI reads colour from tokens, and maps pick
+// their tiles when they are next opened.
+function setTheme(theme) {
+  ctx.state.prefs.theme = theme === 'light' ? 'light' : 'dark';
+  save();
+  keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
+  render();
+}
+
 function boot() {
   store.installFlushHooks();
+  keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
 
   const active = ctx.state.active;
   if (active && S.isStale(active)) {

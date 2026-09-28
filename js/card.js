@@ -178,7 +178,7 @@ function makeState(s, allBadges = []) {
       ui?.refreshChrome?.();
       draw();
     };
-    entry.img.src = badgeSrc(meta.slug);
+    entry.img.src = badgeSrc(meta.slug, 'dark');
     badgeImgs.push(entry);
   }
 

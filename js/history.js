@@ -1,5 +1,5 @@
 import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon,
-         hms, hm, clockTime, shortDate, upperDate, km } from './ui.js';
+         hms, hm, clockTime, shortDate, km } from './ui.js';
 import * as S from './state.js';
 import * as store from './storage.js';
 import { routeSvg } from './session.js';
@@ -154,6 +154,10 @@ export function settingsScreen(ctx) {
   return [
     head({ eyebrow: 'Settings', title: 'Reminders', back: () => ctx.back() }),
 
+    el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('appearance') },
+      el('span', { class: 'listrow__d', text: 'Appearance' }),
+      el('span', { class: 'listrow__m' }, el('span', { text: p.theme === 'light' ? 'Light' : 'Dark' }))),
+
     el('div', { class: 'eb', text: 'Remind me to drink water after' }),
     row,
     el('p', { class: 'body', style: 'margin:0' },
@@ -170,6 +174,38 @@ export function settingsScreen(ctx) {
   ];
 }
 
+/* ---------- appearance ---------- */
+
+// Two tiles with a miniature of each theme. Choosing one switches at once.
+// No "match phone": this is mostly used in dark rooms, and a phone that turns
+// light at sunrise would flip the app mid-morning-after.
+const THEMES = [
+  { k: 'dark', label: 'Dark', bg: '#000000', ink: '#FFFFFF', tile: '#141414' },
+  { k: 'light', label: 'Light', bg: '#EEF2F8', ink: '#0B1526', tile: '#FFFFFF' },
+];
+
+export function appearanceScreen(ctx) {
+  const current = ctx.state.prefs.theme === 'light' ? 'light' : 'dark';
+  const mini = (t) => el('div', { class: 'mini', style: `background:${t.bg}` },
+    el('i', { class: 'mini__title', style: `background:${t.ink}` }),
+    el('i', { class: 'mini__tile', style: `left:8px;background:${t.tile}` }),
+    el('i', { class: 'mini__tile', style: `right:8px;background:${t.tile}` }),
+    el('i', { class: 'mini__btn' }));
+
+  return [
+    head({ eyebrow: 'Settings', title: 'Appearance', back: () => ctx.back() }),
+    el('div', { class: 'theme-pick' }, THEMES.map((t) =>
+      el('button', {
+        class: 'theme-tile press', type: 'button', 'aria-pressed': t.k === current ? 'true' : 'false',
+        onclick: () => { if (t.k !== current) ctx.setTheme(t.k); },
+      }, mini(t), el('span', { class: 'theme-tile__name', text: t.label })))),
+    el('p', { class: 'body', style: 'margin:0', text: current === 'light'
+      ? 'Easier to read in daylight. Dark saves battery on most phones and is kinder to your eyes in a dark room.'
+      : 'The default. Saves battery on most phones and is kinder to your eyes in a dark room.' }),
+    spacer(),
+  ];
+}
+
 /* ---------- 12 night detail ---------- */
 
 export function detailScreen(ctx, session) {
@@ -178,7 +214,7 @@ export function detailScreen(ctx, session) {
   const sum = S.summarise(s);
 
   return [
-    head({ eyebrow: upperDate(s.startedAt), title: `${hm(sum.ms)} out`, back: () => ctx.back() }),
+    head({ eyebrow: shortDate(s.startedAt), title: `${hm(sum.ms)} out`, back: () => ctx.back() }),
 
     ...rewind(s),
 
@@ -190,9 +226,9 @@ export function detailScreen(ctx, session) {
     el('div', { class: 'eb', text: 'Timeline' }),
     (() => {
       const entries = [
-        ...s.pins.map((p) => ({ t: p.t, pin: true, label: p.note ? `${p.name} — ${p.note}` : p.name })),
+        ...s.pins.map((p) => ({ t: p.t, pin: true, label: p.note ? `${p.name} · ${p.note}` : p.name })),
         ...(s.meals || []).map((m) => ({ t: m.t, pin: false, label: 'Food' })),
-        ...(s.challenges || []).map((c) => ({ t: c.t, pin: false, label: `Challenge — ${c.text}` })),
+        ...(s.challenges || []).map((c) => ({ t: c.t, pin: false, label: `Challenge: ${c.text}` })),
         ...s.waters.map((w) => ({ t: w.t, pin: false, label: 'Water' })),
       ].sort((a, b) => a.t - b.t);
       return entries.length
@@ -274,7 +310,7 @@ const escapeXml = (str) => String(str).replace(/[<>&'"]/g, (c) =>
   ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 
 function toGpx(s) {
-  const name = `Last Call — ${shortDate(s.startedAt)}`;
+  const name = `Last Call, ${shortDate(s.startedAt)}`;
   const points = s.trail.map((p) =>
     `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
   const stops = s.pins.map((p) =>

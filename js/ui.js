@@ -65,6 +65,22 @@ export function head({ eyebrow, title, back }) {
   );
 }
 
+/* ---------- theme ---------- */
+
+// Dark is the default and carries no attribute; light sets data-theme on
+// <html>, which colors-light.css is scoped to.
+export const currentTheme = () => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+
+export function applyTheme(theme) {
+  const light = theme === 'light';
+  const root = document.documentElement;
+  if (light) root.dataset.theme = 'light';
+  else delete root.dataset.theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#EEF2F8' : '#000000');
+  document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', light ? 'light' : 'dark');
+  return light;
+}
+
 /* ---------- screen mounting ---------- */
 
 const app = () => document.getElementById('app');

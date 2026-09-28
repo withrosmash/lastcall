@@ -8,6 +8,7 @@ export function defaultPrefs() {
   return {
     hydrationEvery: 5, batterySaver: false, units: 'km',
     recentDrinks: [], locationPrimed: false, historyRange: '8w',
+    theme: 'dark',
   };
 }
 

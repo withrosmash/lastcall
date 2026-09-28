@@ -80,7 +80,7 @@ export function avatarScreen(ctx) {
   return [
     head({ title: 'Your avatar', back: () => ctx.back() }),
     el('div', { class: 'avatar-stage' }, av.canvas),
-    el('p', { class: 'cap', style: 'margin:0', text: 'Tap them to say hello. Any colour works — drag the sliders past the swatches.' }),
+    el('p', { class: 'cap', style: 'margin:0', text: 'Tap them to say hello. For any colour at all, use the sliders.' }),
     el('div', { class: 'eb', text: 'Hair' }),
     styleChips,
     el('div', { class: 'eb', text: 'Colours' }),

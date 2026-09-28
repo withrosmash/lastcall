@@ -14,6 +14,16 @@
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="stylesheet" href="./vendor/leaflet.css">
 <link rel="stylesheet" href="./css/style.css">
+<script>
+  // Before first paint, so a light-theme user never sees a black flash.
+  try {
+    if (JSON.parse(localStorage.getItem('lastcall_v1') || '{}').prefs?.theme === 'light') {
+      document.documentElement.dataset.theme = 'light';
+      document.querySelector('meta[name="theme-color"]').content = '#EEF2F8';
+      document.querySelector('meta[name="color-scheme"]').content = 'light';
+    }
+  } catch (e) { /* unreadable storage: stay dark */ }
+</script>
 </head>
 <body>
 <div class="bloom" id="bloom" aria-hidden="true"></div>

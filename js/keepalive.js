@@ -56,6 +56,16 @@ export async function saveImage(base64, name) {
   return true;
 }
 
+/* ---------- system bars ---------- */
+
+// Dark status and navigation bar icons on the light theme, light icons on the
+// dark one. Left to Android, they follow the phone's own theme instead, which
+// put dark icons on the black app for anyone whose phone is set to light.
+export async function setSystemBars(light) {
+  if (!isNative()) return;
+  try { await LastCallNative.setSystemBars({ light: !!light }); } catch { /* older build */ }
+}
+
 /* ---------- hardware back button ---------- */
 
 // Android's back button otherwise closes the app from any screen. Routing it

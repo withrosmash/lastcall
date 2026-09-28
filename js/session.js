@@ -51,7 +51,7 @@ export function startScreen(ctx) {
     el('h1', { class: 'display', style: 'margin-top:10px' },
       'Track the night.', el('br'), 'Piece it together later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
-      text: 'Steps, stops, drinks and water — kept on this phone, nowhere else.' }),
+      text: 'Steps, stops, drinks and water. Kept on this phone, nowhere else.' }),
     el('div', { style: 'height:20px' }),
     // Caught before a night rather than discovered after one went unrecorded.
     ctx.permissions && Object.values(ctx.permissions).some((v) => !v)
@@ -84,13 +84,13 @@ export function primingScreen(ctx) {
     el('h1', { class: 'display', style: 'margin-top:14px' },
       'Your phone will be in your pocket'),
     el('p', { class: 'body', style: 'margin:12px 0 0' },
-      'Android opens its settings screen for this one — pick “Allow all the time”, then come back.'),
+      'Android opens its settings screen for this one. Pick “Allow all the time”, then come back.'),
     el('p', { class: 'cap', style: 'color:var(--mint);margin:10px 0 0',
       text: 'Your location never leaves the phone.' }),
     spacer(),
     foot(
       btn('Open settings', 'btn--pri', () => ctx.grantThenStart(), { lg: true }),
-      btn('Skip — track without the map', 'btn--sec', () => ctx.startNight({ skipLocation: true })),
+      btn('Skip, track without the map', 'btn--sec', () => ctx.startNight({ skipLocation: true })),
     ),
   ];
 }
@@ -293,7 +293,7 @@ export function recapScreen(ctx, session) {
     el('div', { class: 'live-top' },
       el('div', { style: 'display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap' },
         el('div', { class: 'timer timer--ended', text: hms(sum.ms) }),
-        el('div', { class: 'cap', text: `${clockTime(s.startedAt)} — ${clockTime(s.endedAt)}` }),
+        el('div', { class: 'cap', text: `${clockTime(s.startedAt)} to ${clockTime(s.endedAt)}` }),
       ),
       av.canvas),
 
@@ -365,7 +365,7 @@ export function routeSvg(s, height = 190) {
   const open = `<svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">`;
 
   if (pts.length < 2) {
-    wrap.innerHTML = `${open}<text x="50" y="32" text-anchor="middle" fill="#4D4D4D" font-size="4.5" font-family="system-ui">No route recorded</text></svg>`;
+    wrap.innerHTML = `${open}<text x="50" y="32" text-anchor="middle" style="fill:var(--faint)" font-size="4.5" font-family="system-ui">No route recorded</text></svg>`;
     return wrap;
   }
 
@@ -383,9 +383,9 @@ export function routeSvg(s, height = 190) {
   const last = fitted[fitted.length - 1];
 
   wrap.innerHTML = open +
-    `<polyline points="${line}" fill="none" stroke="#7EE0C0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>` +
-    stops.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="1.9" fill="#F06C9B"/>`).join('') +
-    `<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.2" fill="#fff"/>` +
+    `<polyline points="${line}" fill="none" style="stroke:var(--mint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>` +
+    stops.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="1.9" style="fill:var(--pink)"/>`).join('') +
+    `<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.2" style="fill:var(--text)"/>` +
     `</svg>`;
   return wrap;
 }

@@ -33,7 +33,11 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.os.Environment;
 
+import android.view.Window;
+
 import androidx.core.app.NotificationCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
@@ -401,6 +405,20 @@ public class LastCallNative extends Plugin implements SensorEventListener {
     }
 
     /* ---------- gallery save ---------- */
+
+    /* Status and navigation bar icons follow the app's theme, not the phone's:
+       dark icons over the light theme, light icons over the dark one. */
+    @PluginMethod
+    public void setSystemBars(PluginCall call) {
+        final boolean light = Boolean.TRUE.equals(call.getBoolean("light", false));
+        getActivity().runOnUiThread(() -> {
+            Window window = getActivity().getWindow();
+            WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(window, window.getDecorView());
+            bars.setAppearanceLightStatusBars(light);
+            bars.setAppearanceLightNavigationBars(light);
+            call.resolve();
+        });
+    }
 
     @PluginMethod
     public void saveToGallery(PluginCall call) {

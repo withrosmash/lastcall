@@ -1,4 +1,4 @@
-import { el, btn, spacer, foot, head, sheet, toast, hms, km } from './ui.js';
+import { el, btn, spacer, foot, head, sheet, toast, hms, km, currentTheme } from './ui.js';
 import * as S from './state.js';
 import * as geo from './geo.js';
 
@@ -8,10 +8,24 @@ import * as geo from './geo.js';
 // Dark Gray Canvas — keyless, CORS-enabled, attribution required. Its data
 // stops at zoom 16 (z17 is a "not yet available" tile), so deeper zooms
 // upscale z16. Note the {y}/{x} order. Offline tiles are still open.
-const TILES =
-  'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+// The light theme uses the matching Light Gray Canvas: same service, same
+// keyless access and zoom ceiling.
+const tiles = () =>
+  `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/${currentTheme() === 'light' ? 'World_Light_Gray_Base' : 'World_Dark_Gray_Base'}/MapServer/tile/{z}/{y}/{x}`;
 const ATTRIB = 'Esri, HERE, Garmin, &copy; OpenStreetMap contributors';
 const TILE_OPTS = { maxZoom: 19, maxNativeZoom: 16, attribution: ATTRIB, crossOrigin: true };
+
+// Mint route on black. On the light map mint alone washes out, so it sits on a
+// deep teal under-stroke (the design's --data-route over #0B6E55).
+function route(latlngs, { weight = 4, opacity = 1 } = {}) {
+  const base = { lineCap: 'round', lineJoin: 'round', interactive: false };
+  if (currentTheme() !== 'light') return { line: L.polyline(latlngs, { ...base, color: '#7EE0C0', weight, opacity }) };
+  return {
+    under: L.polyline(latlngs, { ...base, color: '#0B6E55', weight: weight + 3, opacity }),
+    line: L.polyline(latlngs, { ...base, color: '#3FC79E', weight, opacity }),
+  };
+}
+const addRoute = (r) => { r.under?.addTo(map); r.line.addTo(map); return r; };
 
 let map = null;
 let layers = { trail: null, me: null, pins: [] };
@@ -68,11 +82,9 @@ function initMap(host, s) {
   teardownMap();
 
   map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
-  L.tileLayer(TILES, TILE_OPTS).addTo(map);
+  L.tileLayer(tiles(), TILE_OPTS).addTo(map);
 
-  layers.trail = L.polyline(s.trail.map((p) => [p.lat, p.lng]), {
-    color: '#7EE0C0', weight: 4, lineCap: 'round', lineJoin: 'round',
-  }).addTo(map);
+  layers.trail = addRoute(route(s.trail.map((p) => [p.lat, p.lng])));
 
   for (const pin of s.pins) addPinMarker(pin);
 
@@ -94,7 +106,8 @@ function initMap(host, s) {
   onFix = (e) => {
     const fix = e.detail;
     if (!map) return;
-    layers.trail.addLatLng([fix.lat, fix.lng]);
+    layers.trail.under?.addLatLng([fix.lat, fix.lng]);
+    layers.trail.line.addLatLng([fix.lat, fix.lng]);
     setMe(fix);
     if (!centred) { map.setView([fix.lat, fix.lng], 16); centred = true; }
   };
@@ -277,13 +290,11 @@ function initAtlas(host, done) {
   teardownMap();
 
   map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
-  L.tileLayer(TILES, TILE_OPTS).addTo(map);
+  L.tileLayer(tiles(), TILE_OPTS).addTo(map);
 
   let bounds = null;
   for (const s of done) {
-    const line = L.polyline(s.trail.map((p) => [p.lat, p.lng]), {
-      color: '#7EE0C0', weight: 3, opacity: 0.75, lineCap: 'round', lineJoin: 'round',
-    }).addTo(map);
+    const { line } = addRoute(route(s.trail.map((p) => [p.lat, p.lng]), { weight: 3, opacity: 0.75 }));
     bounds = bounds ? bounds.extend(line.getBounds()) : line.getBounds();
   }
   if (bounds) map.fitBounds(bounds, { padding: [34, 34] });
@@ -349,12 +360,12 @@ export function nightMap(host, s) {
     teardownMap();
 
     map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
-    L.tileLayer(TILES, TILE_OPTS).addTo(map);
+    L.tileLayer(tiles(), TILE_OPTS).addTo(map);
 
     const trail = retime(s.trail);
     const all = trail.map((p) => [p.lat, p.lng]);
-    L.polyline(all, { color: '#7EE0C0', weight: 4, opacity: 0.3, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-    const walked = L.polyline(all, { color: '#7EE0C0', weight: 4, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+    addRoute(route(all, { opacity: 0.3 }));
+    const walked = addRoute(route(all));
     for (const pin of s.pins) addPinMarker(pin);
 
     const here = L.marker(all[all.length - 1], {
@@ -370,7 +381,9 @@ export function nightMap(host, s) {
       const pos = positionAt(trail, t);
       if (!pos || !map) return;
       here.setLatLng([pos.lat, pos.lng]);
-      walked.setLatLngs([...all.slice(0, pos.i), [pos.lat, pos.lng]]);
+      const upTo = [...all.slice(0, pos.i), [pos.lat, pos.lng]];
+      walked.under?.setLatLngs(upTo);
+      walked.line.setLatLngs(upTo);
     };
   });
   return controller;

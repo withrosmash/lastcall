@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'lastcall-v19';
+const CACHE = 'lastcall-v20';
 
 const SHELL = [
   './',
@@ -11,6 +11,9 @@ const SHELL = [
   './css/style.css',
   './css/tokens/colors.css',
   './css/tokens/typography.css',
+  './css/tokens/colors-round2.css',
+  './css/tokens/typography-round2.css',
+  './css/tokens/colors-light.css',
   './css/tokens/spacing.css',
   './css/tokens/effects.css',
   './vendor/leaflet.js',
@@ -72,6 +75,38 @@ const SHELL = [
   './icons/badges/badge-sunrise-service.svg',
   './icons/badges/badge-ten-k.svg',
   './icons/badges/badge-two-step.svg',
+  './icons/badges/light/badge-archivist.svg',
+  './icons/badges/light/badge-balanced-books.svg',
+  './icons/badges/light/badge-brand-loyal.svg',
+  './icons/badges/light/badge-cartographer.svg',
+  './icons/badges/light/badge-century-club.svg',
+  './icons/badges/light/badge-chaos-agent.svg',
+  './icons/badges/light/badge-cover-star.svg',
+  './icons/badges/light/badge-dry-run.svg',
+  './icons/badges/light/badge-early-doors.svg',
+  './icons/badges/light/badge-fifty-stops.svg',
+  './icons/badges/light/badge-first-dare.svg',
+  './icons/badges/light/badge-first-night.svg',
+  './icons/badges/light/badge-french-exit.svg',
+  './icons/badges/light/badge-game-on.svg',
+  './icons/badges/light/badge-ghost.svg',
+  './icons/badges/light/badge-good-habits.svg',
+  './icons/badges/light/badge-homing-pigeon.svg',
+  './icons/badges/light/badge-hydro-homie.svg',
+  './icons/badges/light/badge-marathon.svg',
+  './icons/badges/light/badge-metronome.svg',
+  './icons/badges/light/badge-mixologist.svg',
+  './icons/badges/light/badge-month-in-books.svg',
+  './icons/badges/light/badge-no-notes.svg',
+  './icons/badges/light/badge-on-the-board.svg',
+  './icons/badges/light/badge-one-and-done.svg',
+  './icons/badges/light/badge-pin-cushion.svg',
+  './icons/badges/light/badge-regular.svg',
+  './icons/badges/light/badge-ringleader.svg',
+  './icons/badges/light/badge-scenic-route.svg',
+  './icons/badges/light/badge-sunrise-service.svg',
+  './icons/badges/light/badge-ten-k.svg',
+  './icons/badges/light/badge-two-step.svg',
 ];
 
 self.addEventListener('install', (event) => {
