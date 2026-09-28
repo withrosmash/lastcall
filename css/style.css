@@ -379,3 +379,29 @@ canvas.avatar{
 .rewind__tick{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:var(--r-pill);background:var(--pink);pointer-events:none}
 .rewind__place{font:700 13px/1.2 var(--font-sans);color:var(--muted-up)}
 .rewind__place.is-stop{color:var(--pink)}
+
+/* ---------- first launch ---------- */
+.onboard__top{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.onboard__dots{display:flex;gap:6px}
+.onboard__dots span{width:18px;height:4px;border-radius:var(--r-pill);background:var(--line)}
+.onboard__dots span.on{background:var(--mint)}
+.onboard__stage{flex:1;min-height:200px;display:flex;align-items:center;justify-content:center}
+
+/* ---------- splash hand-off ----------
+   Same circle, same size and place as the system splash (160dp, centred), so
+   the user's own avatar seems to step into the default face's spot. */
+.handoff{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity 300ms var(--ease-out);
+}
+.handoff.is-out{opacity:0;pointer-events:none}
+.handoff__disc{
+  width:160px;height:160px;border-radius:50%;overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:center;
+  background:radial-gradient(circle at 50% 15%,#35A26F,#17553B 45%,#061710);
+}
+[data-theme="light"] .handoff__disc{background:radial-gradient(circle at 50% 15%,#6F9BDB,#0047AB 55%,#062A66)}
+.handoff__disc canvas{margin-bottom:-27px}
+.handoff__mark{position:absolute;bottom:calc(34px + var(--safe-bottom));font:700 15px/1 var(--font-sans);letter-spacing:-.02em;color:var(--mint-dim)}
+@media (prefers-reduced-motion:reduce){.handoff{transition:none}}

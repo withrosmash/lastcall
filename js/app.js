@@ -1,7 +1,9 @@
 import * as store from './storage.js';
 import * as S from './state.js';
-import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme } from './ui.js';
-import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScreen, morningNight } from './session.js';
+import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme, el } from './ui.js';
+import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScreen, morningNight, onboardingScreen, needsOnboarding } from './session.js';
+import { createAvatar } from './avatar.js';
+import { avatarLook } from './wardrobe.js';
 import { avatarScreen } from './avatarscreen.js';
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
@@ -50,12 +52,13 @@ const SCREENS = {
   avatar: { build: avatarScreen, bloom: 'hero' },
   appearance: { build: appearanceScreen, bloom: 'hero' },
   morning: { build: (c) => morningScreen(c, c.arg), bloom: 'hero' },
+  onboarding: { build: onboardingScreen, bloom: 'hero' },
 };
 
 // Screens the hardware back button should leave rather than unwind into: a
 // closed night is done, and returning to the live screen of a finished session
 // would be a lie.
-const STACK_ROOTS = new Set(['start', 'live', 'recap', 'morning']);
+const STACK_ROOTS = new Set(['start', 'live', 'recap', 'morning', 'onboarding']);
 // Every screen that owns a Leaflet instance, so leaving any of them tears it
 // down — previously only 'map' did, and detail/atlas left theirs alive.
 const MAP_SCREENS = new Set(['map', 'detail', 'atlas']);
@@ -430,9 +433,29 @@ function setTheme(theme) {
   render();
 }
 
+/* The splash hand-off. Android's splash can only show the default face,
+   because it's read from a fixed file before any app code runs. So the app's
+   first frame puts the user's own avatar in the same circle, waving, then
+   fades into the app. Native only: the web preview has no system splash. */
+function handoff() {
+  if (!geo.isNative()) return;
+  const av = createAvatar({ cell: 3, look: avatarLook(ctx), label: 'Your avatar' });
+  av.play('hello');
+  const node = el('div', { class: 'handoff', 'aria-hidden': 'true' },
+    el('div', { class: 'handoff__disc' }, av.canvas),
+    el('span', { class: 'handoff__mark', text: 'Last Call' }));
+  document.body.append(node);
+  av.start();
+  setTimeout(() => {
+    node.classList.add('is-out');
+    setTimeout(() => node.remove(), 320);
+  }, 1100);
+}
+
 function boot() {
   store.installFlushHooks();
   keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
+  handoff();
 
   const active = ctx.state.active;
   if (active && S.isStale(active)) {
@@ -453,9 +476,11 @@ function boot() {
     ensureBatteryExemption();
   } else {
     keepalive.setSessionActive(false);
-    // The first open after a night, before midday, is the morning after.
+    // A new install gets the walkthrough; the first open after a night,
+    // before midday, is the morning after.
     const night = morningNight(ctx.state);
-    if (night) go('morning', night);
+    if (needsOnboarding(ctx.state)) go('onboarding');
+    else if (night) go('morning', night);
     else go('start');
   }
 

@@ -1,86 +1,117 @@
-// Draws every icon the app needs from one vector definition, with a tiny
-// self-contained PNG encoder. No ImageMagick, no rsvg, no npm image deps —
-// none of which are installed, and all of which would be a build dependency
-// for four small files.
+// Draws every icon and splash image the app ships, from the avatar engine
+// itself, with a tiny self-contained PNG encoder. No ImageMagick, no rsvg, no
+// npm image deps.
+//
+// Round 2, direction A (design/round2/designs/Extras, 8d): the default
+// avatar's face, happy, on the forest bloom. The launcher and the system
+// splash can't show the user's own avatar (Android reads them from fixed files
+// before any app code runs), so they use this default face and the app's
+// first frame hands over to the user's own avatar (js/app.js, handoff).
+//
+//   node scripts/icons.mjs    (rerun if the avatar's default look changes)
 
 import { deflateSync } from 'node:zlib';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { build, toFrame, normaliseLook, DEFAULT_LOOK } from '../js/avatar.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const RES = resolve(root, 'android/app/src/main/res');
 
-const BG = [0x00, 0x00, 0x00];
-const MINT = [0x7e, 0xe0, 0xc0];
-const PINK = [0xf0, 0x6c, 0x9b];
-const WHITE = [0xff, 0xff, 0xff];
+/* ---------- the face ---------- */
 
-// The route mark: a climbing polyline, mint start, pink finish.
-const PTS = [[0.02, 0.90], [0.24, 0.55], [0.46, 0.66], [0.68, 0.24], [0.98, 0.36]];
+const LOOK = normaliseLook({ ...DEFAULT_LOOK, glasses: 'none' });
+const FACE = build(LOOK, toFrame({ eyes: 'happy', mouth: 'cat', blush: 2 }, { still: false }));
+// The head. The design's crop ran one row lower, which caught the top of the
+// shoulders as stray blocks under the chin.
+const CROP = [2, 3, 28, 26];
+const cellAt = (x, y) => FACE[y * 32 + x];
 
-function segDist(px, py, ax, ay, bx, by) {
-  const vx = bx - ax, vy = by - ay;
-  const L = vx * vx + vy * vy;
-  const t = L === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / L));
-  return Math.hypot(ax + t * vx - px, ay + t * vy - py);
+/* ---------- colour ---------- */
+
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const STOPS = [[0, hex('#35A26F')], [0.45, hex('#17553B')], [1, hex('#061710')]];
+
+// The forest bloom: a radial glow from near the top, as in the design.
+function bloom(P, x, y) {
+  const d = Math.hypot(x + 0.5 - P / 2, y + 0.5 - P * 0.15) / (P * 0.95);
+  const t = Math.min(1, d);
+  for (let i = 1; i < STOPS.length; i++) {
+    if (t <= STOPS[i][0]) return lerp(STOPS[i - 1][1], STOPS[i][1], (t - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0]));
+  }
+  return STOPS[STOPS.length - 1][1];
 }
 
-// Supersampled coverage render, then box-filtered down for clean edges.
-function render(size, inset, { transparent = false, mono = null, ss = 4 } = {}) {
-  const S = size * ss;
-  const m = S * inset;
-  const box = S - m * 2;
-  const pts = PTS.map(([x, y]) => [m + x * box, m + y * box]);
-  const stroke = (S * 0.085) / 2;
-  const rStart = S * 0.062;
-  const rEnd = S * 0.075;
+// Coverage of a mask at a pixel, 4 x 4 supersampled so curved edges are smooth.
+function coverage(mask, P, x, y) {
+  if (mask === 'none') return 1;
+  let n = 0;
+  for (let sy = 0; sy < 4; sy++) for (let sx = 0; sx < 4; sx++) {
+    const px = x + (sx + 0.5) / 4, py = y + (sy + 0.5) / 4;
+    if (mask === 'circle') { if (Math.hypot(px - P / 2, py - P / 2) <= P / 2) n++; continue; }
+    // rounded square, corner radius 30%
+    const r = P * 0.3;
+    const cx = Math.min(Math.max(px, r), P - r), cy = Math.min(Math.max(py, r), P - r);
+    if (Math.hypot(px - cx, py - cy) <= r) n++;
+  }
+  return n / 16;
+}
 
-  const acc = new Float64Array(size * size * 4);
-
-  for (let sy = 0; sy < S; sy++) {
-    for (let sx = 0; sx < S; sx++) {
-      const px = sx + 0.5, py = sy + 0.5;
-      let col = transparent ? null : BG;
-      let alpha = transparent ? 0 : 255;
-
-      for (let i = 0; i < pts.length - 1; i++) {
-        if (segDist(px, py, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]) <= stroke) {
-          col = mono || MINT; alpha = 255; break;
-        }
+/**
+ * One square image. `face` places the head at whole-pixel scale `s`, centred;
+ * `bg` paints the bloom; `mask` clips it (none, circle, round).
+ */
+function iconPixels(P, { bg = true, face = true, mask = 'none', s = null } = {}) {
+  const out = Buffer.alloc(P * P * 4);
+  const scale = s ?? Math.max(1, Math.floor((P * 0.66) / CROP[2]));
+  const ox = Math.round((P - CROP[2] * scale) / 2), oy = Math.round((P - CROP[3] * scale) / 2);
+  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
+    let c = null, a = 0;
+    if (bg) { c = bloom(P, x, y); a = 1; }
+    if (face) {
+      const gx = Math.floor((x - ox) / scale), gy = Math.floor((y - oy) / scale);
+      if (x >= ox && y >= oy && gx < CROP[2] && gy < CROP[3]) {
+        const p = cellAt(gx + CROP[0], gy + CROP[1]);
+        if (p) { c = p.c; a = 1; }
       }
-      if (Math.hypot(px - pts[0][0], py - pts[0][1]) <= rStart) { col = mono || MINT; alpha = 255; }
-      if (Math.hypot(px - pts.at(-1)[0], py - pts.at(-1)[1]) <= rEnd) { col = mono || PINK; alpha = 255; }
-
-      const idx = ((sy / ss) | 0) * size + ((sx / ss) | 0);
-      acc[idx * 4] += col ? col[0] : 0;
-      acc[idx * 4 + 1] += col ? col[1] : 0;
-      acc[idx * 4 + 2] += col ? col[2] : 0;
-      acc[idx * 4 + 3] += alpha;
     }
+    const k = (y * P + x) * 4;
+    if (!c) continue;
+    const cov = coverage(mask, P, x, y);
+    out[k] = Math.round(c[0]); out[k + 1] = Math.round(c[1]); out[k + 2] = Math.round(c[2]);
+    out[k + 3] = Math.round(255 * a * cov);
   }
-
-  const n = ss * ss;
-  const raw = Buffer.alloc(size * (size * 4 + 1));
-  let p = 0;
-  for (let y = 0; y < size; y++) {
-    raw[p++] = 0; // filter type
-    for (let x = 0; x < size; x++) {
-      const i = (y * size + x) * 4;
-      raw[p++] = Math.round(acc[i] / n);
-      raw[p++] = Math.round(acc[i + 1] / n);
-      raw[p++] = Math.round(acc[i + 2] / n);
-      raw[p++] = Math.round(acc[i + 3] / n);
-    }
-  }
-  return raw;
+  return out;
 }
+
+// Splash: black ground, the icon as a disc in the middle, 160dp across.
+function splashPixels(w, h) {
+  const out = Buffer.alloc(w * h * 4);
+  const D = Math.min(w, h) / 2;
+  const disc = iconPixels(Math.round(D), { mask: 'circle' });
+  const P = Math.round(D), x0 = Math.round((w - P) / 2), y0 = Math.round((h - P) / 2);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = (y * w + x) * 4;
+    out[k + 3] = 255;
+    const ix = x - x0, iy = y - y0;
+    if (ix < 0 || iy < 0 || ix >= P || iy >= P) continue;
+    const j = (iy * P + ix) * 4, a = disc[j + 3] / 255;
+    out[k] = Math.round(disc[j] * a); out[k + 1] = Math.round(disc[j + 1] * a); out[k + 2] = Math.round(disc[j + 2] * a);
+  }
+  return out;
+}
+
+/* ---------- PNG ---------- */
 
 const CRC = (() => {
-  const t = new Int32Array(256);
+  const t = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
     let c = n;
     for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c;
+    t[n] = c >>> 0;
   }
   return (buf) => {
     let c = -1;
@@ -98,42 +129,99 @@ function chunk(tag, data) {
   return Buffer.concat([len, body, crc]);
 }
 
-async function png(path, size, inset, opts) {
+async function png(path, w, h, rgba) {
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
   ihdr[8] = 8; ihdr[9] = 6; // 8-bit RGBA
+  const raw = Buffer.alloc((w * 4 + 1) * h);
+  for (let y = 0; y < h; y++) rgba.copy(raw, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4);
   const buf = Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(render(size, inset, opts), { level: 9 })),
+    chunk('IDAT', deflateSync(raw, { level: 9 })),
     chunk('IEND', Buffer.alloc(0)),
   ]);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, buf);
-  console.log(`${path.replace(root + '/', '')}  ${size}x${size}  ${buf.length}b`);
+  console.log(`${path.replace(root + '/', '')}  ${w}x${h}  ${buf.length}b`);
 }
+const square = (path, P, opts) => png(path, P, P, iconPixels(P, opts));
 
-/* ---- PWA / web ---- */
-await png(resolve(root, 'icons/icon-192.png'), 192, 0.19);
-await png(resolve(root, 'icons/icon-512.png'), 512, 0.19);
-await png(resolve(root, 'icons/icon-512-maskable.png'), 512, 0.30); // 40% safe zone
-await png(resolve(root, 'icons/apple-touch-icon.png'), 180, 0.19);
+/* ---------- web ---------- */
 
-/* ---- Android launcher ---- */
-const RES = resolve(root, 'android/app/src/main/res');
+await square(resolve(root, 'icons/icon-192.png'), 192, {});
+await square(resolve(root, 'icons/icon-512.png'), 512, {});
+// Maskable icons can be cropped to a circle 80% across, so the face sits further in.
+await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { s: Math.floor((512 * 0.5) / 28) });
+await square(resolve(root, 'icons/apple-touch-icon.png'), 180, {});
+// For the Play listing later.
+await square(resolve(root, 'design/round2/icon-1024.png'), 1024, {});
+
+/* ---------- Android launcher ---------- */
+
 const LAUNCHER = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
 for (const [density, size] of Object.entries(LAUNCHER)) {
-  await png(`${RES}/mipmap-${density}/ic_launcher.png`, size, 0.19);
-  await png(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, 0.19);
-  // Adaptive foreground is cropped to a 66% safe zone, so it sits further in.
-  await png(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, Math.round(size * 2), 0.34, { transparent: true });
+  await square(`${RES}/mipmap-${density}/ic_launcher.png`, size, { mask: 'round' });
+  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle' });
+  // Adaptive layers are 108dp; the launcher shows the middle 72dp, so the
+  // face is sized to that.
+  const A = Math.round(size * 2.25);
+  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, s: Math.max(1, Math.floor((A * 0.62) / 28)) });
+  await square(`${RES}/mipmap-${density}/ic_launcher_background.png`, A, { face: false });
 }
 
-/* ---- Notification small icon ----
-   Android silhouettes these: only the alpha channel survives, so it must be
-   flat white on transparent or it renders as a grey blob. */
-const STATUS = { mdpi: 24, hdpi: 36, xhdpi: 48, xxhdpi: 72, xxxhdpi: 96 };
-for (const [density, size] of Object.entries(STATUS)) {
-  await png(`${RES}/drawable-${density}/ic_stat_lastcall.png`, size, 0.16, { transparent: true, mono: WHITE });
+/* ---------- splash ---------- */
+
+const SPLASH = {
+  'drawable': [480, 320],
+  'drawable-land-mdpi': [480, 320], 'drawable-land-hdpi': [800, 480], 'drawable-land-xhdpi': [1280, 720],
+  'drawable-land-xxhdpi': [1600, 960], 'drawable-land-xxxhdpi': [1920, 1280],
+  'drawable-port-mdpi': [320, 480], 'drawable-port-hdpi': [480, 800], 'drawable-port-xhdpi': [720, 1280],
+  'drawable-port-xxhdpi': [960, 1600], 'drawable-port-xxxhdpi': [1280, 1920],
+};
+for (const [dir, [w, h]] of Object.entries(SPLASH)) await png(`${RES}/${dir}/splash.png`, w, h, splashPixels(w, h));
+
+/* ---------- notification icon ----------
+   Android keeps only the alpha of a status bar icon, so it's a flat white
+   12 x 12 pixel face (the design's mono face), as a vector so every density
+   gets the same crisp pixels. */
+
+const MONO = ['....HHHH....', '..HHHHHHHH..', '.HHHHHHHHHH.', '.HHHHHHHHHH.', '.HH.HHHH.HH.', '.HH.HHHH.HH.',
+  '.HHHHHHHHHH.', '.HHHH..HHHH.', '..HHHHHHHH..', '...HHHHHH...', '............', '............'];
+let d = '';
+MONO.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'H') d += `M${x},${y + 1}h1v1h-1z`; }));
+const vector = `<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated by scripts/icons.mjs: the avatar's face, one colour, 12 x 12. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="12"
+    android:viewportHeight="12">
+    <path android:fillColor="#FFFFFFFF" android:pathData="${d}"/>
+</vector>
+`;
+await writeFile(`${RES}/drawable/ic_stat_lastcall.xml`, vector);
+console.log('android/app/src/main/res/drawable/ic_stat_lastcall.xml  vector');
+for (const density of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
+  const old = `${RES}/drawable-${density}/ic_stat_lastcall.png`;
+  if (existsSync(old)) await rm(old);
 }
+
+/* ---------- themed icon ----------
+   Android 13 can tint launcher icons to the wallpaper; it uses this one-colour
+   layer. The same 12 x 12 face, 4dp to a pixel, centred in the 108dp canvas. */
+
+let m = '';
+MONO.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'H') m += `M${30 + x * 4},${28 + y * 4}h4v4h-4z`; }));
+await writeFile(`${RES}/drawable/ic_launcher_monochrome.xml`, `<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated by scripts/icons.mjs: the themed-icon layer. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FF000000" android:pathData="${m}"/>
+</vector>
+`);
+console.log('android/app/src/main/res/drawable/ic_launcher_monochrome.xml  vector');

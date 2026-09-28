@@ -4,6 +4,9 @@ import * as S from './state.js';
 import { pickDrink, remember } from './drinks.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
+import * as geo from './geo.js';
+import { requestActivityPermission } from './keepalive.js';
+import * as notify from './notify.js';
 import { createAvatar } from './avatar.js';
 import { avatarLook, openUnlocks, itemsForBadges } from './wardrobe.js';
 
@@ -72,6 +75,85 @@ export function startScreen(ctx) {
     foot(
       btn('Start night', 'btn--pri', () => ctx.beginNight(), { lg: true }),
       btn('History', 'btn--sec', () => ctx.go('history')),
+    ),
+  ];
+}
+
+/* ---------- first launch ----------
+   Four steps, one idea each (design/round2/designs/Extras, 8c). The avatar
+   introduces itself and stays at the top, reacting to each step. Each
+   permission step says why it's needed and what still works without it.
+   Only for a genuinely new install: anyone with a night recorded skips it. */
+
+const ONBOARD = [
+  {
+    eyebrow: 'Last Call', title: 'This is you, roughly.',
+    body: 'It lives on this phone and keeps you company on nights out. You can change how it looks whenever you like.',
+    note: 'No account, no sign-up. Everything stays on the phone.',
+    primary: 'Hello', secondary: 'Change the look first', face: null,
+  },
+  {
+    eyebrow: 'Location', title: 'Your phone will be in your pocket',
+    body: 'Your phone will ask about location. Choose the option that allows it all the time, so the map keeps drawing with the screen off.',
+    note: 'Your location never leaves the phone. Without it there’s no map, but drinks, water and time still work.',
+    primary: 'Allow location', secondary: 'Skip, track without the map', face: { eyes: 'up', mouth: 'ooh' },
+    // The settings route rather than the plugin's own prompt: "Allow all the
+    // time" lives there on Android, and it's the path proven in the field.
+    ask: async (ctx) => { ctx.state.prefs.locationPrimed = true; ctx.save(); await geo.openSettings(); },
+  },
+  {
+    eyebrow: 'Steps', title: 'Counting steps',
+    body: 'Your phone will ask about motion and activity. That is the step counter, which is how the night gets its steps and the walk gets its pace.',
+    note: 'Without it, there are no steps. Everything else still works.',
+    primary: 'Allow steps', secondary: 'Skip steps', face: { eyes: 'wide', mouth: 'small' },
+    ask: () => requestActivityPermission(),
+  },
+  {
+    eyebrow: 'Notifications', title: 'One quiet notification',
+    body: 'While a night is running, a notification stays on your lock screen. It keeps tracking going, and you can log a drink or water from it without opening the app.',
+    note: 'There are no other notifications and no reminders sent from anywhere else.',
+    primary: 'Allow and start', secondary: 'Not now', face: { eyes: 'content', mouth: 'smile', blush: 2 },
+    ask: () => notify.init(),
+  },
+];
+
+export const needsOnboarding = (state) => !state.flags?.onboarded && !state.sessions.length && !state.active;
+
+export function onboardingScreen(ctx) {
+  const i = Math.min(ctx.onboardStep || 0, ONBOARD.length - 1);
+  const step = ONBOARD[i];
+  const av = createAvatar({ cell: 4, look: avatarLook(ctx), label: 'Your avatar' });
+  if (step.face) av.setFace(step.face);
+  else av.play('hello');
+  queueMicrotask(() => av.start());
+
+  const to = (n) => { ctx.onboardStep = n; ctx.render(); };
+  const finish = () => {
+    ctx.state.flags.onboarded = true;
+    ctx.save();
+    ctx.onboardStep = 0;
+    ctx.go('start', null, { replace: true });
+  };
+  const next = () => (i === ONBOARD.length - 1 ? finish() : to(i + 1));
+  const allow = async () => {
+    try { await step.ask?.(ctx); } catch { /* the step still moves on */ }
+    next();
+  };
+
+  return [
+    el('div', { class: 'onboard__top' },
+      el('div', { class: 'onboard__dots', 'aria-label': `Step ${i + 1} of ${ONBOARD.length}` },
+        ONBOARD.map((_, k) => el('span', { class: k <= i ? 'on' : '' }))),
+      i > 0 ? el('button', { class: 'back press', type: 'button', onclick: () => to(i - 1) },
+        icon('chevron-left', { size: 15 }), el('span', { text: 'Back' })) : null),
+    el('div', { class: 'onboard__stage' }, av.canvas),
+    el('div', { class: 'eb eb--mint-dim', text: step.eyebrow }),
+    el('h1', { class: 'display', style: 'margin-top:10px', text: step.title }),
+    el('p', { class: 'body', style: 'margin:12px 0 0', text: step.body }),
+    el('p', { class: 'cap', style: 'margin:10px 0 0;color:var(--mint-dim)', text: step.note }),
+    foot(
+      btn(step.primary, 'btn--pri', allow, { lg: true }),
+      btn(step.secondary, 'btn--sec', () => (i === 0 ? ctx.go('avatar') : next())),
     ),
   ];
 }
