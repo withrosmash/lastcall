@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'lastcall-v20';
+const CACHE = 'lastcall-v21';
 
 const SHELL = [
   './',
@@ -29,6 +29,7 @@ const SHELL = [
   './js/staticmap.js',
   './js/avatar.js',
   './js/avatarscreen.js',
+  './js/wardrobe.js',
   './js/state.js',
   './js/storage.js',
   './js/ui.js',
@@ -75,6 +76,12 @@ const SHELL = [
   './icons/badges/badge-sunrise-service.svg',
   './icons/badges/badge-ten-k.svg',
   './icons/badges/badge-two-step.svg',
+  './icons/badges/badge-anniversary.svg',
+  './icons/badges/badge-big-stomp.svg',
+  './icons/badges/badge-just-add-water.svg',
+  './icons/badges/badge-late-bite.svg',
+  './icons/badges/badge-long-haul.svg',
+  './icons/badges/badge-snack-break.svg',
   './icons/badges/light/badge-archivist.svg',
   './icons/badges/light/badge-balanced-books.svg',
   './icons/badges/light/badge-brand-loyal.svg',
@@ -107,6 +114,12 @@ const SHELL = [
   './icons/badges/light/badge-sunrise-service.svg',
   './icons/badges/light/badge-ten-k.svg',
   './icons/badges/light/badge-two-step.svg',
+  './icons/badges/light/badge-anniversary.svg',
+  './icons/badges/light/badge-big-stomp.svg',
+  './icons/badges/light/badge-just-add-water.svg',
+  './icons/badges/light/badge-late-bite.svg',
+  './icons/badges/light/badge-long-haul.svg',
+  './icons/badges/light/badge-snack-break.svg',
 ];
 
 self.addEventListener('install', (event) => {

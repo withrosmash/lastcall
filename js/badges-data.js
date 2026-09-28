@@ -1,4 +1,5 @@
-// Generated from the Claude Design badge delivery (badges.json).
+// Generated from the Claude Design badge delivery (badges.json), plus the six
+// round 2 badges that unlock avatar items (design/BADGES-ROUND-2.md).
 // slug/name/criteria/accent/cat/hidden are the design system's own manifest;
 // evaluation logic lives in badges.js.
 export const BADGES = [
@@ -256,6 +257,54 @@ export const BADGES = [
     "criteria": "25 challenges all-time",
     "accent": "amber",
     "cat": "Aspirational",
+    "hidden": false
+  },
+  {
+    "slug": "long-haul",
+    "name": "Long Haul",
+    "criteria": "Walk 50 km all-time",
+    "accent": "forest",
+    "cat": "Aspirational",
+    "hidden": false
+  },
+  {
+    "slug": "just-add-water",
+    "name": "Just Add Water",
+    "criteria": "50 waters all-time",
+    "accent": "mint",
+    "cat": "Health",
+    "hidden": false
+  },
+  {
+    "slug": "snack-break",
+    "name": "Snack Break",
+    "criteria": "Food three times in one night",
+    "accent": "amber",
+    "cat": "Funny",
+    "hidden": false
+  },
+  {
+    "slug": "big-stomp",
+    "name": "Big Stomp",
+    "criteria": "20,000+ steps in a night",
+    "accent": "forest",
+    "cat": "Health",
+    "hidden": false
+  },
+  {
+    "slug": "late-bite",
+    "name": "Late Bite",
+    "criteria": "Food logged after midnight",
+    "accent": "amber",
+    "cat": "Funny",
+    "hidden": false
+  },
+  {
+    "slug": "anniversary",
+    "name": "Anniversary",
+    "criteria": "One year since your first night",
+    "accent": "mint",
+    "cat": "Streaks",
     "hidden": false
   }
 ];

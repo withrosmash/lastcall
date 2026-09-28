@@ -47,7 +47,7 @@ const SCREENS = {
   settings: { build: settingsScreen, bloom: 'hero' },
   badges: { build: badges.badgesScreen, bloom: 'hero' },
   atlas: { build: atlasScreen, bloom: 'none' },
-  avatar: { build: avatarScreen, bloom: 'none' },
+  avatar: { build: avatarScreen, bloom: 'hero' },
   appearance: { build: appearanceScreen, bloom: 'hero' },
 };
 

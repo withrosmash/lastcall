@@ -4,11 +4,12 @@ import * as S from './state.js';
 import { pickDrink, remember } from './drinks.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
-import { createAvatar, DEFAULT_LOOK } from './avatar.js';
+import { createAvatar } from './avatar.js';
+import { avatarLook, openUnlocks, itemsForBadges } from './wardrobe.js';
 
 /* ---------- avatar ---------- */
 
-export const avatarLook = (ctx) => ({ ...DEFAULT_LOOK, ...(ctx.state.prefs.avatar || {}) });
+export { avatarLook };
 
 // The live screen rebuilds on every tap, so its avatar is one canvas carried
 // across renders. A fresh one each time would cut every reaction off mid-way.
@@ -275,14 +276,23 @@ export function recapScreen(ctx, session) {
   if (!s) { ctx.go('start'); return []; }
   const sum = S.summarise(s);
 
-  // Celebrates any new badge, then yawns and dozes off. Once per night: the
-  // recap re-renders when you come back to it and shouldn't replay.
+  // Yawns and dozes off. Badges that come with an item open the unlock sheet
+  // instead of a celebration here; other new badges still get one. Once per
+  // night: the recap re-renders when you come back and shouldn't replay.
   const av = createAvatar({ cell: 3, look: avatarLook(ctx) });
   av.setMood('Sleepy');
   if (ctx.recapPlayed !== s.id) {
     ctx.recapPlayed = s.id;
-    if ((ctx.newBadges || []).length) { av.play('badge'); av.play('end', { queue: true }); }
+    const slugs = (ctx.newBadges || []).map((b) => b.slug);
+    const unlocking = itemsForBadges(slugs).length > 0;
+    if (slugs.length && !unlocking) { av.play('badge'); av.play('end', { queue: true }); }
     else av.play('end');
+    if (unlocking) {
+      // A beat after the recap lands, so the night's numbers register first.
+      setTimeout(() => {
+        if (ctx.screen === 'recap') openUnlocks(ctx, slugs, { onClose: () => av.setLook(avatarLook(ctx)) });
+      }, 900);
+    }
   }
   queueMicrotask(() => av.start());
 

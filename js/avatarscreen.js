@@ -1,103 +1,198 @@
-// Customise the avatar. Quick-pick swatches for the usual colours, and three
-// sliders (colour, strength, shade) that reach any colour at all — built from
-// range inputs rather than <input type="color">, which Android's WebView
-// doesn't reliably give a picker for.
+// Customise, as designed in round 2 (design/round2/designs/Customise Screen):
+// a live preview you can tap for another face, five tabs (Hair, Glasses, Top,
+// Items, Colours), and Save look / Shuffle / Cancel. Changes are a draft until
+// saved; Cancel and the back button leave without saving.
+//
+// Colours use range inputs rather than <input type="color">, which Android's
+// WebView doesn't reliably give a picker for.
 
-import { el, btn, head, foot } from './ui.js';
-import { createAvatar, PARTS, STYLES, toHsl, fromHsl, randomLook } from './avatar.js';
-import { avatarLook } from './session.js';
+import { el, btn, navPair, sheet, icon, currentTheme } from './ui.js';
+import {
+  createAvatar, drawStill, HAIRS, GLASSES, TOPS, ITEMS, SLOTS, SWATCHES, CROP,
+  SUNGLASSES_BADGE, toHsl, fromHsl, shuffleLook,
+} from './avatar.js';
+import { avatarLook, saveLook, isUnlocked, requirement, badgeName, progress } from './wardrobe.js';
+
+// Tap the preview to cycle these.
+const FACES = [
+  { n: 'Resting', eyes: 'open', mouth: 'smile' },
+  { n: 'Happy', eyes: 'happy', mouth: 'cat', blush: 2 },
+  { n: 'Hearts', eyes: 'heart', mouth: 'open', blush: 2 },
+  { n: 'Stars', eyes: 'star', mouth: 'wide' },
+  { n: 'Wink', eyes: 'wink', mouth: 'smile' },
+  { n: 'Surprised', eyes: 'wide', mouth: 'ooh' },
+  { n: 'Puppy', eyes: 'puppy', mouth: 'small' },
+  { n: 'Content', eyes: 'content', mouth: 'smile', blush: 2 },
+];
+const TABS = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['items', 'Items'], ['colours', 'Colours']];
 
 export function avatarScreen(ctx) {
-  const look = avatarLook(ctx);
-  let part = PARTS[0].key;
+  let draft = avatarLook(ctx);
+  let tab = 'hair', slot = 'hair', face = 0, saved = false;
+  const light = currentTheme() === 'light';
+  const SIL = light ? '#C3CCD9' : '#3A3A3A';
+  const SIL_SHEET = light ? '#AEB9C8' : '#4D4D4D';
 
-  const av = createAvatar({ cell: 5, look });
+  const av = createAvatar({ cell: 4, look: draft, onTap: () => nextFace(), label: 'Your avatar. Tap for another face.' });
   queueMicrotask(() => av.start());
+  const caption = el('span', { class: 'cap', style: 'text-align:center' });
+  const nextFace = () => {
+    face = (face + 1) % FACES.length;
+    const f = FACES[face];
+    av.setFace(face === 0 ? null : f);
+    caption.textContent = `${f.n} · tap for another face`;
+  };
+  caption.textContent = `${FACES[0].n} · tap for another face`;
 
-  // Every change shows at once; the store debounces the actual write.
-  const commit = () => {
-    av.setLook(look);
-    ctx.state.prefs.avatar = { ...look };
-    ctx.save();
+  const saveBtn = btn('Save look', 'btn--pri', () => {
+    saveLook(ctx, draft);
+    saved = true;
+    saveBtn.querySelector('span').textContent = 'Saved';
+  }, { lg: true });
+  const changed = () => {
+    av.setLook(draft);
+    if (saved) { saved = false; saveBtn.querySelector('span').textContent = 'Save look'; }
+    paintPanel();
   };
 
-  const chip = (label, on, onclick) =>
-    el('button', { class: 'chip press', type: 'button', 'aria-pressed': on ? 'true' : 'false', onclick }, label);
+  const tabRow = el('div', { class: 'chips chips--scroll' });
+  const panel = el('div', { class: 'wardrobe' });
+  const paintTabs = () => tabRow.replaceChildren(...TABS.map(([k, label]) =>
+    el('button', { class: 'chip press', type: 'button', 'aria-pressed': tab === k ? 'true' : 'false',
+      onclick: () => { tab = k; paintTabs(); paintPanel(); } }, label)));
 
-  const styleChips = el('div', { class: 'chips' });
-  const paintStyles = () => styleChips.replaceChildren(...STYLES.map((st) =>
-    chip(st, look.style === st, () => { look.style = st; commit(); paintStyles(); })));
+  // A neutral face on every tile, so only the thing being chosen differs.
+  const base = () => ({ ...draft, costume: null });
+  const tileCanvas = (look, opts) => drawStill(document.createElement('canvas'), look, opts);
+  const tile = ({ name, canvas, selected, locked, sub, onclick }) =>
+    el('button', { class: 'wtile press', type: 'button', 'aria-pressed': selected ? 'true' : 'false', onclick },
+      el('div', { class: 'wtile__art' }, canvas),
+      el('span', { class: `wtile__name${locked ? ' is-locked' : ''}`, text: name }),
+      sub ? el('span', { class: 'wtile__sub' }, locked ? icon('lock', { size: 11 }) : null, el('span', { text: sub })) : null);
 
-  const partChips = el('div', { class: 'chips' });
-  const swatches = el('div', { class: 'swatches' });
-  const slider = (min, max, label) => el('input', { type: 'range', class: 'hsl', min, max, step: 1, 'aria-label': label });
-  const hue = slider(0, 359, 'Colour'), sat = slider(0, 100, 'Strength'), lit = slider(10, 92, 'Shade');
-
-  function paintTracks() {
-    const h = +hue.value, s = +sat.value, l = +lit.value;
-    // The colour track always shows the full rainbow, even when the current
-    // colour is grey, so it's obvious what dragging it will do.
-    hue.style.setProperty('--track', `linear-gradient(to right,${[0, 60, 120, 180, 240, 300, 359].map((x) => `hsl(${x} 80% 55%)`).join(',')})`);
-    sat.style.setProperty('--track', `linear-gradient(to right,hsl(${h} 0% ${l}%),hsl(${h} 100% ${l}%))`);
-    lit.style.setProperty('--track', `linear-gradient(to right,hsl(${h} ${s}% 10%),hsl(${h} ${s}% 50%),hsl(${h} ${s}% 92%))`);
+  function lockedSheet(item) {
+    const worn = { ...base(), glasses: item.slot === 'glasses' ? item.id : 'none', hat: item.slot === 'hat' ? item.id : null,
+      held: item.slot === 'held' ? item.id : null, costume: item.slot === 'costume' ? item.id : null,
+      shoes: item.slot === 'shoes' ? item.id : 'plain' };
+    const line = progress(ctx, item.badge);
+    sheet((close) => [
+      el('h2', { class: 'title', style: 'margin:0', text: item.name }),
+      el('div', { class: 'lock-row' },
+        el('div', { class: 'lock-art' }, tileCanvas(worn, { fit: [88, 88], only: item.id, silhouette: SIL_SHEET })),
+        el('div', { class: 'stack', style: 'gap:6px;min-width:0' },
+          el('div', { class: 'eb', text: badgeName(item.badge) }),
+          el('p', { class: 'body', style: 'margin:0;color:var(--text)', text: requirement(item.badge) }),
+          line ? el('p', { class: 'body', style: 'margin:0', text: line }) : null)),
+      btn('Close', 'btn--sec', close),
+    ]);
   }
-  function markSwatch() {
-    const cur = look[part].toLowerCase();
-    for (const b of swatches.children) b.setAttribute('aria-pressed', b.dataset.c === cur ? 'true' : 'false');
-  }
-  function paintPart() {
-    partChips.replaceChildren(...PARTS.map((p) => chip(p.label, p.key === part, () => { part = p.key; paintPart(); })));
-    swatches.replaceChildren(...PARTS.find((p) => p.key === part).presets.map((c) =>
-      el('button', {
-        class: 'swatch press', type: 'button', 'aria-label': c, 'data-c': c.toLowerCase(),
-        style: `--c:${c}`, onclick: () => { look[part] = c; commit(); paintPart(); },
-      })));
-    const [h, s, l] = toHsl(look[part]);
-    hue.value = h; sat.value = s; lit.value = l;
-    paintTracks();
-    markSwatch();
-  }
-  const fromSliders = () => {
-    look[part] = fromHsl(+hue.value, +sat.value, +lit.value);
-    paintTracks();
-    markSwatch();
-    commit();
-  };
-  hue.addEventListener('input', () => {
-    // Dragging the colour on a grey does nothing visible; give it some colour.
-    if (+sat.value < 12) sat.value = 60;
-    fromSliders();
-  });
-  sat.addEventListener('input', fromSliders);
-  lit.addEventListener('input', fromSliders);
 
-  paintStyles();
-  paintPart();
+  function paintPanel() {
+    if (tab === 'colours') { paintColours(); return; }
+    let tiles = [];
+    if (tab === 'hair') {
+      tiles = HAIRS.map(([k, name]) => tile({
+        name, selected: draft.hair === k,
+        canvas: tileCanvas({ ...base(), hair: k, hat: null, glasses: 'none' }, { scale: 2, crop: CROP.head }),
+        onclick: () => { draft = { ...draft, hair: k, costume: null }; changed(); },
+      }));
+    }
+    if (tab === 'glasses') {
+      tiles = GLASSES.map(([k, name]) => {
+        const item = k === 'sun' ? { id: 'sun', slot: 'glasses', name, badge: SUNGLASSES_BADGE } : null;
+        const locked = !!item && !isUnlocked(ctx, item);
+        const look = { ...base(), glasses: k, hat: null };
+        return tile({
+          name, selected: draft.glasses === k, locked, sub: item ? badgeName(item.badge) : null,
+          canvas: tileCanvas(look, locked ? { scale: 2, crop: CROP.head, only: 'sun', silhouette: SIL } : { scale: 2, crop: CROP.head }),
+          onclick: () => { if (locked) { lockedSheet(item); return; } draft = { ...draft, glasses: k, costume: null }; changed(); },
+        });
+      });
+    }
+    if (tab === 'top') {
+      tiles = TOPS.map(([k, name]) => tile({
+        name, selected: draft.top === k,
+        canvas: tileCanvas({ ...base(), top: k, held: null }, { scale: 3, crop: CROP.body }),
+        onclick: () => { draft = { ...draft, top: k, costume: null }; changed(); },
+      }));
+    }
+    if (tab === 'items') {
+      tiles = ITEMS.map((it) => {
+        if (it.group) return el('span', { class: 'wardrobe__group', text: it.group });
+        const locked = !isUnlocked(ctx, it);
+        const on = it.slot === 'shoes' ? draft.shoes === it.id : draft[it.slot] === it.id;
+        const worn = { ...base(), hat: it.slot === 'hat' ? it.id : null, held: it.slot === 'held' ? it.id : null,
+          costume: it.slot === 'costume' ? it.id : null, shoes: it.slot === 'shoes' ? it.id : 'plain', glasses: 'none' };
+        const onHead = it.slot === 'hat' || it.slot === 'costume';
+        const opts = onHead ? { scale: 2, crop: CROP.head } : { fit: [72, 56] };
+        return tile({
+          name: it.name, selected: on, locked, sub: it.badge ? badgeName(it.badge) : null,
+          canvas: tileCanvas(worn, locked ? { ...opts, only: it.id, silhouette: SIL } : onHead ? opts : { ...opts, only: it.id }),
+          onclick: () => {
+            if (locked) { lockedSheet(it); return; }
+            if (it.slot === 'shoes') draft = { ...draft, shoes: on ? 'plain' : it.id };
+            else draft = { ...draft, [it.slot]: on ? null : it.id };
+            changed();
+          },
+        });
+      });
+    }
+    panel.replaceChildren(el('div', { class: 'wardrobe__grid' }, tiles));
+  }
 
-  const labelled = (text, input) => el('label', { class: 'stack', style: 'gap:2px' },
-    el('span', { class: 'eb', text }), input);
+  function paintColours() {
+    const cur = draft.colors[slot];
+    const pool = SWATCHES[slot] || SWATCHES.cloth;
+    const [h, s, l] = toHsl(cur);
+    const setColour = (hex) => { draft = { ...draft, colors: { ...draft.colors, [slot]: hex } }; changed(); };
+
+    const slider = (label, min, max, value, unit, track, onInput) => {
+      const input = el('input', { type: 'range', class: 'wslider', min, max, step: 1, value, 'aria-label': label });
+      input.style.setProperty('--track', track);
+      input.style.setProperty('--thumb', cur);
+      const out = el('span', { class: 'num', text: `${value}${unit}` });
+      // Only the preview updates while dragging; the panel repaints on release,
+      // so the slider under your thumb isn't rebuilt mid-drag.
+      input.addEventListener('input', () => {
+        out.textContent = `${input.value}${unit}`;
+        draft = { ...draft, colors: { ...draft.colors, [slot]: onInput(+input.value) } };
+        av.setLook(draft);
+        if (saved) { saved = false; saveBtn.querySelector('span').textContent = 'Save look'; }
+      });
+      input.addEventListener('change', () => paintColours());
+      return el('label', { class: 'wslider__row' },
+        el('span', { class: 'wslider__label' }, el('span', { text: label }), out), input);
+    };
+    const hueStops = [0, 60, 120, 180, 240, 300, 359].map((x) => fromHsl(x, Math.max(s, 40), 50)).join(',');
+
+    panel.replaceChildren(el('div', { class: 'stack', style: 'gap:14px' },
+      el('div', { class: 'chips chips--scroll' }, SLOTS.map(([k, label]) =>
+        el('button', { class: 'chip press', type: 'button', 'aria-pressed': slot === k ? 'true' : 'false',
+          onclick: () => { slot = k; paintColours(); } },
+        el('span', { class: 'dot', style: `background:${draft.colors[k]}` }), label))),
+      el('div', { class: 'wswatches' }, pool.map((c) =>
+        el('button', { class: 'wswatch press', type: 'button', 'aria-label': c,
+          'aria-pressed': c.toUpperCase() === cur.toUpperCase() ? 'true' : 'false', onclick: () => setColour(c) },
+        el('span', { style: `background:${c}` })))),
+      el('div', { class: 'stack', style: 'gap:4px' },
+        slider('Colour', 0, 359, h, '°', `linear-gradient(90deg,${hueStops})`, (v) => fromHsl(v, Math.max(s, 12), l)),
+        slider('Strength', 0, 100, s, '%', `linear-gradient(90deg,${fromHsl(h, 0, l)},${fromHsl(h, 100, l)})`, (v) => fromHsl(h, v, l)),
+        slider('Shade', 8, 92, Math.min(92, Math.max(8, l)), '%', `linear-gradient(90deg,${fromHsl(h, s, 8)},${fromHsl(h, s, 50)},${fromHsl(h, s, 92)})`, (v) => fromHsl(h, s, v)))));
+  }
+
+  paintTabs();
+  paintPanel();
 
   return [
-    head({ title: 'Your avatar', back: () => ctx.back() }),
-    el('div', { class: 'avatar-stage' }, av.canvas),
-    el('p', { class: 'cap', style: 'margin:0', text: 'Tap them to say hello. For any colour at all, use the sliders.' }),
-    el('div', { class: 'eb', text: 'Hair' }),
-    styleChips,
-    el('div', { class: 'eb', text: 'Colours' }),
-    partChips,
-    swatches,
-    labelled('Colour', hue),
-    labelled('Strength', sat),
-    labelled('Shade', lit),
-    foot(
-      btn('Done', 'btn--pri', () => ctx.back(), { lg: true }),
-      btn('Surprise me', 'btn--sec', () => {
-        Object.assign(look, randomLook());
-        commit();
-        paintStyles();
-        paintPart();
-        av.play('cheer');
-      }),
-    ),
+    el('div', { class: 'eb', text: 'Customise' }),
+    el('div', { class: 'wpreview' }, av.canvas, caption),
+    tabRow,
+    panel,
+    el('div', { class: 'foot' },
+      saveBtn,
+      navPair([
+        ['Shuffle', () => { draft = shuffleLook(draft); changed(); }],
+        ['Cancel', () => ctx.back()],
+      ])),
   ];
 }

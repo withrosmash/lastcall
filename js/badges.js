@@ -69,6 +69,10 @@ const NIGHT_CHECKS = {
   'first-dare': (s) => (s.challenges || []).length >= 1,
   'game-on': (s) => (s.challenges || []).length >= 3,
   'no-notes': (s) => (s.challenges || []).length >= 5,
+  'snack-break': (s) => (s.meals || []).length >= 3,
+  'big-stomp': (s) => s.steps >= 20_000,
+  // Food between midnight and 5am local time: the late-night chips.
+  'late-bite': (s) => (s.meals || []).some((m) => new Date(m.t).getHours() < 5),
 };
 
 const AGGREGATE_CHECKS = {
@@ -100,6 +104,11 @@ const AGGREGATE_CHECKS = {
   // All-time, not per night: the pool is 26 dares, so 100 in one night would
   // mean running the whole set four times over.
   'chaos-agent': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 100,
+  'long-haul': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 50_000,
+  'just-add-water': (done) => done.reduce((n, s) => n + s.waters.length, 0) >= 50,
+  // Checked whenever a night ends, so it lands on the first night out after
+  // the date comes round.
+  'anniversary': (done) => done.length > 0 && Date.now() - done[0].startedAt >= 365 * 24 * 3600e3,
 };
 
 // Everything currently earnable, oldest qualifying night first so the badge
