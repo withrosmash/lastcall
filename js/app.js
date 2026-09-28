@@ -1,7 +1,7 @@
 import * as store from './storage.js';
 import * as S from './state.js';
 import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme } from './ui.js';
-import { startScreen, liveScreen, recapScreen, primingScreen, react } from './session.js';
+import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScreen, morningNight } from './session.js';
 import { avatarScreen } from './avatarscreen.js';
 import { remember } from './drinks.js';
 import * as geo from './geo.js';
@@ -49,12 +49,13 @@ const SCREENS = {
   atlas: { build: atlasScreen, bloom: 'none' },
   avatar: { build: avatarScreen, bloom: 'hero' },
   appearance: { build: appearanceScreen, bloom: 'hero' },
+  morning: { build: (c) => morningScreen(c, c.arg), bloom: 'hero' },
 };
 
 // Screens the hardware back button should leave rather than unwind into: a
 // closed night is done, and returning to the live screen of a finished session
 // would be a lie.
-const STACK_ROOTS = new Set(['start', 'live', 'recap']);
+const STACK_ROOTS = new Set(['start', 'live', 'recap', 'morning']);
 // Every screen that owns a Leaflet instance, so leaving any of them tears it
 // down — previously only 'map' did, and detail/atlas left theirs alive.
 const MAP_SCREENS = new Set(['map', 'detail', 'atlas']);
@@ -452,7 +453,10 @@ function boot() {
     ensureBatteryExemption();
   } else {
     keepalive.setSessionActive(false);
-    go('start');
+    // The first open after a night, before midday, is the morning after.
+    const night = morningNight(ctx.state);
+    if (night) go('morning', night);
+    else go('start');
   }
 
   setInterval(() => ctx.tick?.(), 1000);

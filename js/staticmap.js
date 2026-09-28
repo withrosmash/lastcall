@@ -11,8 +11,9 @@
 
 const TILE = 256;
 const MAX_Z = 16; // Esri's dark canvas has no data past this
-const tileUrl = (z, x, y) =>
-  `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${z}/${y}/${x}`;
+// The light card uses the matching Light Gray Canvas.
+const tileUrl = (z, x, y, light) =>
+  `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/${light ? 'World_Light_Gray_Base' : 'World_Dark_Gray_Base'}/MapServer/tile/${z}/${y}/${x}`;
 
 // Longitude/latitude → pixels in a world TILE·2^z wide.
 export function project(lat, lng, z) {
@@ -55,7 +56,7 @@ export function toCard(f, lat, lng) {
 }
 
 /** Every tile needed to cover a w×h card, with where each one lands. */
-export function tilesFor(f, w, h) {
+export function tilesFor(f, w, h, light = false) {
   const n = 2 ** f.z;
   const left = f.cx + (0 - f.rcx) / f.k, right = f.cx + (w - f.rcx) / f.k;
   const top = f.cy + (0 - f.rcy) / f.k, bottom = f.cy + (h - f.rcy) / f.k;
@@ -65,7 +66,7 @@ export function tilesFor(f, w, h) {
     for (let tx = Math.floor(left / TILE); tx <= Math.floor(right / TILE); tx++) {
       const wx = ((tx % n) + n) % n;
       out.push({
-        url: tileUrl(f.z, wx, ty),
+        url: tileUrl(f.z, wx, ty, light),
         dx: f.rcx + (tx * TILE - f.cx) * f.k,
         dy: f.rcy + (ty * TILE - f.cy) * f.k,
         size: TILE * f.k,

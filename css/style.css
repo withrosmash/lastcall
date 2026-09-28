@@ -367,3 +367,15 @@ canvas.avatar{
 .unlock__dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:6px}
 .unlock__dots span{width:6px;height:6px;border-radius:var(--r-pill);background:var(--line)}
 .unlock__dots span.on{background:var(--mint)}
+
+/* ---------- round 2: card builder, morning, walking the route ---------- */
+.chips__rule{flex:0 0 1px;align-self:stretch;margin:8px 2px;background:var(--line)}
+.morning__stage{display:flex;justify-content:center;padding:6px 0 2px}
+.walker{position:relative;width:24px;height:32px}
+.walker__halo{position:absolute;left:50%;bottom:-5px;width:40px;height:14px;margin-left:-20px;border-radius:50%;background:rgba(255,255,255,.14)}
+[data-theme="light"] .walker__halo{background:rgba(11,21,38,.14)}
+.walker__sprite{position:relative;image-rendering:pixelated;display:block}
+.rewind__wrap{position:relative}
+.rewind__tick{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:var(--r-pill);background:var(--pink);pointer-events:none}
+.rewind__place{font:700 13px/1.2 var(--font-sans);color:var(--muted-up)}
+.rewind__place.is-stop{color:var(--pink)}

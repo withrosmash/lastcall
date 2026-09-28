@@ -76,6 +76,59 @@ export function startScreen(ctx) {
   ];
 }
 
+/* ---------- the morning after ----------
+   The first time the app opens after a night, until midday, it opens here
+   instead of the start screen: the avatar in pyjamas with a mug, and the
+   night in one line. Any button marks it seen. */
+
+export function morningNight(state, now = Date.now()) {
+  if (state.active) return null;
+  const last = state.sessions.find((x) => x.endedAt);
+  if (!last || state.flags?.morningSeen === last.id) return null;
+  if (now - last.endedAt > 16 * 3600e3 || new Date(now).getHours() >= 12) return null;
+  return last;
+}
+
+export function morningScreen(ctx, night) {
+  const s = night || morningNight(ctx.state);
+  if (!s) { ctx.go('start', null, { replace: true }); return []; }
+  const sum = S.summarise(s);
+  const seen = () => { ctx.state.flags.morningSeen = s.id; ctx.save(); };
+
+  const base = avatarLook(ctx);
+  const look = {
+    ...base, top: 'pyjamas', messy: true, held: 'mug', hat: 'nightcap', costume: null,
+    glasses: base.glasses === 'sun' ? 'none' : base.glasses,
+    colors: { ...base.colors, top: '#3D6FB0' },
+  };
+  const av = createAvatar({ cell: 4, look, label: 'Your avatar, the morning after', onTap: () => av.play('morningwave') });
+  av.setMood('Morning');
+  queueMicrotask(() => av.start());
+
+  const place = s.pins.length ? s.pins[s.pins.length - 1].name : null;
+  return [
+    el('div', { class: 'eb', text: place ? `${shortDate(s.startedAt)} · ${place}` : shortDate(s.startedAt) }),
+    el('h1', { class: 'display', style: 'margin-top:4px', text: 'Morning.' }),
+    el('div', { class: 'morning__stage' }, av.canvas),
+    el('p', { class: 'body', style: 'margin:0',
+      text: `You were out ${longDuration(sum.ms)} and home by ${clockTime(s.endedAt)}.` }),
+    tiles(
+      tile('Drinks', sum.drinks, { tone: 'drinks' }),
+      tile('Water', sum.waters),
+      sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
+      tile('Stops', sum.stops),
+    ),
+    spacer(),
+    foot(
+      btn('Make a card', 'btn--pri', () => { seen(); ctx.go('card', s); }, { lg: true }),
+      navPair([
+        ['See the night', () => { seen(); ctx.go('detail', s); }],
+        ['Not now', () => { seen(); ctx.go('start'); }],
+      ]),
+    ),
+  ];
+}
+
 /* ---------- 13 permission priming ---------- */
 
 export function primingScreen(ctx) {

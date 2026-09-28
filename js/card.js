@@ -1,9 +1,11 @@
-import { el, btn, foot, head, spacer, toast, icon, hms, km, buzz } from './ui.js';
+import { el, btn, foot, head, spacer, toast, icon, hms, hm, km, buzz, sheet } from './ui.js';
 import * as S from './state.js';
 import { fitPoints } from './session.js';
 import { saveImage } from './keepalive.js';
 import { badgeSrc, BADGES } from './badges.js';
 import * as SM from './staticmap.js';
+import { paintAvatar } from './avatar.js';
+import { avatarLook } from './wardrobe.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
@@ -49,67 +51,101 @@ const THEMES = [
 
 let ui = null;
 
-/* ---------- 09 card builder ---------- */
+/* ---------- 09 card builder ----------
+   Round 2 (design/round2/designs/Share and Route): Route or Your photo, 4:5 or
+   9:16, an optional title, the avatar with a choice of face, and Save for
+   video. Route cards take a Dark or Light card theme; photo cards keep the
+   Light / Halo / Dark text themes. Badges and Stops stay as elements. */
+
+const TITLE_MAX = 24;
+const FACES = [['normal', 'Normal'], ['happy', 'Happy'], ['wink', 'Wink'], ['hearts', 'Hearts'], ['stars', 'Stars'], ['sleepy', 'Sleepy'], ['none', 'None']];
+const FACE_STATE = {
+  normal: { eyes: 'open', mouth: 'smile' },
+  happy: { eyes: 'happy', mouth: 'cat', blush: 2 },
+  wink: { eyes: 'wink', mouth: 'smile' },
+  hearts: { eyes: 'heart', mouth: 'open', blush: 2 },
+  stars: { eyes: 'star', mouth: 'wide' },
+  sleepy: { eyes: 'content', mouth: 'smile', blush: 2 },
+};
 
 export function cardScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
   if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
+  ui.look = avatarLook(ctx);
 
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);
 
-  const tabs = el('div', { class: 'chips' },
-    tab('Preset', () => setMode('preset'), ui.mode === 'preset'),
-    // A photo already picked switches back without reopening the picker;
-    // tapping again while active re-picks.
-    tab('Your photo', () => {
-      if (ui.photo && ui.mode !== 'photo') setMode('photo');
-      else pickPhoto();
-    }, ui.mode === 'photo'),
-  );
-
-  // Shape sits with the other composition choices, not after them — you frame
-  // the card before you place things on it.
-  const ratios = el('div', { class: 'chips' },
-    tab('Feed 4:5', () => { setRatio('feed'); ui.refreshChrome(); }, ui.ratio === 'feed'),
-    tab('Story 9:16', () => { setRatio('story'); ui.refreshChrome(); }, ui.ratio === 'story'),
-  );
-
-  const themes = el('div', { class: 'chips' });
+  const layouts = el('div', { class: 'chips chips--scroll' });
+  const cardLabel = el('div', { class: 'eb', text: 'Card' });
+  const cardThemes = el('div', { class: 'chips' });
+  const textLabel = el('div', { class: 'eb', text: 'Text' });
+  const textThemes = el('div', { class: 'chips' });
   const toggles = el('div', { class: 'chips' });
-  const togglesLabel = el('div', { class: 'eb', text: 'Elements' });
+  const faces = el('div', { class: 'chips chips--scroll' });
   const hint = el('p', { class: 'cap', style: 'margin:0',
     text: 'Drag to move. Pinch, or pull the corner dot, to resize.' });
 
-  // Element toggles gate content in both modes: preset stacks whatever is on,
-  // photo mode makes the same pieces draggable.
+  const count = el('span', { class: 'cap num', style: 'align-self:flex-end' });
+  const titleInput = el('input', { type: 'text', maxlength: String(TITLE_MAX), placeholder: 'Leaving do', 'aria-label': 'Title' });
+  titleInput.value = ui.title;
+  const setCount = () => { count.textContent = `${ui.title.length}/${TITLE_MAX}`; };
+  titleInput.addEventListener('input', () => {
+    ui.title = titleInput.value.slice(0, TITLE_MAX);
+    setCount();
+    draw();
+  });
+  setCount();
+
   ui.refreshChrome = () => {
-    const preset = ui.mode === 'preset';
-    tabs.children[0].setAttribute('aria-pressed', preset ? 'true' : 'false');
-    tabs.children[1].setAttribute('aria-pressed', preset ? 'false' : 'true');
-    ratios.children[0].setAttribute('aria-pressed', ui.ratio === 'feed' ? 'true' : 'false');
-    ratios.children[1].setAttribute('aria-pressed', ui.ratio === 'story' ? 'true' : 'false');
-    themes.replaceChildren(...THEMES.map((t) =>
+    const route = ui.mode === 'preset';
+    layouts.replaceChildren(
+      tab('Route', () => setMode('preset'), route),
+      // A photo already picked switches back without reopening the picker;
+      // tapping again while active re-picks.
+      tab('Your photo', () => {
+        if (ui.photo && ui.mode !== 'photo') setMode('photo');
+        else pickPhoto();
+      }, !route),
+      el('span', { class: 'chips__rule' }),
+      tab('4:5', () => { setRatio('feed'); ui.refreshChrome(); }, ui.ratio === 'feed'),
+      tab('9:16', () => { setRatio('story'); ui.refreshChrome(); }, ui.ratio === 'story'),
+    );
+    cardThemes.replaceChildren(...[['dark', 'Dark'], ['light', 'Light']].map(([k, label]) =>
+      tab(label, () => { ui.cardTheme = k; ui.refreshChrome(); draw(); }, ui.cardTheme === k)));
+    textThemes.replaceChildren(...THEMES.map((t) =>
       tab(t.label, () => { ui.theme = t.key; ui.refreshChrome(); draw(); }, ui.theme === t.key)));
     toggles.replaceChildren(...elementToggles());
-    hint.classList.toggle('hidden', preset);
+    faces.replaceChildren(...FACES.map(([k, label]) =>
+      tab(label, () => { ui.face = k; if (ui.selected === 'avatar' && k === 'none') ui.selected = null; ui.refreshChrome(); draw(); }, ui.face === k)));
+    for (const n of [cardLabel, cardThemes]) n.classList.toggle('hidden', !route);
+    for (const n of [textLabel, textThemes, hint]) n.classList.toggle('hidden', route);
   };
   ui.refreshChrome();
   draw();
 
   return [
     head({ title: 'Your card', back: () => ctx.back() }),
-    tabs,
-    ratios,
+    layouts,
     el('div', { class: 'canvas-wrap' }, canvas),
     hint,
-    el('div', { class: 'eb', text: 'Text' }),
-    themes,
-    togglesLabel,
+    el('div', { class: 'stack', style: 'gap:4px' },
+      el('label', { class: 'field' }, el('span', { class: 'field__k', text: 'Title' }), titleInput),
+      count),
+    cardLabel,
+    cardThemes,
+    textLabel,
+    textThemes,
+    el('div', { class: 'eb', text: 'On the card' }),
     toggles,
+    el('div', { class: 'eb', text: 'Avatar' }),
+    faces,
     spacer(),
-    foot(btn('Next', 'btn--pri', () => ctx.go('share', s), { lg: true })),
+    foot(
+      btn('Next', 'btn--pri', () => ctx.go('share', s), { lg: true }),
+      btn('Save for video', 'btn--sec', () => videoSheet(), { iconName: 'download' }),
+    ),
   ];
 }
 
@@ -119,6 +155,7 @@ export function shareScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
   if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
+  ui.look = avatarLook(ctx);
 
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);
@@ -132,9 +169,6 @@ export function shareScreen(ctx, session) {
     foot(
       btn('Share', 'btn--pri', () => shareCard(), { iconName: 'share-2', lg: true }),
       btn('Save to photos', 'btn--sec', () => saveCard(), { iconName: 'download' }),
-      btn('Save for video', 'btn--sec', () => saveVideoPack()),
-      el('p', { class: 'cap', style: 'margin:0;text-align:center',
-        text: 'Saves each element as a see-through image, plus the whole layout, for CapCut or any video editor.' }),
     ),
   ];
 }
@@ -144,17 +178,21 @@ const tab = (label, onclick, on) =>
 
 /* ---------- state ---------- */
 
+// The toggles under "On the card". Title shows when there is one; the avatar
+// has its own row of faces, with None to leave it off.
 const TYPES = [
   { key: 'map', label: 'Map', presetOnly: true },
   { key: 'route', label: 'Route' },
   { key: 'stats', label: 'Stats' },
-  { key: 'time', label: 'Time' },
+  { key: 'time', label: 'Time out' },
   { key: 'date', label: 'Date' },
   { key: 'stops', label: 'Stops' },
   { key: 'water', label: 'Water' },
   { key: 'food', label: 'Food' },
   { key: 'badges', label: 'Badges' },
 ];
+// Photo cards draw in this order, so later ones sit on top and win a tap.
+const DRAW_ORDER = ['route', 'avatar', 'title', 'time', 'stats', 'water', 'food', 'date', 'stops', 'badges'];
 
 function makeState(s, allBadges = []) {
   // Badges the night itself earned, art preloaded for the canvas. The SVGs are
@@ -164,12 +202,14 @@ function makeState(s, allBadges = []) {
     .map((b) => BADGES.find((m) => m.slug === b.slug))
     .filter(Boolean)
     .slice(0, 4);
-  // Same guard as the grid's monogram fallback: a badge whose art is missing
-  // drops out of the card rather than exporting a labelled gap. Inert now that
-  // all 32 have artwork.
+  // A badge whose art is missing drops out of the card rather than exporting
+  // a labelled gap.
   const badgeImgs = [];
   for (const meta of sessionBadges) {
-    const entry = { meta, img: new Image() };
+    // Both art sets load up front: the light route card uses the light discs.
+    const entry = { meta, img: new Image(), imgLight: new Image() };
+    entry.imgLight.onload = () => draw();
+    entry.imgLight.src = badgeSrc(meta.slug, 'light');
     entry.img.onload = () => draw();
     entry.img.onerror = () => {
       const i = badgeImgs.indexOf(entry);
@@ -189,13 +229,19 @@ function makeState(s, allBadges = []) {
     mode: 'preset',
     ratio: 'feed',
     theme: 'halo',
+    cardTheme: 'dark',
+    title: '',
+    face: 'normal',
+    look: null,
     photo: null,
     selected: null,
     drag: null,
-    // Defaults reproduce Mode B — the stats bar sitting along the foot.
+    // Photo-card positions. The route card lays itself out.
     elements: {
       map: { on: s.trail.length > 1 },
       route: { on: true, x: PAD, y: 300, scale: 1 },
+      title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
+      avatar: { on: true, x: 1080 - PAD - 300, y: 1350 - PAD - 520, scale: 1 },
       time: { on: true, x: PAD, y: 1350 - PAD - 300, scale: 1 },
       stats: { on: true, x: PAD, y: 1350 - PAD - 190, scale: 1 },
       date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1 },
@@ -213,6 +259,10 @@ const SCALE_MAX = 2.5;
 // Non-finite guards the divide-by-tiny-baseline case; NaN would otherwise
 // slip through Math.min/max and stick to the element permanently.
 const clampScale = (n) => (Number.isFinite(n) ? Math.min(SCALE_MAX, Math.max(SCALE_MIN, n)) : 1);
+// The avatar is pixel art, so it only ever grows in whole pixels: 6x to 18x,
+// with scale 1 meaning 10x.
+const avatarCell = (e) => Math.min(18, Math.max(6, Math.round(10 * (e.scale || 1))));
+const snapScale = (key, node) => { if (key === 'avatar') node.scale = avatarCell(node) / 10; };
 
 function elementToggles() {
   // The badges toggle only exists when the night actually earned some.
@@ -375,6 +425,7 @@ function attachDrag(canvas) {
       const [a, b] = [...pointers.values()];
       const pn = ui.pinch, node = ui.elements[pn.key];
       node.scale = clampScale(pn.baseScale * (dist(a, b) / pn.baseDist));
+      snapScale(pn.key, node);
       if (pn.cx != null) {
         const k = node.scale / pn.baseScale;
         node.x = pn.cx - (pn.bw * k) / 2;
@@ -389,6 +440,7 @@ function attachDrag(canvas) {
       const el2 = ui.elements[ui.resize.key];
       const b = ui.bounds.get(ui.resize.key);
       el2.scale = clampScale(ui.resize.baseScale * (dist(p, { x: b.x, y: b.y }) / ui.resize.baseDist));
+      snapScale(ui.resize.key, el2);
       draw();
       return;
     }
@@ -478,7 +530,26 @@ function hitTest(p) {
    Manual letter-spacing: ctx.letterSpacing isn't universal, and the labels
    depend on +0.18em tracking to read as labels at all. */
 
-const theme = () => THEMES.find((t) => t.key === ui.theme) || THEMES[0];
+const ROUTE_THEMES = {
+  dark: {
+    bg: '#000000', rgb: '0,0,0', text: '#FFFFFF', label: '#A3A3A3', date: '#8A8A8A', pink: '#F06C9B',
+    mark: '#7EE0C0', route: '#7EE0C0', under: 'rgba(0,0,0,.55)', underW: 10, ring: '#000000',
+    credit: 'rgba(255,255,255,.45)', bloom: ['rgba(33,118,79,.42)', 'rgba(10,36,25,.22)', 'rgba(0,0,0,0)'],
+  },
+  light: {
+    bg: '#EEF2F8', rgb: '238,242,248', text: '#0B1526', label: '#626E81', date: '#4A576B', pink: '#C92F68',
+    mark: '#0B6E55', route: '#7EE0C0', under: '#0B6E55', underW: 7, ring: '#FFFFFF',
+    credit: 'rgba(11,21,38,.45)', bloom: ['rgba(0,71,171,.26)', 'rgba(0,71,171,.10)', 'rgba(0,71,171,0)'],
+  },
+};
+const routeTheme = () => ROUTE_THEMES[ui.cardTheme] || ROUTE_THEMES.dark;
+const theme = () => {
+  if (ui.mode === 'preset') {
+    const T = routeTheme();
+    return { ink: T.text, labelInk: T.label, muted: T.date, shadow: null };
+  }
+  return THEMES.find((t) => t.key === ui.theme) || THEMES[0];
+};
 
 function drawText(g, str, x, y, { size = 40, weight = 700, color, spacing = 0, align = 'left' } = {}) {
   const th = theme();
@@ -553,7 +624,7 @@ const abbrev = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 // so labels step up whenever there's an image behind them — and the chosen
 // text theme decides how far.
 // Video exports get the same step-up: they'll sit over footage, not black.
-const overImage = () => ui.overlay || (ui.photo && ui.mode === 'photo');
+const overImage = () => ui.mode === 'preset' || (ui.photo && ui.mode === 'photo');
 const labelInk = () => (overImage() ? theme().labelInk : C.faint);
 const mutedInk = () => (overImage() ? theme().muted : C.muted);
 
@@ -563,45 +634,36 @@ function placeLine(s) {
   return new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
 }
 
-/* ---------- draw ---------- */
+/* ---------- draw ----------
+   `only` draws a single layer on a clear ground, for Save for video; `target`
+   draws onto another canvas at the card's size. */
 
-function draw({ forExport = false } = {}) {
-  if (!ui?.g) return;
-  const g = ui.g;
+function draw({ forExport = false, only = null, target = null } = {}) {
+  if (!ui?.g && !target) return;
+  const g = target || ui.g;
+  const live = !target;
   const [w, h] = RATIOS[ui.ratio];
-  ui.bounds.clear();
-
+  const want = (id) => !only || only === id;
+  if (live) ui.bounds.clear();
   g.clearRect(0, 0, w, h);
-  // The video overlay keeps the layout and drops everything behind it.
-  if (ui.overlay) {
-    if (ui.mode === 'preset') drawPreset(g, w, h);
-    else drawFree(g, w, h, forExport);
-    drawWordmark(g, h);
-    return;
-  }
-  g.fillStyle = C.bg;
-  g.fillRect(0, 0, w, h);
 
-  // The photo belongs to photo mode only — preset always shows the black
-  // bloom card, even when a photo has been picked and is waiting in state.
-  if (ui.photo && ui.mode === 'photo') {
-    drawCover(g, ui.photo, w, h);
-    // A 34% wash so white type holds over any picture.
-    g.fillStyle = 'rgba(0,0,0,.34)';
+  if (ui.mode === 'preset') { drawRouteCard(g, w, h, want); return; }
+
+  if (!only) {
+    g.fillStyle = C.bg;
     g.fillRect(0, 0, w, h);
-  } else {
-    drawBloom(g, w, h);
+    if (ui.photo) {
+      drawCover(g, ui.photo, w, h);
+      // A 34% wash so white type holds over any picture.
+      g.fillStyle = 'rgba(0,0,0,.34)';
+      g.fillRect(0, 0, w, h);
+    } else {
+      drawBloom(g, w, h);
+    }
   }
-
-  if (ui.mode === 'preset') drawPreset(g, w, h);
-  else drawFree(g, w, h, forExport);
-
-  drawWordmark(g, h);
-}
-
-// The wordmark is the one fixed element — always mint, always present.
-function drawWordmark(g, h) {
-  drawText(g, 'Last Call', PAD, h - PAD - 26, { size: 26, weight: 700, color: C.mint, spacing: 1 });
+  drawFree(g, w, h, forExport || !!only || !live, want, live);
+  // The wordmark is the one fixed element on a photo card: mint, bottom right.
+  if (want('wordmark')) drawText(g, 'Last Call', w - PAD, h - PAD - 40, { size: 40, weight: 700, color: C.mint, align: 'right' });
 }
 
 function drawBloom(g, w, h) {
@@ -620,39 +682,6 @@ function drawCover(g, img, w, h) {
   g.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
 }
 
-// Fixed composition: whichever blocks are enabled stack up from just above the
-// wordmark, and the route takes whatever height is left.
-function drawPreset(g, w, h) {
-  const on = ui.elements;
-  const blocks = [];
-  if (on.time.on) blocks.push({ h: 118, draw: (y) => drawTime(g, PAD, y) });
-  if (on.stats.on) blocks.push({ h: 100, draw: (y) => drawStats(g, PAD, y) });
-  if (on.stops.on) blocks.push({ h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 14, draw: (y) => DRAW.stops(g, PAD, y, w) });
-  if (on.water.on || on.food.on) {
-    blocks.push({ h: 110, draw: (y) => {
-      let x = PAD;
-      if (on.water.on) { x += DRAW.water(g, x, y).w + 70; }
-      if (on.food.on) DRAW.food(g, x, y);
-    } });
-  }
-  if (on.badges?.on && ui.badgeImgs.length) blocks.push({ h: 195, draw: (y) => DRAW.badges(g, PAD, y, w) });
-  if (on.date.on) blocks.push({ h: 40, draw: (y) => drawText(g, placeLine(ui.session), PAD, y, { size: 24, weight: 400, color: mutedInk() }) });
-
-  const stackH = blocks.reduce((n, b) => n + b.h, 0);
-  const stackTop = h - PAD - 26 - 30 - stackH;
-  const region = { x: PAD, y: PAD + 60, w: w - PAD * 2, h: stackTop - PAD - 100 };
-
-  const frame = on.map.on && !ui.overlay ? drawMapBackground(g, w, h, region, stackTop) : null;
-
-  if (on.route.on) {
-    if (frame) drawMapRoute(g, frame);
-    else drawRoute(g, region.x, region.y, region.w, region.h);
-  }
-
-  let y = stackTop;
-  for (const b of blocks) { b.draw(y); y += b.h; }
-}
-
 let redrawQueued = false;
 function queueDraw() {
   if (redrawQueued) return;
@@ -660,16 +689,79 @@ function queueDraw() {
   requestAnimationFrame(() => { redrawQueued = false; draw(); });
 }
 
-/* Tiles full-bleed behind the whole card, zoomed so the route fits the upper
-   region. Returns the frame when a map is actually showing, or null — offline,
-   a tiny region, or an export that had to fall back — so the caller draws the
-   plain outline instead. Bloom stays underneath while tiles load. */
-function drawMapBackground(g, w, h, region, stackTop) {
-  const trail = ui.session.trail;
-  if (trail.length < 2 || ui.mapBlocked || region.h < 120) return null;
+/* ---------- the route card ----------
+   The map fills the top and fades into the ground behind the numbers; the
+   route lies on the real streets; stats sit in rows at the foot with the
+   avatar standing to their right. Badges and stops, when on, stack above the
+   stats and the map gives up the room. */
 
-  const f = SM.frame(trail, region);
-  const list = SM.tilesFor(f, w, h);
+function drawRouteCard(g, w, h, want) {
+  const T = routeTheme();
+  const on = ui.elements;
+  const M = PAD;
+  const title = ui.title.trim();
+  const rowTop = (r) => h - M - 500 + r * 130;
+
+  const stack = [];
+  if (on.stops.on && ui.session.pins.length) stack.push({ id: 'stops', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
+  if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: 215 });
+  const above = stack.reduce((n, b) => n + b.h, 0);
+  const mapH = h - 520 - above;
+  const region = { x: M, y: title ? 150 : 90, w: w - M * 2, h: h - 790 - above - (title ? 60 : 0) };
+  const trail = ui.session.trail;
+  let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
+
+  if (want('map')) {
+    g.fillStyle = T.bg;
+    g.fillRect(0, 0, w, h);
+    if (frame && !drawRouteMap(g, w, frame, mapH, T)) frame = null;
+    const bloom = g.createRadialGradient(w / 2, h, 0, w / 2, h, w * 0.9);
+    T.bloom.forEach((c, i) => bloom.addColorStop(i / 2, c));
+    g.fillStyle = bloom;
+    g.fillRect(0, 0, w, h);
+  } else if (frame && SM.status(SM.tilesFor(frame, w, mapH, ui.cardTheme === 'light')) === 'failed') {
+    frame = null;
+  }
+
+  if (want('title') && title) drawText(g, title, M, M + 6, { size: 64, weight: 700, color: T.text, spacing: -1 });
+  if (want('route') && on.route.on) {
+    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.map((p) => SM.toCard(frame, p.lat, p.lng)), T);
+    else outlineRoute(g, region, T);
+  }
+
+  let y = rowTop(0) - above;
+  for (const b of stack) {
+    if (want(b.id)) DRAW[b.id](g, M, y, w);
+    y += b.h;
+  }
+
+  const cell = (x, r, label, value, pink) => {
+    drawText(g, label, x, rowTop(r), { size: 28, weight: 600, color: T.label });
+    drawText(g, value, x, rowTop(r) + 36, { size: 76, weight: 700, color: pink ? T.pink : T.text, spacing: -2 });
+  };
+  if (want('stats') && on.stats.on) {
+    const top = [['Distance', `${km(ui.sum.distanceM)} km`]];
+    if (ui.sum.steps) top.push(['Steps', abbrev(ui.sum.steps)]);
+    top.forEach(([l, v], i) => cell(M + i * 300, 0, l, v));
+    const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks), true]];
+    if (on.water.on) second.push(['Water', String(ui.sum.waters)]);
+    if (on.food.on) second.push(['Food', String((ui.session.meals || []).length)]);
+    second.forEach(([l, v, pink], i) => cell(M + i * 150, 1, l, v, pink));
+  }
+  if (want('time') && on.time.on) cell(M, 2, 'Time out', hm(ui.sum.ms));
+  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 64, { size: 30, weight: 400, color: T.date });
+  if (want('wordmark')) drawText(g, 'Last Call', M, h - M - 22, { size: 40, weight: 700, color: T.mark });
+  if (want('avatar') && ui.face !== 'none' && ui.look) paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
+}
+
+/* Map tiles for the top of the card, fading into the ground. Returns false
+   when every tile failed (offline), so the plain outline stands in. */
+function drawRouteMap(g, w, f, mapH, T) {
+  const list = SM.tilesFor(f, w, mapH, ui.cardTheme === 'light');
+  g.save();
+  g.beginPath();
+  g.rect(0, 0, w, mapH);
+  g.clip();
   let drawn = 0;
   for (const t of list) {
     const img = SM.tile(t.url, queueDraw);
@@ -678,80 +770,94 @@ function drawMapBackground(g, w, h, region, stackTop) {
     g.drawImage(img, Math.floor(t.dx), Math.floor(t.dy), Math.ceil(t.size) + 1, Math.ceil(t.size) + 1);
     drawn++;
   }
-  if (!drawn) return SM.status(list) === 'failed' ? null : f;
-
   // Type over a map sits on a gradient, never a capsule (design system rule).
-  const foot = g.createLinearGradient(0, stackTop - 180, 0, h);
-  foot.addColorStop(0, 'rgba(0,0,0,0)');
-  foot.addColorStop(0.35, 'rgba(0,0,0,.72)');
-  foot.addColorStop(1, 'rgba(0,0,0,.92)');
+  const foot = g.createLinearGradient(0, mapH - 360, 0, mapH);
+  foot.addColorStop(0, `rgba(${T.rgb},0)`);
+  foot.addColorStop(1, `rgba(${T.rgb},1)`);
   g.fillStyle = foot;
-  g.fillRect(0, stackTop - 180, w, h - stackTop + 180);
-
-  const head = g.createLinearGradient(0, 0, 0, region.y + 40);
-  head.addColorStop(0, 'rgba(0,0,0,.55)');
-  head.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillRect(0, mapH - 360, w, 360);
+  const head = g.createLinearGradient(0, 0, 0, 220);
+  head.addColorStop(0, `rgba(${T.rgb},.72)`);
+  head.addColorStop(1, `rgba(${T.rgb},0)`);
   g.fillStyle = head;
-  g.fillRect(0, 0, w, region.y + 40);
-
-  // The tiles' terms require a credit on anything that shows them, cards
-  // included. Kept small and out of the way in the top corner.
+  g.fillRect(0, 0, w, 220);
+  g.restore();
+  if (!drawn) return SM.status(list) !== 'failed';
+  // The tiles' terms require a credit on anything that shows them.
   g.save();
   g.font = `400 17px ${SANS}`;
   g.textAlign = 'right';
   g.textBaseline = 'top';
-  g.fillStyle = 'rgba(255,255,255,.45)';
+  g.fillStyle = T.credit;
   g.fillText('Map © Esri · OpenStreetMap contributors', w - 28, 24);
   g.restore();
-  return f;
+  return true;
 }
 
-// The route in the same projection as the tiles, so it lies on the streets.
-function drawMapRoute(g, f) {
-  const trail = ui.session.trail;
-  const pts = trail.map((p) => SM.toCard(f, p.lat, p.lng));
+// Mint on an under-stroke (dark on black, deep teal on the light card), pink
+// stops with a ring.
+function strokeRoute(g, pts, stops, T, lw = 11) {
+  if (pts.length < 2) return;
   g.save();
   g.lineCap = 'round';
   g.lineJoin = 'round';
-  // A dark under-stroke lifts the mint line off busy street detail.
-  g.strokeStyle = 'rgba(0,0,0,.55)';
-  g.lineWidth = 16;
   g.beginPath();
   pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+  g.strokeStyle = T.under;
+  g.lineWidth = lw + T.underW;
   g.stroke();
-  g.strokeStyle = C.mint;
-  g.lineWidth = 9;
+  g.strokeStyle = T.route;
+  g.lineWidth = lw;
   g.stroke();
-
-  for (const pin of ui.session.pins) {
-    const p = SM.toCard(f, pin.lat, pin.lng);
-    g.fillStyle = C.pink;
+  for (const p of stops) {
     g.beginPath();
-    g.arc(p.x, p.y, 13, 0, Math.PI * 2);
+    g.arc(p.x, p.y, lw * 1.6, 0, Math.PI * 2);
+    g.fillStyle = T.pink;
     g.fill();
+    g.lineWidth = 4;
+    g.strokeStyle = T.ring;
+    g.stroke();
   }
-  const end = pts[pts.length - 1];
-  g.fillStyle = '#fff';
-  g.beginPath();
-  g.arc(end.x, end.y, 12, 0, Math.PI * 2);
-  g.fill();
   g.restore();
 }
 
-function drawFree(g, w, h, forExport) {
-  for (const t of TYPES) {
-    if (t.presetOnly) continue;
-    const e = ui.elements[t.key];
-    if (!e.on) continue;
+// No map (off, offline or a very short night): the route's shape alone.
+function outlineRoute(g, region, T) {
+  const pts = ui.session.trail;
+  if (pts.length < 2 || region.w < 40 || region.h < 40) return;
+  const fitted = fitPoints(pts, region.w, region.h, 20).map((p) => ({ x: p.x + region.x, y: p.y + region.y }));
+  const stops = ui.session.pins.map((pin) => {
+    let best = 0;
+    for (let i = 1; i < pts.length; i++) if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
+    return fitted[best];
+  });
+  strokeRoute(g, fitted, stops, T);
+}
+
+/* ---------- the photo card ---------- */
+
+function drawFree(g, w, h, forExport, want, live) {
+  const setBounds = (key, b) => { if (live) ui.bounds.set(key, b); };
+  for (const key of DRAW_ORDER) {
+    const e = ui.elements[key];
+    if (!e?.on || !want(key)) continue;
+    if (key === 'title' && !ui.title.trim()) continue;
+    if (key === 'avatar') {
+      if (ui.face === 'none' || !ui.look) continue;
+      const cellSize = avatarCell(e);
+      paintAvatar(g, ui.look, e.x, e.y, cellSize, FACE_STATE[ui.face]);
+      setBounds(key, { x: e.x, y: e.y, w: 32 * cellSize, h: 43 * cellSize });
+      continue;
+    }
     const scale = e.scale || 1;
     // Elements draw themselves at the origin under a transform, so every DRAW
     // routine scales for free and the stored bounds stay in card coordinates.
     g.save();
     g.translate(e.x, e.y);
     g.scale(scale, scale);
-    const box = DRAW[t.key](g, 0, 0, w);
+    const box = DRAW[key](g, 0, 0, w);
     g.restore();
-    ui.bounds.set(t.key, { x: e.x, y: e.y, w: box.w * scale, h: box.h * scale });
+    setBounds(key, { x: e.x, y: e.y, w: box.w * scale, h: box.h * scale });
   }
   if (!forExport && ui.guides?.length) {
     g.save();
@@ -791,102 +897,81 @@ function drawTime(g, x, y) {
   return { w, h: 100 };
 }
 
-// One labelled figure — the shape water and food share.
+// One labelled figure: the shape water and food share. Labels are sentence
+// case now, like the rest of the app.
 function bigStat(g, x, y, label, value) {
-  drawText(g, label, x, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
-  const w = drawText(g, value, x, y + 30, { size: 52, weight: 700, spacing: -2 });
-  return { w: Math.max(w, 90), h: 92 };
+  drawText(g, label, x, y, { size: 26, weight: 600, color: labelInk() });
+  const w = drawText(g, value, x, y + 34, { size: 52, weight: 700, spacing: -2 });
+  return { w: Math.max(w, 90), h: 96 };
 }
 
 function drawStats(g, x, y) {
   const cells = [
-    ['DRINKS', String(ui.sum.drinks), C.pink],
-    ['STOPS', String(ui.sum.stops), null],
-    ['STEPS', abbrev(ui.sum.steps), null],
-    ['KM', km(ui.sum.distanceM), null],
+    ['Drinks', String(ui.sum.drinks), C.pink],
+    ['Stops', String(ui.sum.stops), null],
+    ['Steps', abbrev(ui.sum.steps), null],
+    ['Km', km(ui.sum.distanceM), null],
   ];
   let cx = x;
   for (const [k, v, color] of cells) {
-    drawText(g, k, cx, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
-    drawText(g, v, cx, y + 30, { size: 52, weight: 700, color, spacing: -2 });
+    drawText(g, k, cx, y, { size: 26, weight: 600, color: labelInk() });
+    drawText(g, v, cx, y + 34, { size: 52, weight: 700, color, spacing: -2 });
     cx += 190;
   }
-  return { w: 190 * cells.length - 60, h: 92 };
+  return { w: 190 * cells.length - 60, h: 96 };
 }
 
 const DRAW = {
   route(g, x, y, w) {
     const rw = Math.min(w - x - PAD, 620);
     const rh = 420;
-    drawRoute(g, x, y, rw, rh);
+    outlineRoute(g, { x, y, w: rw, h: rh }, { ...ROUTE_THEMES.dark, under: 'rgba(0,0,0,.35)', underW: 6 });
     return { w: rw, h: rh };
+  },
+  title(g, x, y) {
+    const w = drawText(g, ui.title.trim(), x, y, { size: 72, weight: 700, spacing: -1 });
+    return { w, h: 84 };
   },
   time: drawTime,
   stats: drawStats,
   date(g, x, y) {
-    const w = drawText(g, placeLine(ui.session), x, y, { size: 24, weight: 400, color: mutedInk() });
-    return { w, h: 30 };
+    const w = drawText(g, placeLine(ui.session), x, y, { size: 28, weight: 400, color: mutedInk() });
+    return { w, h: 34 };
   },
   badges(g, x, y) {
     const items = ui.badgeImgs;
     if (!items.length) return { w: 0, h: 0 };
-    const size = 120, gap = 34, cell = size + gap;
+    const size = 120, gap = 34, cellW = size + gap;
     let labelH = 0;
-    items.forEach(({ meta, img }, i) => {
-      const cx = x + i * cell;
+    const light = ui.mode === 'preset' && ui.cardTheme === 'light';
+    items.forEach(({ meta, img: dark, imgLight }, i) => {
+      const cx = x + i * cellW;
+      const img = light && imgLight.complete && imgLight.naturalWidth ? imgLight : dark;
       if (img.complete && img.naturalWidth) g.drawImage(img, cx, y, size, size);
-      labelH = Math.max(labelH, drawLabelFit(
-        g, meta.name.toUpperCase(), cx + size / 2, y + size + 14, cell - 10));
+      labelH = Math.max(labelH, drawLabelFit(g, meta.name, cx + size / 2, y + size + 14, cellW - 10, { size: 20, spacing: 0 }));
     });
-    return { w: cell * items.length - gap, h: size + 14 + labelH };
+    return { w: cellW * items.length - gap, h: size + 14 + labelH };
   },
   water(g, x, y) {
-    return bigStat(g, x, y, 'WATER', String(ui.sum.waters));
+    return bigStat(g, x, y, 'Water', String(ui.sum.waters));
   },
   food(g, x, y) {
-    return bigStat(g, x, y, 'FOOD', String((ui.session.meals || []).length));
+    return bigStat(g, x, y, 'Food', String((ui.session.meals || []).length));
   },
   stops(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);
     if (!names.length) {
-      const w = drawText(g, 'NO STOPS PINNED', x, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
-      return { w, h: 24 };
+      const w = drawText(g, 'No stops pinned', x, y, { size: 26, weight: 600, color: labelInk() });
+      return { w, h: 30 };
     }
-    drawText(g, 'STOPS', x, y, { size: 20, weight: 600, color: labelInk(), spacing: 3.5 });
+    drawText(g, 'Stops', x, y, { size: 26, weight: 600, color: labelInk() });
     let widest = 0;
     names.forEach((n, i) => {
-      widest = Math.max(widest, drawText(g, n, x, y + 36 + i * 44, { size: 34, weight: 700, spacing: -0.5 }));
+      widest = Math.max(widest, drawText(g, n, x, y + 38 + i * 44, { size: 34, weight: 700, spacing: -0.5 }));
     });
-    return { w: Math.max(widest, 220), h: 36 + names.length * 44 };
+    return { w: Math.max(widest, 220), h: 38 + names.length * 44 };
   },
 };
-
-function drawRoute(g, x, y, w, h) {
-  const pts = ui.session.trail;
-  if (pts.length < 2 || w < 40 || h < 40) return;
-  const fitted = fitPoints(pts, w, h, 20).map((p) => ({ x: p.x + x, y: p.y + y }));
-
-  g.save();
-  g.strokeStyle = C.mint;
-  g.lineWidth = 9;
-  g.lineCap = 'round';
-  g.lineJoin = 'round';
-  g.beginPath();
-  fitted.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
-  g.stroke();
-
-  for (const pin of ui.session.pins) {
-    let best = 0;
-    for (let i = 1; i < pts.length; i++) {
-      if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
-    }
-    g.fillStyle = C.pink;
-    g.beginPath();
-    g.arc(fitted[best].x, fitted[best].y, 12, 0, Math.PI * 2);
-    g.fill();
-  }
-  g.restore();
-}
 
 /* ---------- export ---------- */
 
@@ -968,73 +1053,120 @@ function download(blob, name = filename()) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/* ---------- video pack ----------
-   Transparent PNGs for a video editor: the whole layout with nothing behind it,
-   plus every element on its own at twice card size, so it stays sharp when
-   scaled up over footage. No photo and no map tiles are drawn, so nothing
-   cross-origin can taint the export. */
+/* ---------- Save for video ----------
+   One see-through PNG per layer, ready to lay over a video in any editor. Full
+   frame keeps every image at the card's size so the layers line up when
+   stacked; Cropped trims each to its element for placing by hand. The map
+   tiles are fetched with CORS, so even the map layer exports cleanly. */
 
-const PACK_SCALE = 2;
-const PACK_MARGIN = 40; // room for the Halo glow and descenders
+const LAYER_LABEL = {
+  map: 'Map', route: 'Route', title: 'Title', stats: 'Stats', time: 'Time out', date: 'Date', stops: 'Stops',
+  water: 'Water', food: 'Food', badges: 'Badges', avatar: 'Avatar', wordmark: 'Wordmark',
+};
+
+function layerIds() {
+  const on = ui.elements;
+  const hasTitle = !!ui.title.trim();
+  const hasAvatar = ui.face !== 'none';
+  if (ui.mode === 'preset') {
+    return ['map', 'route', 'title', 'badges', 'stops', 'stats', 'time', 'date', 'avatar', 'wordmark'].filter((id) => {
+      if (id === 'title') return hasTitle;
+      if (id === 'avatar') return hasAvatar;
+      if (id === 'badges') return on.badges.on && ui.badgeImgs.length;
+      if (id === 'stops') return on.stops.on && ui.session.pins.length;
+      if (id === 'map' || id === 'wordmark') return true;
+      return on[id]?.on;
+    });
+  }
+  return [...DRAW_ORDER.filter((id) => {
+    if (id === 'title') return hasTitle && on.title.on;
+    if (id === 'avatar') return hasAvatar && on.avatar.on;
+    return on[id]?.on;
+  }), 'wordmark'];
+}
 
 const canvasBlob = (c) => new Promise((resolve, reject) =>
   c.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob returned null'))), 'image/png'));
 
-async function overlayBlob() {
-  ui.overlay = true;
+// Trims transparent edges. Anything that can't be read back is left whole.
+function cropCanvas(c) {
   try {
-    draw({ forExport: true });
-    return await canvasBlob(ui.canvas);
-  } finally {
-    ui.overlay = false;
-    draw();
-  }
+    const { width: w, height: h } = c;
+    const d = c.getContext('2d').getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return c;
+    const pad = 12;
+    x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+    x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+    const out = document.createElement('canvas');
+    out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+    out.getContext('2d').drawImage(c, -x0, -y0);
+    return out;
+  } catch { return c; }
 }
 
-// Draws one element alone, measuring it first on a scratch canvas.
-async function pieceBlob(paint) {
-  const [w] = RATIOS[ui.ratio];
-  const scratch = document.createElement('canvas');
-  scratch.width = w; scratch.height = 1600;
-  ui.overlay = true;
-  try {
-    const box = paint(scratch.getContext('2d'), w);
-    if (!box?.w || !box?.h) return null;
-    const c = document.createElement('canvas');
-    c.width = Math.ceil((box.w + PACK_MARGIN * 2) * PACK_SCALE);
-    c.height = Math.ceil((box.h + PACK_MARGIN * 2) * PACK_SCALE);
-    const g = c.getContext('2d');
-    g.scale(PACK_SCALE, PACK_SCALE);
-    g.translate(PACK_MARGIN, PACK_MARGIN);
-    paint(g, w);
-    return await canvasBlob(c);
-  } finally {
-    ui.overlay = false;
-  }
+async function layerBlob(id, full) {
+  const [w, h] = RATIOS[ui.ratio];
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  draw({ only: id, target: c.getContext('2d'), forExport: true });
+  return canvasBlob(full ? c : cropCanvas(c));
 }
 
-async function buildVideoPack() {
+async function buildLayers(ids, full) {
   const base = filename().replace(/\.png$/, '');
   const files = [];
-  files.push([`${base}-layout.png`, await overlayBlob()]);
-  for (const t of TYPES) {
-    if (t.presetOnly || !ui.elements[t.key]?.on) continue;
-    const blob = await pieceBlob((g, w) => DRAW[t.key](g, 0, 0, w));
-    if (blob) files.push([`${base}-${t.key}.png`, blob]);
-  }
-  files.push([`${base}-wordmark.png`, await pieceBlob((g) => ({
-    w: drawText(g, 'Last Call', 0, 0, { size: 26, weight: 700, color: C.mint, spacing: 1 }), h: 32,
-  }))]);
+  for (const id of ids) files.push([`${base}-${id}.png`, await layerBlob(id, full)]);
   return files;
 }
 
-async function saveVideoPack() {
+function videoSheet() {
+  const ids = layerIds();
+  const picked = new Set(ids);
+  let full = true;
+  const [, h] = RATIOS[ui.ratio];
+  sheet((close) => {
+    const chips = el('div', { class: 'chips' });
+    const sizes = el('div', { class: 'chips' });
+    const note = el('span', { class: 'cap' });
+    const go = btn('Save images', 'btn--pri', async () => {
+      close();
+      await saveLayers([...picked].filter((id) => ids.includes(id)), full);
+    }, { lg: true });
+    const paint = () => {
+      chips.replaceChildren(...ids.map((id) => tab(LAYER_LABEL[id], () => {
+        if (picked.has(id)) picked.delete(id); else picked.add(id);
+        paint();
+      }, picked.has(id))));
+      sizes.replaceChildren(
+        tab('Full frame', () => { full = true; paint(); }, full),
+        tab('Cropped', () => { full = false; paint(); }, !full));
+      note.textContent = full
+        ? `Every image is 1080 × ${h}, so the layers line up when stacked.`
+        : 'Each image is trimmed to the element, for placing by hand.';
+      go.disabled = !picked.size;
+    };
+    paint();
+    return [
+      el('h2', { class: 'title', style: 'margin:0', text: 'Save for video' }),
+      el('p', { class: 'body', style: 'margin:0', text: 'Each element saves as its own see-through PNG, ready to lay over a video in any editor.' }),
+      el('div', { class: 'eb', text: 'Elements' }), chips,
+      el('div', { class: 'eb', text: 'Size' }), sizes, note,
+      go,
+      btn('Close', 'btn--sec', close),
+    ];
+  });
+}
+
+async function saveLayers(ids, full) {
   let files;
-  try { files = await buildVideoPack(); } catch {
+  try { files = await buildLayers(ids, full); } catch {
     toast('The video images didn’t render.');
     return;
   }
-
   try {
     let native = true;
     for (const [name, blob] of files) {
@@ -1042,7 +1174,7 @@ async function saveVideoPack() {
     }
     window.dispatchEvent(new Event('lc:card-exported'));
     toast(native
-      ? `Saved ${files.length} see-through images to Pictures › Last Call.`
+      ? `Saved ${files.length} see-through image${files.length === 1 ? '' : 's'} to Pictures › Last Call.`
       : `Downloaded ${files.length} see-through images.`, 4000);
   } catch {
     toast('Saving to the gallery failed partway. Try again.');
@@ -1054,5 +1186,5 @@ async function saveVideoPack() {
 // element geometry the pointer gestures mutate.
 export function __renderForTest() { return render(); }
 export function __stateForTest() { return ui; }
-export function __videoPackForTest() { return buildVideoPack(); }
+export function __layersForTest(full = true) { return buildLayers(layerIds(), full); }
 export { icon, km };

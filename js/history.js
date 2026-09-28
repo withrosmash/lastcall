@@ -4,6 +4,7 @@ import * as S from './state.js';
 import * as store from './storage.js';
 import { routeSvg } from './session.js';
 import { nightMap } from './map.js';
+import { avatarLook } from './wardrobe.js';
 import { saveTextFile } from './keepalive.js';
 import { BADGES } from './badges-data.js';
 
@@ -216,7 +217,7 @@ export function detailScreen(ctx, session) {
   return [
     head({ eyebrow: shortDate(s.startedAt), title: `${hm(sum.ms)} out`, back: () => ctx.back() }),
 
-    ...rewind(s),
+    ...rewind(ctx, s),
 
     tiles(
       tile('Drinks', sum.drinks, { tone: 'drinks' }),
@@ -255,26 +256,25 @@ export function detailScreen(ctx, session) {
    where you were at that moment, what you'd drunk by then, and the last place
    you'd checked in — the thing that actually jogs a memory the next morning. */
 
-function rewind(s) {
+function rewind(ctx, s) {
   const start = s.startedAt;
   const end = s.endedAt || Date.now();
+  const span = Math.max(1, end - start);
   const hasRoute = s.trail.length > 1;
 
   const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Your route that night' });
-  const ctl = hasRoute ? nightMap(host, s) : { setTime: () => {} };
+  const ctl = hasRoute ? nightMap(host, s, avatarLook(ctx)) : { setTime: () => {}, stand: () => {} };
 
-  const clock = el('div', { style: 'font:var(--type-title);letter-spacing:var(--tr-title);font-variant-numeric:tabular-nums' });
-  const where = el('div', { class: 'cap cap--up', style: 'min-height:1.35em' });
+  const clock = el('div', { class: 'num', style: 'font:var(--type-stat);letter-spacing:var(--tr-stat)' });
+  const where = el('div', { class: 'rewind__place' });
 
-  const show = (t) => {
-    const drinks = s.drinks.filter((d) => d.t <= t).length;
-    const stop = [...s.pins].reverse().find((p) => p.t <= t);
+  // Within 2.5% of the night either side of a check-in, you were there.
+  const show = (t, walking = false) => {
+    const near = s.pins.find((p) => Math.abs(p.t - t) / span <= 0.025);
     clock.textContent = clockTime(t);
-    where.replaceChildren(
-      el('b', { style: 'color:var(--pink);font-weight:600', text: `${drinks} drink${drinks === 1 ? '' : 's'}` }),
-      stop ? ` · last checked in at ${stop.name}` : ' · not checked in anywhere yet',
-    );
-    ctl.setTime(t);
+    where.textContent = near ? near.name : 'Between stops';
+    where.classList.toggle('is-stop', !!near);
+    ctl.setTime(t, { walking });
   };
 
   const slider = el('input', {
@@ -282,9 +282,14 @@ function rewind(s) {
     class: 'rewind', 'aria-label': 'Time through the night',
     oninput: (e) => {
       e.target.style.setProperty('--fill', `${Number(e.target.value) / 10}%`);
-      show(start + ((end - start) * Number(e.target.value)) / 1000);
+      show(start + (span * Number(e.target.value)) / 1000, true);
     },
+    onchange: () => ctl.stand(),
   });
+  const ticks = s.pins.map((p) => el('span', {
+    class: 'rewind__tick',
+    style: `left:calc(12px + (100% - 24px) * ${Math.min(1, Math.max(0, (p.t - start) / span)).toFixed(4)})`,
+  }));
   queueMicrotask(() => show(end));
 
   return [
@@ -294,7 +299,7 @@ function rewind(s) {
           el('p', { class: 'cap cap--up', style: 'margin:0', text: 'No route was recorded this night.' })),
     el('div', { class: 'stack', style: 'gap:4px' },
       el('div', { class: 'row', style: 'align-items:baseline' }, clock, where),
-      slider,
+      el('div', { class: 'rewind__wrap' }, slider, ...ticks),
       el('div', { class: 'row cap', style: 'justify-content:space-between' },
         el('span', { text: clockTime(start) }),
         el('span', { text: clockTime(end) }),

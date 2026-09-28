@@ -1,12 +1,12 @@
 // Customise, as designed in round 2 (design/round2/designs/Customise Screen):
-// a live preview you can tap for another face, five tabs (Hair, Glasses, Top,
-// Items, Colours), and Save look / Shuffle / Cancel. Changes are a draft until
-// saved; Cancel and the back button leave without saving.
+// a live preview you can tap for another face, and five tabs (Hair, Glasses,
+// Top, Items, Colours). Every change saves as you make it, so backing out never
+// loses anything; Undo changes puts back the look you had when you opened it.
 //
 // Colours use range inputs rather than <input type="color">, which Android's
 // WebView doesn't reliably give a picker for.
 
-import { el, btn, navPair, sheet, icon, currentTheme } from './ui.js';
+import { el, btn, sheet, icon, currentTheme } from './ui.js';
 import {
   createAvatar, drawStill, HAIRS, GLASSES, TOPS, ITEMS, SLOTS, SWATCHES, CROP,
   SUNGLASSES_BADGE, toHsl, fromHsl, shuffleLook,
@@ -27,8 +27,9 @@ const FACES = [
 const TABS = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['items', 'Items'], ['colours', 'Colours']];
 
 export function avatarScreen(ctx) {
-  let draft = avatarLook(ctx);
-  let tab = 'hair', slot = 'hair', face = 0, saved = false;
+  const original = avatarLook(ctx);
+  let draft = structuredClone(original);
+  let tab = 'hair', slot = 'hair', face = 0;
   const light = currentTheme() === 'light';
   const SIL = light ? '#C3CCD9' : '#3A3A3A';
   const SIL_SHEET = light ? '#AEB9C8' : '#4D4D4D';
@@ -44,16 +45,19 @@ export function avatarScreen(ctx) {
   };
   caption.textContent = `${FACES[0].n} · tap for another face`;
 
-  const saveBtn = btn('Save look', 'btn--pri', () => {
-    saveLook(ctx, draft);
-    saved = true;
-    saveBtn.querySelector('span').textContent = 'Saved';
-  }, { lg: true });
-  const changed = () => {
-    av.setLook(draft);
-    if (saved) { saved = false; saveBtn.querySelector('span').textContent = 'Save look'; }
+  // Undo is only worth offering once something has changed.
+  const undoBtn = btn('Undo changes', 'btn--sec', () => {
+    draft = structuredClone(original);
+    commit();
     paintPanel();
+  });
+  const commit = () => {
+    saveLook(ctx, draft);
+    av.setLook(draft);
+    undoBtn.disabled = JSON.stringify(draft) === JSON.stringify(original);
   };
+  undoBtn.disabled = true;
+  const changed = () => { commit(); paintPanel(); };
 
   const tabRow = el('div', { class: 'chips chips--scroll' });
   const panel = el('div', { class: 'wardrobe' });
@@ -156,8 +160,7 @@ export function avatarScreen(ctx) {
       input.addEventListener('input', () => {
         out.textContent = `${input.value}${unit}`;
         draft = { ...draft, colors: { ...draft.colors, [slot]: onInput(+input.value) } };
-        av.setLook(draft);
-        if (saved) { saved = false; saveBtn.querySelector('span').textContent = 'Save look'; }
+        commit();
       });
       input.addEventListener('change', () => paintColours());
       return el('label', { class: 'wslider__row' },
@@ -189,10 +192,9 @@ export function avatarScreen(ctx) {
     tabRow,
     panel,
     el('div', { class: 'foot' },
-      saveBtn,
-      navPair([
-        ['Shuffle', () => { draft = shuffleLook(draft); changed(); }],
-        ['Cancel', () => ctx.back()],
-      ])),
+      btn('Done', 'btn--pri', () => ctx.back(), { lg: true }),
+      el('div', { class: 'btn-pair' },
+        btn('Shuffle', 'btn--sec', () => { draft = shuffleLook(draft); changed(); }),
+        undoBtn)),
   ];
 }

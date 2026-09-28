@@ -209,7 +209,9 @@ export function build(look0, fr = NEUTRAL, only = null) {
   // What the frame's arms are doing decides which held items can show.
   const armL = fr.armL || 'down', armR = fr.armR || 'down';
   const armsBusy = armL !== 'down' || armR !== 'down' || !!fr.armSwing;
-  const held = look.held === 'mug' ? (armsBusy ? null : 'mug') : (armR !== 'down' || fr.prop || fr.armSwing ? null : look.held);
+  // The mug is two-handed, but the right hand can let go of it to wave.
+  const held = look.held === 'mug' ? (armL !== 'down' || fr.armSwing ? null : 'mug') : (armR !== 'down' || fr.prop || fr.armSwing ? null : look.held);
+  const oneHand = held === 'mug' && armR !== 'down';
 
   // hair back
   O = hairO;
@@ -536,7 +538,10 @@ export function build(look0, fr = NEUTRAL, only = null) {
     for (let y = 32; y <= 36; y++) for (let x = 13; x <= 18; x++) M(x, y, y === 34 ? [126, 224, 192] : [237, 230, 218]);
     for (let x = 14; x <= 17; x++) M(x, 32, [96, 60, 38], false);
     [[15, 30], [16, 29], [16, 31]].forEach(([x, y]) => M(x, y, [214, 214, 214], false));
-    if (!only) { [[10, 33], [11, 33], [20, 33], [21, 33]].forEach(([x, y]) => set(x, y, mul(C.top, .85), 'held')); [[12, 33], [12, 34], [19, 33], [19, 34]].forEach(([x, y]) => set(x, y, C.skin, 'held')); }
+    if (!only) {
+      [[10, 33], [11, 33], ...(oneHand ? [] : [[20, 33], [21, 33]])].forEach(([x, y]) => set(x, y, mul(C.top, .85), 'held'));
+      [[12, 33], [12, 34], ...(oneHand ? [] : [[19, 33], [19, 34]])].forEach(([x, y]) => set(x, y, C.skin, 'held'));
+    }
   }
 
   // reaction props: held in the right hand, or dropped from above
@@ -697,6 +702,82 @@ export function drawStill(canvas, look, opts = {}) {
   return canvas;
 }
 
+/** Paints one frame onto any 2D context at whole-pixel scale `s` (the share card). */
+export function paintAvatar(g, look, x0, y0, s, face = {}) {
+  const grid = build(normaliseLook(look), toFrame({ eyes: 'open', mouth: 'smile', blush: 1, ...face }, { still: false }));
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const p = grid[y * W + x]; if (!p) continue;
+    g.fillStyle = `rgb(${p.c[0]},${p.c[1]},${p.c[2]})`;
+    g.fillRect(Math.round(x0 + x * s), Math.round(y0 + y * s), s, s);
+  }
+  return { w: W * s, h: H * s };
+}
+
+/* ================= the map sprite =================
+   At map scale the full avatar would be a smudge, so a 12 x 16 sprite from the
+   same colour slots walks the route: four frames, mirrored for walking left.
+   Hoods, the crown and the party hat show at this size; other hats don't. */
+
+export const MW = 12, MH = 16;
+export function mini(look0, frame = 0) {
+  const look = normaliseLook(look0);
+  const g = new Array(MW * MH).fill(null);
+  const C = {}; Object.keys(look.colors).forEach((k) => (C[k] = hex(look.colors[k])));
+  const S = (x, y, c, o = true) => { if (x < 0 || y < 0 || x >= MW || y >= MH) return; g[y * MW + x] = { c, outline: o }; };
+  const b = frame === 1 || frame === 3 ? -1 : 0;
+  const LEGS = [
+    [[4, 13], [4, 14], [7, 13], [7, 14]], [[5, 13], [5, 14], [6, 13], [6, 14]],
+    [[4, 13], [3, 14], [7, 13], [8, 14]], [[5, 13], [5, 14], [6, 13], [6, 14]],
+  ];
+  const SHOES = [[[3, 15], [4, 15], [7, 15], [8, 15]], [[5, 15], [6, 15]], [[2, 15], [3, 15], [8, 15], [9, 15]], [[5, 15], [6, 15]]];
+  LEGS[frame].forEach(([x, y]) => S(x, y, C.bottoms));
+  SHOES[frame].forEach(([x, y]) => S(x, y, C.shoes));
+  for (let y = 9; y <= 12; y++) for (let x = 3; x <= 8; x++) S(x, y + b, C.top);
+  const ARMS = [[[2, 10], [2, 11], [9, 9], [9, 10]], [[2, 10], [2, 11], [9, 10], [9, 11]], [[2, 9], [2, 10], [9, 10], [9, 11]], [[2, 10], [2, 11], [9, 10], [9, 11]]];
+  ARMS[frame].forEach(([x, y]) => S(x, y + b, C.skin));
+  for (let y = 3; y <= 8; y++) for (let x = 1; x <= 10; x++) { if ((y === 3 || y === 8) && (x === 1 || x === 10)) continue; S(x, y + b, C.skin); }
+  const hs = look.hair;
+  if (look.hat === 'duck' || look.hat === 'dino' || look.hat === 'panda') {
+    const hc = hex({ duck: '#F5C842', dino: '#70BE5C', panda: '#F0F0EC' }[look.hat]);
+    for (let y = 0; y <= 8; y++) for (let x = 0; x <= 11; x++) { const inner = y >= 4 && x >= 3 && x <= 8; if (inner) continue; if (y === 0 && (x < 3 || x > 8)) continue; if (y >= 6 && (x === 0 || x === 11)) continue; S(x, y + b, hc); }
+  } else if (hs !== 'bald') {
+    [[0, 3, 8], [1, 2, 9], [2, 1, 10], [3, 1, 10]].forEach(([y, a, c]) => { for (let x = a; x <= c; x++) S(x, y + b, C.hair); });
+    [4, 5].forEach((y) => { S(1, y + b, C.hair); S(10, y + b, C.hair); });
+    if (hs === 'long') for (let y = 6; y <= 10; y++) { S(0, y + b, C.hair); S(11, y + b, C.hair); S(1, y + b, C.hair); S(10, y + b, C.hair); }
+    if (hs === 'pigtails') [5, 6].forEach((y) => { S(0, y + b, C.hair); S(11, y + b, C.hair); });
+    if (hs === 'bun') S(5, b, C.hair);
+    if (hs === 'quiff' || hs === 'mohawk') { S(5, b, C.hair); S(6, b, C.hair); }
+  }
+  if (look.hat === 'party') [[5, 0], [6, 0]].forEach(([x, y]) => S(x, y + b, [240, 108, 155]));
+  if (look.hat === 'crown') { for (let x = 3; x <= 8; x++) S(x, 1 + b, [242, 193, 78]); [3, 5, 6, 8].forEach((x) => S(x, b, [242, 193, 78])); }
+  const E = mix(C.eyes, [18, 14, 22], .6);
+  [[5, 5], [5, 6], [8, 5], [8, 6]].forEach(([x, y]) => S(x, y + b, E, false));
+  [[4, 7], [9, 7]].forEach(([x, y]) => S(x, y + b, C.cheeks, false));
+  const get = (x, y) => (x < 0 || y < 0 || x >= MW || y >= MH ? null : g[y * MW + x]);
+  return g.map((p, i) => {
+    if (!p || !p.outline) return p;
+    const x = i % MW, y = (i / MW) | 0;
+    if (![get(x - 1, y), get(x + 1, y), get(x, y - 1), get(x, y + 1)].some((q) => !q)) return p;
+    const lum = (.2126 * p.c[0] + .7152 * p.c[1] + .0722 * p.c[2]) / 255;
+    return { ...p, c: lum < .12 ? mix(p.c, [150, 150, 150], .32) : mul(p.c, .58) };
+  });
+}
+export function drawMini(canvas, look, { frame = 0, flip = false, scale = 2 } = {}) {
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  canvas.width = MW * scale * dpr; canvas.height = MH * scale * dpr;
+  canvas.style.width = `${MW * scale}px`; canvas.style.height = `${MH * scale}px`;
+  const g = canvas.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, MW * scale, MH * scale);
+  mini(look, frame).forEach((p, i) => {
+    if (!p) return;
+    const x = i % MW, y = (i / MW) | 0;
+    g.fillStyle = `rgb(${p.c[0]},${p.c[1]},${p.c[2]})`;
+    g.fillRect((flip ? MW - 1 - x : x) * scale, y * scale, scale, scale);
+  });
+  return canvas;
+}
+
 /* ================= animation ================= */
 // Keyframes are [ticks, state]; one tick is a twelfth of a second.
 
@@ -806,6 +887,10 @@ const ANIM = {
     K(3, { mouth: 'smile', eyes: 'happy' }),
   ],
   hello: [K(3, { armR: 'wave', mouth: 'open' }), K(3, { armR: 'wave2', eyes: 'wink', mouth: 'smile', blush: 2 }), K(3, { armR: 'wave', mouth: 'smile' }), K(3, {})],
+  // the morning after: sips from the mug, a slow blink, now and then a wave
+  sip: [K(6, { headDY: 1, eyes: 'content', mouth: 'small' }), K(12, {})],
+  slowblink: [K(2, { eyes: 'half' }), K(4, { eyes: 'closed' }), K(2, { eyes: 'half' }), K(8, {})],
+  morningwave: [K(3, { armR: 'wave', eyes: 'happy' }), K(3, { armR: 'wave2', eyes: 'happy' }), K(3, { armR: 'wave' }), K(2, {})],
   // idle fidgets
   weight: [K(6, { rootDX: -1 }), K(8, { rootDX: -1, eyes: 'lookL' }), K(4, {})],
   look: [K(4, { eyes: 'lookL', headDX: -1 }), K(5, { eyes: 'lookL', headDX: -1 }), K(3, {}), K(4, { eyes: 'lookR', headDX: 1 }), K(4, {})],
@@ -822,6 +907,7 @@ const MOODS = {
   Thirsty: { base: { eyes: 'half', mouth: 'flat', blush: 0 }, idle: ['fan', 'look', 'weight'], every: [30, 60] },
   Sleepy: { base: { eyes: 'sleepy', mouth: 'small', blush: 1 }, idle: ['yawn', 'weight'], every: [34, 64] },
   Buzzing: { base: { eyes: 'open', mouth: 'cat', blush: 2 }, idle: ['tap', 'dance', 'hum'], every: [22, 44] },
+  Morning: { base: { eyes: 'open', mouth: 'small', blush: 1 }, idle: ['sip', 'slowblink', 'sip', 'sip', 'morningwave'], every: [6, 14] },
 };
 
 const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

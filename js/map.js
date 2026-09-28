@@ -1,6 +1,7 @@
 import { el, btn, spacer, foot, head, sheet, toast, hms, km, currentTheme } from './ui.js';
 import * as S from './state.js';
 import * as geo from './geo.js';
+import { drawMini } from './avatar.js';
 
 // Dark basemap: the standard OSM raster is light, which fights a true-black
 // night app and leaves the stats strip unreadable. CARTO's dark_all used to be
@@ -353,8 +354,11 @@ export function positionAt(trail, t) {
   return { lat: last.lat, lng: last.lng, i: trail.length };
 }
 
-export function nightMap(host, s) {
-  const controller = { setTime: () => {} };
+// The history map, with your avatar walking the route as the slider moves:
+// a 12 x 16 sprite, four frames, mirrored when walking left, standing still
+// once you let go.
+export function nightMap(host, s, look = null) {
+  const controller = { setTime: () => {}, stand: () => {} };
   queueMicrotask(() => {
     if (!globalThis.L || !host.isConnected || s.trail.length < 2) return;
     teardownMap();
@@ -368,19 +372,43 @@ export function nightMap(host, s) {
     const walked = addRoute(route(all));
     for (const pin of s.pins) addPinMarker(pin);
 
-    const here = L.marker(all[all.length - 1], {
-      icon: L.divIcon({ className: '', html: '<div class="dot-me"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }),
-      keyboard: false,
-      interactive: false,
-    }).addTo(map);
+    let sprite = null;
+    let icon = L.divIcon({ className: '', html: '<div class="dot-me"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
+    if (look) {
+      sprite = document.createElement('canvas');
+      sprite.className = 'walker__sprite';
+      drawMini(sprite, look, { frame: 0 });
+      const wrap = document.createElement('div');
+      wrap.className = 'walker';
+      wrap.append(Object.assign(document.createElement('div'), { className: 'walker__halo' }), sprite);
+      icon = L.divIcon({ className: '', html: wrap, iconSize: [24, 32], iconAnchor: [12, 30] });
+    }
+    const here = L.marker(all[all.length - 1], { icon, keyboard: false, interactive: false }).addTo(map);
+    const walk = { frame: 0, flip: false, dist: 0, last: null };
+    const pose = (frame, flip) => {
+      if (!sprite || (frame === walk.frame && flip === walk.flip)) return;
+      walk.frame = frame; walk.flip = flip;
+      drawMini(sprite, look, { frame, flip });
+    };
+    controller.stand = () => { walk.last = null; pose(0, walk.flip); };
 
     map.fitBounds(L.polyline(all).getBounds(), { padding: [30, 30] });
     setTimeout(() => map?.invalidateSize(), 60);
 
-    controller.setTime = (t) => {
+    controller.setTime = (t, { walking = false } = {}) => {
       const pos = positionAt(trail, t);
       if (!pos || !map) return;
       here.setLatLng([pos.lat, pos.lng]);
+      if (walking && sprite) {
+        // One step per few screen pixels travelled, facing the way it's going.
+        const pt = map.latLngToLayerPoint([pos.lat, pos.lng]);
+        if (walk.last) {
+          const dx = pt.x - walk.last.x;
+          walk.dist += Math.hypot(dx, pt.y - walk.last.y);
+          pose(Math.floor(walk.dist / 6) % 4, dx < -0.5 ? true : dx > 0.5 ? false : walk.flip);
+        }
+        walk.last = pt;
+      }
       const upTo = [...all.slice(0, pos.i), [pos.lat, pos.lng]];
       walked.under?.setLatLngs(upTo);
       walked.line.setLatLngs(upTo);
