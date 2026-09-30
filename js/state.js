@@ -57,7 +57,13 @@ export function modeLine(s) {
   return seq.map((m) => MODES[m]?.label || m).join(', then ');
 }
 
-export const hasMorning = (s) => !!MODES[currentPart(s).mode]?.morning;
+export function hasMorning(s) {
+  const rule = MODES[currentPart(s).mode]?.morning;
+  if (rule !== 'late') return !!rule;
+  // Only a day that ran past midnight gets a morning after.
+  if (!s.endedAt) return false;
+  return new Date(s.endedAt).toDateString() !== new Date(s.startedAt).toDateString();
+}
 
 /** Minutes per kilometre as "m:ss", or null until there's 200 m to go on. */
 export function pace(ms, m) {
@@ -109,14 +115,54 @@ export function sliceTo(s, mode) {
   });
   const inside = (t) => spans.some(([a, b]) => t >= a && t < b);
   const keep = (list) => (list || []).filter((e) => inside(e.t));
-  if (!spans.length) return { ...s, drinks: [], waters: [], meals: [], challenges: [], pins: [], trail: [] };
+  if (!spans.length) return { ...s, drinks: [], waters: [], meals: [], challenges: [], pins: [], trail: [], sets: [] };
   const lastEnd = spans.at(-1)[1];
   return {
     ...s,
     startedAt: spans[0][0],
     endedAt: lastEnd === Infinity ? s.endedAt : lastEnd,
     drinks: keep(s.drinks), waters: keep(s.waters), meals: keep(s.meals),
-    challenges: keep(s.challenges), pins: keep(s.pins), trail: keep(s.trail),
+    challenges: keep(s.challenges), pins: keep(s.pins), trail: keep(s.trail), sets: keep(s.sets),
+  };
+}
+
+/* ---------- festival ---------- */
+
+/** Saw a set: the act, when, and where you were standing if the GPS knew. */
+export function addSet(s, { name, lat = null, lng = null }, now = Date.now()) {
+  (s.sets = s.sets || []).push({ t: now, name: name.trim(), lat, lng });
+  return s;
+}
+
+const actKey = (name) => name.trim().toLowerCase();
+
+/** Every act seen across these adventures, once each, first spelling kept. */
+export function festivalActs(sessions) {
+  const seen = new Map();
+  for (const x of [...sessions].sort((a, b) => a.startedAt - b.startedAt)) {
+    for (const set of x.sets || []) if (!seen.has(actKey(set.name))) seen.set(actKey(set.name), set.name);
+  }
+  return [...seen.values()];
+}
+
+/**
+ * A festival review as one read-only adventure, so the recap tiles and the
+ * card can draw it. Nothing here is saved; the days stay as they are.
+ */
+export function mergeSessions(sessions) {
+  const days = [...sessions].sort((a, b) => a.startedAt - b.startedAt);
+  const all = (k) => days.flatMap((d) => d[k] || []).sort((a, b) => a.t - b.t);
+  return {
+    id: 'f' + days.map((d) => d.id).join('-'),
+    sessionIds: days.map((d) => d.id),
+    startedAt: days[0].startedAt,
+    endedAt: Math.max(...days.map((d) => d.endedAt || d.startedAt)),
+    parts: [{ t: days[0].startedAt, mode: 'festival', company: 'group' }],
+    drinks: all('drinks'), waters: all('waters'), meals: all('meals'), challenges: all('challenges'),
+    pins: all('pins'), trail: all('trail'), sets: all('sets'),
+    steps: days.reduce((n, d) => n + (d.steps || 0), 0),
+    distanceM: days.reduce((n, d) => n + (d.distanceM || 0), 0),
+    place: null,
   };
 }
 

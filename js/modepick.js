@@ -11,6 +11,7 @@ const HINT = {
   night: 'Bars, clubs, the last train home.',
   day: 'Cafés, markets, somewhere new.',
   walk: 'Parks, paths, the long way round.',
+  festival: 'Stages, fields, one more act.',
 };
 
 /** Mode tiles plus the company chips. Calls onChange({ mode, company }) on every tap. */

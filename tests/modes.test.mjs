@@ -69,13 +69,14 @@ test('recent drinks are kept per mode', () => {
 });
 
 test('every mode is fully described', () => {
-  assert.deepEqual(MODE_KEYS, ['night', 'day', 'walk']);
+  assert.deepEqual(MODE_KEYS, ['night', 'day', 'walk', 'festival']);
   for (const k of MODE_KEYS) {
     const m = MODES[k];
     assert.ok(m.label, k);
     assert.ok(m.buttons.length, k);
     assert.ok(m.drinks.includes('Low/no'), k);
-    assert.equal(typeof m.morning, 'boolean', k);
+    assert.ok(typeof m.morning === 'boolean' || m.morning === 'late', k);
+    assert.ok(['default', 'walk', 'festival'].includes(m.headline), k);
   }
   assert.equal(MODES.night.label, 'Night out');
   assert.equal(MODES.day.label, 'Day out');

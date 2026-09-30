@@ -1,6 +1,6 @@
 // The kinds of adventure. Each mode is described once, here, and screens read
-// from it rather than checking for a mode by name. Festival joins in
-// a later step (docs/superpowers/specs/2026-09-30-m2-modes-design.md).
+// from it rather than checking for a mode by name
+// (docs/superpowers/specs/2026-09-30-m2-modes-design.md).
 // No imports, so node can test it.
 
 // Night out's list is the one the app has always had.
@@ -15,6 +15,12 @@ export const MODES = {
   walk: {
     label: 'Walk', icon: 'footprints', buttons: ['water', 'food', 'checkin', 'challenge', 'map', 'more'], labels: { food: 'Snack' },
     drinks: ['Coffee', 'Tea', 'Soft drink', 'Pint', 'Low/no'], drinkHint: 'Oat latte', morning: false, headline: 'walk',
+  },
+  // One adventure per festival day. Saw a set stands in for Check in; the
+  // morning-after screen only follows a day that ran past midnight.
+  festival: {
+    label: 'Festival', icon: 'tent', buttons: ['drink', 'water', 'food', 'set', 'challenge', 'map'],
+    drinks: ['Pint', 'Cider', 'Cocktail can', 'Spirit + mixer', 'Low/no'], drinkHint: 'Frozen margarita', morning: 'late', headline: 'festival',
   },
 };
 

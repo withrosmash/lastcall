@@ -1,7 +1,7 @@
 const KEY = 'lastcall_v1';
 const SCHEMA = 1;
 
-const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs(), badges: [], flags: {} };
+const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs(), badges: [], flags: {}, festivals: [] };
 
 export function defaultPrefs() {
   // Threshold of 5 is the design system's value, not a guess.
@@ -29,7 +29,7 @@ export function load() {
   return cache;
 }
 
-function migrate(data) {
+export function migrate(data) {
   if (!data || typeof data !== 'object') return structuredClone(EMPTY);
   // Only one schema version so far. Future versions step up from here.
   const out = {
@@ -39,6 +39,7 @@ function migrate(data) {
     prefs: { ...defaultPrefs(), ...(data.prefs || {}) },
     badges: Array.isArray(data.badges) ? data.badges : [],
     flags: data.flags && typeof data.flags === 'object' ? data.flags : {},
+    festivals: Array.isArray(data.festivals) ? data.festivals : [],
   };
   return out;
 }
