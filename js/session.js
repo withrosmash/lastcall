@@ -9,6 +9,7 @@ import { requestActivityPermission } from './keepalive.js';
 import * as notify from './notify.js';
 import { createAvatar } from './avatar.js';
 import { avatarLook, openUnlocks, itemsForBadges } from './wardrobe.js';
+import { t, phrase } from './words.js';
 
 /* ---------- avatar ---------- */
 
@@ -53,7 +54,7 @@ export function startScreen(ctx) {
       el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')),
     el('div', { class: 'eb eb--mint-dim', text: 'Leit' }),
     el('h1', { class: 'display', style: 'margin-top:10px' },
-      'Track the night.', el('br'), 'Piece it together later.'),
+      t('Track the {n}.'), el('br'), 'Piece it together later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
       text: 'Steps, stops, drinks and water. Kept on this phone, nowhere else.' }),
     el('div', { style: 'height:20px' }),
@@ -66,14 +67,14 @@ export function startScreen(ctx) {
         )
       : null,
     last ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', last) },
-      el('span', { class: 'listrow__d', text: `Last night · ${shortDate(last.startedAt)}` }),
+      el('span', { class: 'listrow__d', text: `${t('Last {n}')} · ${shortDate(last.startedAt)}` }),
       el('span', { class: 'listrow__m' },
         el('b', { text: `${last.drinks.length} drink${last.drinks.length === 1 ? '' : 's'}` }),
         el('span', { text: hm(S.elapsedMs(last)) }),
       ),
     ) : null,
     foot(
-      btn('Start night', 'btn--pri', () => ctx.beginNight(), { lg: true }),
+      btn(t('Start {n}'), 'btn--pri', () => ctx.beginNight(), { lg: true }),
       btn('History', 'btn--sec', () => ctx.go('history')),
     ),
   ];
@@ -88,7 +89,7 @@ export function startScreen(ctx) {
 const ONBOARD = [
   {
     eyebrow: 'Leit', title: 'This is you, roughly.',
-    body: 'It lives on this phone and keeps you company on nights out. You can change how it looks whenever you like.',
+    body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like.',
     note: 'No account, no sign-up. Everything stays on the phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
   },
@@ -103,14 +104,14 @@ const ONBOARD = [
   },
   {
     eyebrow: 'Steps', title: 'Counting steps',
-    body: 'Your phone will ask about motion and activity. That is the step counter, which is how the night gets its steps and the walk gets its pace.',
+    body: 'Your phone will ask about motion and activity. That is the step counter, which is how each {n} gets its steps and the walk gets its pace.',
     note: 'Without it, there are no steps. Everything else still works.',
     primary: 'Allow steps', secondary: 'Skip steps', face: { eyes: 'wide', mouth: 'small' },
     ask: () => requestActivityPermission(),
   },
   {
     eyebrow: 'Notifications', title: 'One quiet notification',
-    body: 'While a night is running, a notification stays on your lock screen. It keeps tracking going, and you can log a drink or water from it without opening the app.',
+    body: 'While {a} is running, a notification stays on your lock screen. It keeps tracking going, and you can log a drink or water from it without opening the app.',
     note: 'There are no other notifications and no reminders sent from anywhere else.',
     primary: 'Allow and start', secondary: 'Not now', face: { eyes: 'content', mouth: 'smile', blush: 2 },
     ask: () => notify.init(),
@@ -149,7 +150,7 @@ export function onboardingScreen(ctx) {
     el('div', { class: 'onboard__stage' }, av.canvas),
     el('div', { class: 'eb eb--mint-dim', text: step.eyebrow }),
     el('h1', { class: 'display', style: 'margin-top:10px', text: step.title }),
-    el('p', { class: 'body', style: 'margin:12px 0 0', text: step.body }),
+    el('p', { class: 'body', style: 'margin:12px 0 0', text: t(step.body) }),
     el('p', { class: 'cap', style: 'margin:10px 0 0;color:var(--mint-dim)', text: step.note }),
     foot(
       btn(step.primary, 'btn--pri', allow, { lg: true }),
@@ -204,7 +205,7 @@ export function morningScreen(ctx, night) {
     foot(
       btn('Make a card', 'btn--pri', () => { seen(); ctx.go('card', s); }, { lg: true }),
       navPair([
-        ['See the night', () => { seen(); ctx.go('detail', s); }],
+        [t('See the {n}'), () => { seen(); ctx.go('detail', s); }],
         ['Not now', () => { seen(); ctx.go('start'); }],
       ]),
     ),
@@ -253,11 +254,11 @@ export function liveScreen(ctx) {
   const behind = every > 0 && since >= every && !ctx.nudgeDismissed;
 
   const gpsNote = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported'
-    ? 'Location is off, so there’s no map tonight. Drinks, water and time are all still being tracked.'
+    ? t('Location is off, so there’s no map for this {n}.') + ' Drinks, water and time are all still being tracked.'
     : null;
 
   return [
-    head({ eyebrow: 'On the night' }),
+    head({ eyebrow: t('On the {n}') }),
     el('div', { class: 'live-top' },
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
       av.canvas),
@@ -306,7 +307,7 @@ export function liveScreen(ctx) {
         btn('Map', 'btn--sec', () => ctx.go('map')),
         // End gets its own half rather than sitting in a three-up row: it is
         // the one irreversible action here and gets tapped at 2am.
-        btn('End night', 'btn--sec', () => confirmEnd(ctx)),
+        btn(t('End {n}'), 'btn--sec', () => confirmEnd(ctx)),
       ),
     ),
   ];
@@ -352,7 +353,7 @@ function hydrationSheet(ctx) {
       );
       note.textContent = p.hydrationEvery
         ? `You’ll get a nudge once you’re ${p.hydrationEvery} drinks past your last water.`
-        : 'No water reminders tonight. Everything else is tracked the same.';
+        : t('No water reminders this {n}.') + ' Everything else is tracked the same.';
     };
     paint();
     return [
@@ -394,11 +395,11 @@ export function confirmEnd(ctx) {
   const s = ctx.state.active;
   if (!s) return;
   sheet((close) => [
-    el('h2', { class: 'title', text: 'Call it a night?' }),
+    el('h2', { class: 'title', text: phrase('endTitle') }),
     el('p', { class: 'body', style: 'margin:0' },
       `You’ve been out ${longDuration(S.elapsedMs(s))}. This stops tracking and builds your recap. You can’t reopen a session once it’s closed.`),
     foot(
-      btn('End night', 'btn--pri', () => { close(); ctx.endNight(); }),
+      btn(t('End {n}'), 'btn--pri', () => { close(); ctx.endNight(); }),
       btn('Keep tracking', 'btn--sec', close),
     ),
   ]);
@@ -432,8 +433,8 @@ export function recapScreen(ctx, session) {
   queueMicrotask(() => av.start());
 
   return [
-    el('div', { class: 'eb', text: 'Last night' }),
-    el('h1', { class: 'display', style: 'margin-top:7px', text: 'That was a night.' }),
+    el('div', { class: 'eb', text: t('Last {n}') }),
+    el('h1', { class: 'display', style: 'margin-top:7px', text: phrase('recapTitle') }),
 
     el('div', { class: 'live-top' },
       el('div', { style: 'display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap' },

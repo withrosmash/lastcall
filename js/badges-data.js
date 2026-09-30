@@ -30,7 +30,7 @@ export const BADGES = [
   {
     "slug": "cartographer",
     "name": "Cartographer",
-    "criteria": "A night with a route and zero tracking gaps",
+    "criteria": "{A} with a route and zero tracking gaps",
     "accent": "forest",
     "cat": "Firsts",
     "hidden": false
@@ -38,7 +38,7 @@ export const BADGES = [
   {
     "slug": "french-exit",
     "name": "French Exit",
-    "criteria": "Night under 90 minutes with 3+ drinks",
+    "criteria": "{A} under 90 minutes with 3+ drinks",
     "accent": "pink",
     "cat": "Funny",
     "hidden": false
@@ -54,7 +54,7 @@ export const BADGES = [
   {
     "slug": "one-and-done",
     "name": "One and Done",
-    "criteria": "Exactly one drink, whole night",
+    "criteria": "Exactly one drink, whole {n}",
     "accent": "mint",
     "cat": "Funny",
     "hidden": false
@@ -62,7 +62,7 @@ export const BADGES = [
   {
     "slug": "mixologist",
     "name": "Mixologist",
-    "criteria": "5+ different drink kinds in one night",
+    "criteria": "5+ different drink kinds in one {n}",
     "accent": "pink",
     "cat": "Funny",
     "hidden": false
@@ -78,7 +78,7 @@ export const BADGES = [
   {
     "slug": "pin-cushion",
     "name": "Pin Cushion",
-    "criteria": "5+ stops in one night",
+    "criteria": "5+ stops in one {n}",
     "accent": "pink",
     "cat": "Funny",
     "hidden": false
@@ -94,7 +94,7 @@ export const BADGES = [
   {
     "slug": "scenic-route",
     "name": "Scenic Route",
-    "criteria": "Over 10 km on foot in one night",
+    "criteria": "Over 10 km on foot in one {n}",
     "accent": "forest",
     "cat": "Funny",
     "hidden": false
@@ -118,7 +118,7 @@ export const BADGES = [
   {
     "slug": "ghost",
     "name": "Ghost",
-    "criteria": "A tracked night with zero drinks and zero waters logged",
+    "criteria": "A tracked {n} with zero drinks and zero waters logged",
     "accent": "mint",
     "cat": "Funny",
     "hidden": true
@@ -150,7 +150,7 @@ export const BADGES = [
   {
     "slug": "two-step",
     "name": "Two-Step",
-    "criteria": "5,000+ steps in a night",
+    "criteria": "5,000+ steps in {a}",
     "accent": "forest",
     "cat": "Health",
     "hidden": false
@@ -158,7 +158,7 @@ export const BADGES = [
   {
     "slug": "ten-k",
     "name": "10K",
-    "criteria": "10,000+ steps in a night",
+    "criteria": "10,000+ steps in {a}",
     "accent": "forest",
     "cat": "Health",
     "hidden": false
@@ -166,7 +166,7 @@ export const BADGES = [
   {
     "slug": "dry-run",
     "name": "Dry Run",
-    "criteria": "A tracked night of waters only (3+)",
+    "criteria": "A tracked {n} of waters only (3+)",
     "accent": "mint",
     "cat": "Health",
     "hidden": false
@@ -174,7 +174,7 @@ export const BADGES = [
   {
     "slug": "good-habits",
     "name": "Good Habits",
-    "criteria": "Nudge never fired, 3 nights running",
+    "criteria": "Nudge never fired, 3 {ns} running",
     "accent": "mint",
     "cat": "Streaks",
     "hidden": false
@@ -182,7 +182,7 @@ export const BADGES = [
   {
     "slug": "regular",
     "name": "Regular",
-    "criteria": "Same named stop pinned on 3 different nights",
+    "criteria": "Same named stop pinned on 3 different {ns}",
     "accent": "pink",
     "cat": "Streaks",
     "hidden": false
@@ -190,7 +190,7 @@ export const BADGES = [
   {
     "slug": "month-in-books",
     "name": "Month in the Books",
-    "criteria": "4 nights tracked in one calendar month",
+    "criteria": "4 {ns} tracked in one calendar month",
     "accent": "amber",
     "cat": "Streaks",
     "hidden": false
@@ -206,7 +206,7 @@ export const BADGES = [
   {
     "slug": "century-club",
     "name": "Century Club",
-    "criteria": "100 km walked across all nights",
+    "criteria": "100 km walked across all {ns}",
     "accent": "forest",
     "cat": "Aspirational",
     "hidden": false
@@ -214,7 +214,7 @@ export const BADGES = [
   {
     "slug": "archivist",
     "name": "The Archivist",
-    "criteria": "25 nights tracked all-time",
+    "criteria": "25 {ns} tracked all-time",
     "accent": "amber",
     "cat": "Aspirational",
     "hidden": false
@@ -230,7 +230,7 @@ export const BADGES = [
   {
     "slug": "game-on",
     "name": "Game On",
-    "criteria": "Three challenges in one night",
+    "criteria": "Three challenges in one {n}",
     "accent": "pink",
     "cat": "Funny",
     "hidden": false
@@ -238,7 +238,7 @@ export const BADGES = [
   {
     "slug": "no-notes",
     "name": "No Notes",
-    "criteria": "Five challenges in one night",
+    "criteria": "Five challenges in one {n}",
     "accent": "pink",
     "cat": "Funny",
     "hidden": false
@@ -278,7 +278,7 @@ export const BADGES = [
   {
     "slug": "snack-break",
     "name": "Snack Break",
-    "criteria": "Food three times in one night",
+    "criteria": "Food three times in one {n}",
     "accent": "amber",
     "cat": "Funny",
     "hidden": false
@@ -286,7 +286,7 @@ export const BADGES = [
   {
     "slug": "big-stomp",
     "name": "Big Stomp",
-    "criteria": "20,000+ steps in a night",
+    "criteria": "20,000+ steps in {a}",
     "accent": "forest",
     "cat": "Health",
     "hidden": false
@@ -302,7 +302,7 @@ export const BADGES = [
   {
     "slug": "anniversary",
     "name": "Anniversary",
-    "criteria": "One year since your first night",
+    "criteria": "One year since your first {n}",
     "accent": "mint",
     "cat": "Streaks",
     "hidden": false

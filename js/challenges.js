@@ -5,6 +5,7 @@
 // They're social, harmless, and doable sitting at a table.
 
 import { el, btn, sheet, toast } from './ui.js';
+import { t } from './words.js';
 
 export const CHALLENGES = [
   // From the testers
@@ -24,13 +25,13 @@ export const CHALLENGES = [
   { id: 'sincere-toast', text: 'Make a toast to something completely mundane, and mean every word of it.' },
   { id: 'swap-orders', text: 'Order for someone else in your group and let them order for you.' },
   { id: 'two-truths', text: 'Tell the group two true things and one lie about your week. See who guesses first.' },
-  { id: 'best-photo', text: 'Take the best photo of the night in the next sixty seconds. No retakes.' },
+  { id: 'best-photo', text: 'Take the best photo of the {n} in the next sixty seconds. No retakes.' },
   { id: 'expert', text: 'Become the group expert on something you know nothing about, for one full conversation.' },
   { id: 'handshake', text: 'Invent a group handshake and get everyone to do it correctly before you leave.' },
   { id: 'no-questions', text: 'Get through your next conversation without asking a single question.' },
   { id: 'menu-critic', text: 'Review something you are eating or drinking out loud, as a food critic would.' },
-  { id: 'compliment-staff', text: 'Genuinely thank whoever is working tonight and mean it.' },
-  { id: 'group-title', text: 'Give tonight an official title, and get everyone to use it for the rest of the night.' },
+  { id: 'compliment-staff', text: 'Genuinely thank whoever is working here and mean it.' },
+  { id: 'group-title', text: 'Give this {n} an official title, and get everyone to use it from now on.' },
   { id: 'photograph-stranger', text: 'Ask another group to swap taking photos of each other.' },
   { id: 'sixty-seconds', text: 'Talk for sixty seconds about the last thing you looked up on your phone.' },
   { id: 'plan-heist', text: 'Get the group to plan a completely impractical heist of this venue.' },
@@ -47,8 +48,11 @@ export function pick(session, exclude = []) {
   return from[Math.floor(Math.random() * from.length)];
 }
 
+// Filled before it's shown, so the text saved with the challenge reads right.
+const worded = (c) => ({ ...c, text: t(c.text) });
+
 export function openChallenge(ctx, session) {
-  let current = pick(session);
+  let current = worded(pick(session));
   const skipped = [];
 
   sheet((close) => {
@@ -57,12 +61,12 @@ export function openChallenge(ctx, session) {
 
     const next = () => {
       skipped.push(current.id);
-      current = pick(session, skipped);
+      current = worded(pick(session, skipped));
       body.textContent = current.text;
     };
 
     return [
-      el('div', { class: 'eb eb--mint', text: count ? `Challenge · ${count} done tonight` : 'Challenge' }),
+      el('div', { class: 'eb eb--mint', text: count ? `Challenge · ${count} done so far` : 'Challenge' }),
       body,
       el('div', { class: 'foot' },
         btn('Done', 'btn--pri', () => { close(); ctx.logChallenge(current); }),

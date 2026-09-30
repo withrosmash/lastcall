@@ -3,6 +3,7 @@
 // is easier to follow than a diffing layer.
 
 import { icon } from './icons.js';
+import { t } from './words.js';
 
 export function el(tag, props = {}, ...kids) {
   const node = document.createElement(tag);
@@ -100,7 +101,7 @@ export function mount(nodes, { flush = false, bloom = 'hero', chrome = null } = 
 export const serviceNotice = () =>
   el('div', { class: 'service' },
     icon('circle-dot', { size: 13, color: 'var(--mint)' }),
-    el('span', { text: 'Leit is tracking your night.' }));
+    el('span', { text: t('Leit is tracking your {n}.') }));
 
 /* ---------- bottom sheet ---------- */
 

@@ -2,6 +2,7 @@ import { el, btn, spacer, foot, head, sheet, toast, hms, km, currentTheme } from
 import * as S from './state.js';
 import * as geo from './geo.js';
 import { drawMini } from './avatar.js';
+import { t } from './words.js';
 
 // Dark basemap: the standard OSM raster is light, which fights a true-black
 // night app and leaves the stats strip unreadable. CARTO's dark_all used to be
@@ -39,7 +40,7 @@ export function mapScreen(ctx) {
   const s = ctx.state.active;
   if (!s) { ctx.go('start'); return []; }
 
-  const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Your route tonight' });
+  const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Your route' });
   const denied = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported';
   const waiting = !denied && !s.trail.length;
 
@@ -52,12 +53,12 @@ export function mapScreen(ctx) {
       el('div', { class: `tile__v${tone ? ' tile__v--' + tone : ''}`, text: v }));
 
   return [
-    head({ title: 'Tonight', back: () => ctx.back() }),
+    head({ title: 'Your route', back: () => ctx.back() }),
 
     denied
       ? el('div', { class: 'glass', style: 'flex:1;display:flex;align-items:center' },
           el('p', { class: 'body', style: 'margin:0',
-            text: 'Location is off, so there’s no map tonight. Drinks, water and time are all still being tracked.' }))
+            text: t('Location is off, so there’s no map for this {n}.') + ' Drinks, water and time are all still being tracked.' }))
       : el('div', { class: 'map-wrap' },
           host,
           // Chrome over the map sits on a protection gradient, not a capsule.
@@ -277,7 +278,7 @@ export function atlasScreen(ctx) {
       host,
       el('div', { class: 'map-foot' },
         el('div', {},
-          el('div', { class: 'tile__k', text: 'Nights' }),
+          el('div', { class: 'tile__k', text: t('{Ns}') }),
           el('div', { class: 'tile__v', text: String(done.length) })),
         el('div', {},
           el('div', { class: 'tile__k', text: 'Distance' }),

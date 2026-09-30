@@ -7,6 +7,7 @@
 import { el, btn, sheet, words } from './ui.js';
 import { BADGES } from './badges-data.js';
 import { ITEMS, SUNGLASSES_BADGE, normaliseLook, createAvatar } from './avatar.js';
+import { t } from './words.js';
 
 export const avatarLook = (ctx) => normaliseLook(ctx.state.prefs.avatar);
 
@@ -17,20 +18,20 @@ export function saveLook(ctx, look) {
 
 // In the design's words. The crown's badge is hidden, so its line says so.
 const REQ = {
-  'early-doors': 'Start a night before 5pm.',
-  'game-on': 'Three challenges in one night.',
-  'no-notes': 'Five challenges in one night.',
+  'early-doors': 'Start {a} before 5pm.',
+  'game-on': 'Three challenges in one {n}.',
+  'no-notes': 'Five challenges in one {n}.',
   'ringleader': '25 challenges, all time.',
   'long-haul': 'Walk 50 km, all time.',
   'chaos-agent': 'Comes with a badge that stays hidden until you earn it.',
-  'snack-break': 'Log food three times in one night.',
-  'big-stomp': '20,000 steps in one night.',
+  'snack-break': 'Log food three times in one {n}.',
+  'big-stomp': '20,000 steps in one {n}.',
   'just-add-water': '50 waters, all time.',
-  'pin-cushion': 'Five stops in one night.',
-  'hydro-homie': 'Log more waters than drinks in a night.',
+  'pin-cushion': 'Five stops in one {n}.',
+  'hydro-homie': 'Log more waters than drinks in {a}.',
   'late-bite': 'Log food after midnight.',
-  'anniversary': 'One year since your first night out.',
-  'ten-k': '10,000 steps in one night.',
+  'anniversary': 'One year since your first {n}.',
+  'ten-k': '10,000 steps in one {n}.',
   'first-dare': 'Complete your first challenge.',
 };
 const PHRASE = {
@@ -39,7 +40,7 @@ const PHRASE = {
   bottle: 'water bottle', pizza: 'pizza slice', balloon: 'balloon', trainers: 'trainers', sun: 'sunglasses',
 };
 
-export const requirement = (slug) => REQ[slug] || '';
+export const requirement = (slug) => t(REQ[slug] || '');
 export const badgeName = (slug) => {
   const b = BADGES.find((x) => x.slug === slug);
   return b?.hidden ? 'Hidden badge' : (b?.name || slug);
@@ -65,7 +66,7 @@ export function progress(ctx, slug) {
   const done = ctx.state.sessions.filter((s) => s.endedAt);
   const best = (f) => done.reduce((m, s) => Math.max(m, f(s)), 0);
   const total = (f) => done.reduce((n, s) => n + f(s), 0);
-  const nightBest = (n) => (n ? `Your best night so far is ${lower(n)}.` : 'Not yet.');
+  const nightBest = (n) => (n ? `Your best so far is ${lower(n)}.` : 'Not yet.');
   switch (slug) {
     case 'game-on': case 'no-notes': return nightBest(best((s) => (s.challenges || []).length));
     case 'ringleader': return `${total((s) => (s.challenges || []).length)} so far.`;

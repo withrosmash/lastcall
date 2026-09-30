@@ -6,6 +6,7 @@
 // config exercise rather than a rewrite.
 
 import { registerPlugin, Capacitor } from '../vendor/capacitor-core.js';
+import { t } from './words.js';
 
 // registerPlugin only builds a bridge proxy; the implementation is the native
 // code compiled into the APK. No bundler involved.
@@ -43,7 +44,7 @@ export async function start({ onFix, onStatus }) {
           // Shown in the permanent Android notification. Not optional: the OS
           // only grants background location to a foreground service.
           backgroundTitle: 'Leit',
-          backgroundMessage: 'Leit is tracking your night.',
+          backgroundMessage: t('Leit is tracking your {n}.'),
           requestPermissions: true,
           stale: false,
           distanceFilter: 25,

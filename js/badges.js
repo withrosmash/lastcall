@@ -4,6 +4,7 @@
 import { BADGES } from './badges-data.js';
 import { el, btn, spacer, foot, head, currentTheme } from './ui.js';
 import * as S from './state.js';
+import { t } from './words.js';
 
 const H = 60 * 60 * 1000;
 
@@ -181,7 +182,7 @@ export function badgesScreen(ctx) {
           return el('div', { class: 'center', style: 'display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 2px' },
             badgeChip(b.slug, { size: 64, earned: got }),
             el('div', { style: `font-size:12px;font-weight:700;letter-spacing:-.01em;color:${got ? 'var(--text)' : 'var(--muted)'}`, text: secret ? '???' : b.name }),
-            el('div', { class: 'cap', style: 'font-size:10px;line-height:1.35', text: secret ? 'Keep going.' : b.criteria }),
+            el('div', { class: 'cap', style: 'font-size:10px;line-height:1.35', text: secret ? 'Keep going.' : t(b.criteria) }),
           );
         })),
     ]),

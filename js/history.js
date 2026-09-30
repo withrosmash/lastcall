@@ -7,6 +7,7 @@ import { nightMap } from './map.js';
 import { avatarLook } from './wardrobe.js';
 import { saveTextFile } from './keepalive.js';
 import { BADGES } from './badges-data.js';
+import { t } from './words.js';
 
 /* ---------- 11 history ---------- */
 
@@ -18,7 +19,7 @@ export function historyScreen(ctx) {
     return [
       head({ eyebrow: 'History', title: 'Eight weeks', back }),
       spacer(),
-      el('p', { class: 'body center', text: 'No nights yet. Your first one shows up here.' }),
+      el('p', { class: 'body center', text: t('No {ns} yet. Your first one shows up here.') }),
       spacer(),
       foot(btn('Import history', 'btn--sec', () => importData(ctx))),
     ];
@@ -42,7 +43,7 @@ export function historyScreen(ctx) {
       }, r.label))),
 
     tiles(
-      tile('Nights out', shown.length),
+      tile(t('{Ns}'), shown.length),
       tile('Drinks', totalDrinks, { tone: 'drinks' }),
     ),
 
@@ -66,7 +67,7 @@ export function historyScreen(ctx) {
         )
       : null,
 
-    el('div', { class: 'eb', text: 'Nights' }),
+    el('div', { class: 'eb', text: t('{Ns}') }),
     el('div', { class: 'stack', style: 'gap:6px' },
       shown.slice(0, 40).map((s) => {
         const sum = S.summarise(s);
@@ -99,7 +100,7 @@ const PERMISSIONS = [
   { key: 'backgroundLocation', name: 'Location all the time', why: 'Lets the route keep drawing with the phone in your pocket.' },
   { key: 'activity', name: 'Physical activity', why: 'The step count comes from the phone’s own step sensor.' },
   { key: 'notifications', name: 'Notifications', why: 'Carries the tracking notice, quick log and water nudge.' },
-  { key: 'battery', name: 'Unrestricted battery', why: 'Stops Android putting the app to sleep mid-night.' },
+  { key: 'battery', name: 'Unrestricted battery', why: 'Stops Android putting the app to sleep while you’re out.' },
 ];
 
 export function permissionRows(ctx) {
@@ -112,7 +113,7 @@ export function permissionRows(ctx) {
     el('p', { class: 'cap cap--up', style: 'margin:0',
       text: missing.length
         ? `${missing.length} of ${PERMISSIONS.length} still needed. Tracking works best with all of them.`
-        : 'All set. Nothing will stop a night recording.' }),
+        : t('All set. Nothing will stop {a} recording.') }),
     ...PERMISSIONS.map((p) => {
       const ok = status[p.key];
       return el('div', { class: 'tile', style: 'display:flex;gap:10px;align-items:flex-start' },
@@ -246,7 +247,7 @@ export function detailScreen(ctx, session) {
     foot(
       btn('Make a card', 'btn--pri', () => ctx.go('card', s), { lg: true }),
       s.trail.length > 1 ? btn('Export route (GPX)', 'btn--sec', () => exportGpx(s)) : null,
-      btn('Delete night', 'btn--sec', () => confirmDelete(ctx, s)),
+      btn(t('Delete {n}'), 'btn--sec', () => confirmDelete(ctx, s)),
     ),
   ];
 }
@@ -262,7 +263,7 @@ function rewind(ctx, s) {
   const span = Math.max(1, end - start);
   const hasRoute = s.trail.length > 1;
 
-  const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Your route that night' });
+  const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Your route' });
   const ctl = hasRoute ? nightMap(host, s, avatarLook(ctx)) : { setTime: () => {}, stand: () => {} };
 
   const clock = el('div', { class: 'num', style: 'font:var(--type-stat);letter-spacing:var(--tr-stat)' });
@@ -279,7 +280,7 @@ function rewind(ctx, s) {
 
   const slider = el('input', {
     type: 'range', min: '0', max: '1000', value: '1000', step: '1',
-    class: 'rewind', 'aria-label': 'Time through the night',
+    class: 'rewind', 'aria-label': t('Time through the {n}'),
     oninput: (e) => {
       e.target.style.setProperty('--fill', `${Number(e.target.value) / 10}%`);
       show(start + (span * Number(e.target.value)) / 1000, true);
@@ -296,7 +297,7 @@ function rewind(ctx, s) {
     hasRoute
       ? el('div', { class: 'map-wrap', style: 'flex:0 0 240px;min-height:240px' }, host)
       : el('div', { class: 'glass', style: 'text-align:center' },
-          el('p', { class: 'cap cap--up', style: 'margin:0', text: 'No route was recorded this night.' })),
+          el('p', { class: 'cap cap--up', style: 'margin:0', text: t('No route was recorded on this {n}.') })),
     el('div', { class: 'stack', style: 'gap:4px' },
       el('div', { class: 'row', style: 'align-items:baseline' }, clock, where),
       el('div', { class: 'rewind__wrap' }, slider, ...ticks),
@@ -338,7 +339,7 @@ function confirmDelete(ctx, s) {
   // Reuses the end-night sheet shape: flat statement, then the smallest reason.
   import('./ui.js').then(({ sheet }) => {
     sheet((close) => [
-      el('h2', { class: 'title', text: 'Delete this night?' }),
+      el('h2', { class: 'title', text: t('Delete this {n}?') }),
       el('p', { class: 'body', style: 'margin:0', text: 'It goes for good. Export first if you want to keep it.' }),
       foot(
         btn('Delete', 'btn--pri', () => {
@@ -347,7 +348,7 @@ function confirmDelete(ctx, s) {
           store.flush();
           close();
           ctx.go('history');
-          toast('Night deleted.');
+          toast(t('{N} deleted.'));
         }),
         btn('Keep it', 'btn--sec', close),
       ),
