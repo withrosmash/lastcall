@@ -5,7 +5,7 @@ import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScre
 import { createAvatar } from './avatar.js';
 import { avatarLook } from './wardrobe.js';
 import { avatarScreen } from './avatarscreen.js';
-import { remember } from './drinks.js';
+import { recentFor, rememberFor } from './modes.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen, appearanceScreen } from './history.js';
@@ -238,7 +238,7 @@ async function drainQuickLogs({ silent = false } = {}) {
   for (const e of events) {
     const t = Number(e.t) || Date.now();
     if (e.type === 'water') S.addWater(s, t);
-    else S.addDrink(s, ctx.state.prefs.recentDrinks[0] || 'Drink', t);
+    else S.addDrink(s, recentFor(ctx.state.prefs, S.partAt(s, t).mode)[0] || 'Drink', t);
   }
   // Shade taps carry their own timestamps and may interleave with in-app logs.
   s.drinks.sort((a, b) => a.t - b.t);
@@ -251,11 +251,17 @@ async function drainQuickLogs({ silent = false } = {}) {
   }
 }
 
+// The shade's drink button logs the latest drink for the mode you're in.
+function quickLogLabel() {
+  const s = ctx.state.active;
+  return (s && recentFor(ctx.state.prefs, S.currentPart(s).mode)[0]) || 'Drink';
+}
+
 function logDrink(kind) {
   const s = ctx.state.active;
   if (!s) return;
   S.addDrink(s, kind);
-  ctx.state.prefs.recentDrinks = remember(ctx.state.prefs.recentDrinks, kind);
+  rememberFor(ctx.state.prefs, S.currentPart(s).mode, kind);
   ctx.nudgeDismissed = false;
   save();
   render();
@@ -360,7 +366,7 @@ async function startTracking() {
   });
   startSteps();
   notify.init();
-  keepalive.showQuickLog(ctx.state.prefs.recentDrinks[0] || 'Drink');
+  keepalive.showQuickLog(quickLogLabel());
   keepalive.onQuickLog(() => drainQuickLogs());
   drainQuickLogs();
   requestWakeLock();

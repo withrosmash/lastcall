@@ -82,3 +82,12 @@ test('every mode is fully described', () => {
   assert.deepEqual(MODES.day.drinks, ['Coffee', 'Tea', 'Soft drink', 'Juice', 'Pint', 'Wine', 'Low/no']);
   assert.deepEqual(COMPANY, { group: 'With friends', solo: 'On my own' });
 });
+
+test('the drink picker splits recents from the rest of the mode list', async () => {
+  const { recentAndRest } = await import('../js/modes.js');
+  const { top, rest } = recentAndRest(['Pint'], MODES.day.drinks);
+  assert.deepEqual(top, ['Pint']);
+  assert.ok(!rest.includes('Pint'));
+  assert.ok(rest.includes('Coffee'));
+  assert.deepEqual(recentAndRest(['Pint', 'Pint', 'Tea', 'Juice', 'Wine'], MODES.day.drinks).top, ['Pint', 'Tea', 'Juice']);
+});

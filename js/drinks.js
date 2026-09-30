@@ -1,25 +1,12 @@
 import { el, btn, sheet, foot } from './ui.js';
+import { MODES, recentFor, recentAndRest } from './modes.js';
 
-export const PRESETS = ['Pint', 'Wine', 'Spirit + mixer', 'Shot', 'Cider', 'Cocktail', 'Low/no'];
-const MAX_RECENT = 3;
-
-export function recentAndRest(recent = []) {
-  const top = [];
-  const seen = new Set();
-  for (const r of recent) {
-    if (top.length >= MAX_RECENT || seen.has(r)) continue;
-    seen.add(r); top.push(r);
-  }
-  return { top, rest: PRESETS.filter((p) => !seen.has(p)) };
-}
-
-export function remember(recent, kind) {
-  return [kind, ...recent.filter((r) => r !== kind)].slice(0, MAX_RECENT);
-}
+export { recentAndRest };
 
 /* ---------- 03 pick your poison ---------- */
 
-export function pickDrink(prefs, onPick) {
+export function pickDrink(prefs, mode, onPick) {
+  const m = MODES[mode] || MODES.night;
   let selected = null;
   let custom = '';
 
@@ -49,10 +36,10 @@ export function pickDrink(prefs, onPick) {
       return node;
     };
 
-    const { top, rest } = recentAndRest(prefs.recentDrinks);
+    const { top, rest } = recentAndRest(recentFor(prefs, mode), m.drinks);
 
     const input = el('input', {
-      type: 'text', placeholder: 'Negroni', 'aria-label': 'Something else',
+      type: 'text', placeholder: m.drinkHint, 'aria-label': 'Something else',
       autocapitalize: 'words', enterkeyhint: 'done',
       // Typing a custom value overrides any chip selection.
       oninput: (e) => { custom = e.target.value; sync(); },

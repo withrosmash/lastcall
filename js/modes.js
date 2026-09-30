@@ -3,14 +3,13 @@
 // later steps (docs/superpowers/specs/2026-09-30-m2-modes-design.md).
 // No imports, so node can test it.
 
-// Night out's list is drinks.js PRESETS; copied rather than imported because
-// drinks.js pulls in the DOM.
+// Night out's list is the one the app has always had.
 const NIGHT_DRINKS = ['Pint', 'Wine', 'Spirit + mixer', 'Shot', 'Cider', 'Cocktail', 'Low/no'];
 const BUTTONS = ['drink', 'water', 'food', 'checkin', 'challenge', 'map'];
 
 export const MODES = {
-  night: { label: 'Night out', icon: 'moon', buttons: BUTTONS, drinks: NIGHT_DRINKS, morning: true },
-  day: { label: 'Day out', icon: 'sun', buttons: BUTTONS, drinks: ['Coffee', 'Tea', 'Soft drink', 'Juice', 'Pint', 'Wine', 'Low/no'], morning: false },
+  night: { label: 'Night out', icon: 'moon', buttons: BUTTONS, drinks: NIGHT_DRINKS, drinkHint: 'Negroni', morning: true },
+  day: { label: 'Day out', icon: 'sun', buttons: BUTTONS, drinks: ['Coffee', 'Tea', 'Soft drink', 'Juice', 'Pint', 'Wine', 'Low/no'], drinkHint: 'Flat white', morning: false },
 };
 
 export const MODE_KEYS = Object.keys(MODES);
@@ -29,4 +28,15 @@ export function rememberFor(prefs, mode, kind) {
   const next = [kind, ...recentFor(prefs, mode).filter((r) => r !== kind)].slice(0, MAX_RECENT);
   if (mode === 'night') prefs.recentDrinks = next;
   else prefs.recentByMode = { ...(prefs.recentByMode || {}), [mode]: next };
+}
+
+/** The picker's two rows: up to three recent drinks, then the rest of the list. */
+export function recentAndRest(recent = [], presets = []) {
+  const top = [];
+  const seen = new Set();
+  for (const r of recent) {
+    if (top.length >= MAX_RECENT || seen.has(r)) continue;
+    seen.add(r); top.push(r);
+  }
+  return { top, rest: presets.filter((p) => !seen.has(p)) };
 }

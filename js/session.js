@@ -1,7 +1,8 @@
 import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast, icon,
          hms, hm, longDuration, clockTime, shortDate, upperDate, km, words } from './ui.js';
 import * as S from './state.js';
-import { pickDrink, remember } from './drinks.js';
+import { pickDrink } from './drinks.js';
+import { recentFor } from './modes.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
 import * as geo from './geo.js';
@@ -366,17 +367,19 @@ function hydrationSheet(ctx) {
   }, { onClose: () => ctx.render() });
 }
 
+const liveMode = (ctx) => (ctx.state.active ? S.currentPart(ctx.state.active).mode : 'night');
+
 // Tap opens the picker; holding for half a second logs your last drink
 // straight away — round-buying mode, one thumb, no sheet.
 function addDrinkButton(ctx) {
   const node = btn('Add drink', 'btn--pri', () => {
     if (node.dataset.held) { delete node.dataset.held; return; }
-    pickDrink(ctx.state.prefs, (kind) => ctx.logDrink(kind));
+    pickDrink(ctx.state.prefs, liveMode(ctx), (kind) => ctx.logDrink(kind));
   }, { iconName: 'plus', lg: true });
 
   let timer = null;
   node.addEventListener('pointerdown', () => {
-    const last = ctx.state.prefs.recentDrinks[0];
+    const last = recentFor(ctx.state.prefs, liveMode(ctx))[0];
     if (!last) return;
     timer = setTimeout(() => {
       node.dataset.held = '1';
@@ -557,4 +560,4 @@ export function fitPoints(pts, w, h, pad = 8) {
   }));
 }
 
-export { remember, hm, upperDate };
+export { hm, upperDate };
