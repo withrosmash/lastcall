@@ -631,7 +631,8 @@ const mutedInk = () => (overImage() ? theme().muted : C.muted);
 // Date only. The place was the first stop's name, which on most nights is
 // either "Unnamed stop" or a venue that says nothing about the night.
 function placeLine(s) {
-  return new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
+  const date = new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
+  return `${date} · ${S.modeLine(s)}`;
 }
 
 /* ---------- draw ----------

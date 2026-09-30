@@ -72,7 +72,7 @@ export function historyScreen(ctx) {
       shown.slice(0, 40).map((s) => {
         const sum = S.summarise(s);
         return el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', s) },
-          el('span', { class: 'listrow__d', text: shortDate(s.startedAt) }),
+          el('span', { class: 'listrow__d', text: `${shortDate(s.startedAt)} · ${S.modeLine(s)}` }),
           el('span', { class: 'listrow__m' },
             el('b', { text: `${sum.drinks} drink${sum.drinks === 1 ? '' : 's'}` }),
             el('span', { text: hm(sum.ms) }),
@@ -216,7 +216,7 @@ export function detailScreen(ctx, session) {
   const sum = S.summarise(s);
 
   return [
-    head({ eyebrow: shortDate(s.startedAt), title: `${hm(sum.ms)} out`, back: () => ctx.back() }),
+    head({ eyebrow: `${shortDate(s.startedAt)} · ${S.modeLine(s)}`, title: `${hm(sum.ms)} out`, back: () => ctx.back() }),
 
     ...rewind(ctx, s),
 

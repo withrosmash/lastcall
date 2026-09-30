@@ -169,7 +169,7 @@ export function onboardingScreen(ctx) {
 export function morningNight(state, now = Date.now()) {
   if (state.active) return null;
   const last = state.sessions.find((x) => x.endedAt);
-  if (!last || state.flags?.morningSeen === last.id) return null;
+  if (!last || state.flags?.morningSeen === last.id || !S.hasMorning(last)) return null;
   if (now - last.endedAt > 16 * 3600e3 || new Date(now).getHours() >= 12) return null;
   return last;
 }
@@ -442,7 +442,7 @@ export function recapScreen(ctx, session) {
   queueMicrotask(() => av.start());
 
   return [
-    el('div', { class: 'eb', text: t('Last {n}') }),
+    el('div', { class: 'eb', text: S.modeLine(s) }),
     el('h1', { class: 'display', style: 'margin-top:7px', text: phrase('recapTitle') }),
 
     el('div', { class: 'live-top' },
