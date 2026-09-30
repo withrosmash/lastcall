@@ -405,3 +405,18 @@ canvas.avatar{
 .handoff__disc canvas{margin-bottom:-27px}
 .handoff__mark{position:absolute;bottom:calc(34px + var(--safe-bottom));font:700 15px/1 var(--font-sans);letter-spacing:-.02em;color:var(--mint-dim)}
 @media (prefers-reduced-motion:reduce){.handoff{transition:none}}
+
+/* ---------- mode picker ---------- */
+.mode-pick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-tight)}
+.mode-tile{
+  background:var(--surface);border:1px solid transparent;border-radius:11px;
+  padding:14px 12px 13px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  color:var(--muted);text-align:left;min-height:112px;
+  transition:border-color var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);
+}
+.mode-tile[aria-pressed="true"]{border-color:var(--mint);color:var(--mint)}
+.mode-tile svg{margin-bottom:4px}
+.mode-tile__name{font:600 15px/1.2 var(--font-sans);color:var(--text)}
+.mode-tile[aria-pressed="true"] .mode-tile__name{color:var(--mint)}
+.mode-tile__hint{font-size:12px;line-height:1.35;color:var(--muted)}
+.mode-chip{align-self:flex-start;gap:6px;color:var(--muted)}

@@ -3,6 +3,7 @@ import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast,
 import * as S from './state.js';
 import { pickDrink } from './drinks.js';
 import { recentFor } from './modes.js';
+import { modePicker, modeChip } from './modepick.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
 import * as geo from './geo.js';
@@ -75,7 +76,7 @@ export function startScreen(ctx) {
       ),
     ) : null,
     foot(
-      btn(t('Start {n}'), 'btn--pri', () => ctx.beginNight(), { lg: true }),
+      btn(t('Start {n}'), 'btn--pri', () => modePicker(ctx), { lg: true }),
       btn('History', 'btn--sec', () => ctx.go('history')),
     ),
   ];

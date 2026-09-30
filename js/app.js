@@ -108,7 +108,10 @@ function save() { store.save(ctx.state); }
 // Android makes background location a separate trip to system settings, so the
 // priming screen runs first — otherwise people deny it and the app silently
 // fails at its one job.
-function beginNight() {
+// The picker's choice rides through the location priming screen, which
+// starts the adventure itself once permission is sorted.
+function beginNight(choice = {}) {
+  ctx.pendingStart = choice;
   if (geo.isNative() && !ctx.state.prefs.locationPrimed) go('priming');
   else startNight();
 }
@@ -124,7 +127,12 @@ async function grantThenStart() {
 
 async function startNight({ skipLocation = false } = {}) {
   if (skipLocation) { ctx.state.prefs.locationPrimed = true; save(); }
-  ctx.state.active = S.newSession();
+  const prefs = ctx.state.prefs;
+  const { mode = prefs.lastMode || 'night', company = prefs.lastCompany || 'group' } = ctx.pendingStart || {};
+  ctx.pendingStart = null;
+  prefs.lastMode = mode;
+  prefs.lastCompany = company;
+  ctx.state.active = S.newSession(Date.now(), { mode, company });
   ctx.nudgeDismissed = false;
   save();
   keepalive.setSessionActive(true);
