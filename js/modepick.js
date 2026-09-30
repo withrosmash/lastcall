@@ -61,7 +61,7 @@ export function switchSheet(ctx) {
     const go = btn('Switch', 'btn--pri', () => { close(); ctx.switchMode(pick); }, { lg: true, disabled: true });
     return [
       el('h2', { class: 'title', style: 'margin:0', text: 'Change of plan?' }),
-      el('p', { class: 'body', style: 'margin:0', text: t('It stays one {n}. The buttons and challenges change from now.') }),
+      el('p', { class: 'body', style: 'margin:0', text: t('It stays one {n}. Drinks and challenges change from now.') }),
       ...chooser(pick, (next) => { pick = next; go.disabled = pick.mode === cur.mode && pick.company === cur.company; }),
       el('div', { class: 'foot' }, go, btn('Keep going', 'btn--sec', close)),
     ];
