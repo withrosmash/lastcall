@@ -6,9 +6,9 @@ import { CHALLENGES, poolFor } from '../js/challenges-data.js';
 const ALL = ['night', 'day', 'walk', 'festival'];
 const ids = (list) => list.map((c) => c.id);
 
-test('51 challenges, each tagged', () => {
-  assert.equal(CHALLENGES.length, 51);
-  assert.equal(new Set(ids(CHALLENGES)).size, 51);
+test('50 challenges, each tagged', () => {
+  assert.equal(CHALLENGES.length, 50);
+  assert.equal(new Set(ids(CHALLENGES)).size, 50);
   for (const c of CHALLENGES) {
     assert.ok(c.modes.length && c.modes.every((m) => ALL.includes(m)), c.id);
     assert.equal(typeof c.group, 'boolean', c.id);
@@ -43,7 +43,7 @@ test('once every fitting challenge is done, the pool starts again', () => {
 });
 
 test('a mode with nothing tagged falls back to everything', () => {
-  assert.equal(poolFor(CHALLENGES, { mode: 'moon-base', company: 'group' }, new Set()).length, 51);
+  assert.equal(poolFor(CHALLENGES, { mode: 'moon-base', company: 'group' }, new Set()).length, 50);
 });
 
 test('Another never shows the same challenge twice in a row', async () => {
