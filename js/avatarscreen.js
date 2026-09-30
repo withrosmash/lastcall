@@ -186,11 +186,28 @@ export function avatarScreen(ctx) {
   paintTabs();
   paintPanel();
 
+  // One switch for the small extras each kind of adventure adds.
+  const touches = el('button', {
+    class: 'listrow press', type: 'button', role: 'switch',
+    'aria-checked': ctx.state.prefs.modeTouches === false ? 'false' : 'true',
+    onclick: () => {
+      ctx.state.prefs.modeTouches = ctx.state.prefs.modeTouches === false;
+      ctx.save();
+      touches.setAttribute('aria-checked', ctx.state.prefs.modeTouches ? 'true' : 'false');
+      touches.querySelector('.listrow__m span').textContent = ctx.state.prefs.modeTouches ? 'On' : 'Off';
+    },
+  },
+  el('span', { class: 'stack', style: 'gap:2px' },
+    el('span', { class: 'listrow__d', text: 'Dress for the mode' }),
+    el('span', { class: 'cap', text: 'A camera on a day out, a backpack on a walk, glitter at a festival.' })),
+  el('span', { class: 'listrow__m' }, el('span', { text: ctx.state.prefs.modeTouches === false ? 'Off' : 'On' })));
+
   return [
     el('div', { class: 'eb', text: 'Customise' }),
     el('div', { class: 'wpreview' }, av.canvas, caption),
     tabRow,
     panel,
+    touches,
     el('div', { class: 'foot' },
       btn('Done', 'btn--pri', () => ctx.back(), { lg: true }),
       el('div', { class: 'btn-pair' },

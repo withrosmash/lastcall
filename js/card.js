@@ -5,7 +5,7 @@ import { saveImage } from './keepalive.js';
 import { badgeSrc, BADGES } from './badges.js';
 import * as SM from './staticmap.js';
 import { paintAvatar } from './avatar.js';
-import { avatarLook } from './wardrobe.js';
+import { avatarLook, dressedFor } from './wardrobe.js';
 import { MODES } from './modes.js';
 import { NIGHT_GLOW, cardBloom, photoBloom } from './glow.js';
 
@@ -74,7 +74,7 @@ export function cardScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
   if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
-  ui.look = avatarLook(ctx);
+  ui.look = dressedFor(ctx, avatarLook(ctx), S.currentPart(ui.session).mode);
 
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);
@@ -157,7 +157,7 @@ export function shareScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
   if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
-  ui.look = avatarLook(ctx);
+  ui.look = dressedFor(ctx, avatarLook(ctx), S.currentPart(ui.session).mode);
 
   const canvas = el('canvas', { id: 'card-canvas' });
   bindCanvas(canvas);

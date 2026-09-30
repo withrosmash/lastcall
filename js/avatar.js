@@ -151,7 +151,7 @@ const BIG_EYES = new Set(['heart', 'star', 'wide', 'puppy']);
 
 /* ================= building a frame ================= */
 
-const Z = { hairBack: 0, shoes: 1, bottoms: 1.1, top: 1.2, arm: 1.3, neck: 1.05, head: 2, face: 3, hair: 4, glasses: 5, hat: 6, held: 7, lift: 4.5 };
+const Z = { hairBack: 0, shoes: 1, bottoms: 1.1, top: 1.2, touch: 1.25, arm: 1.3, neck: 1.05, head: 2, face: 3, hair: 4, glasses: 5, hat: 6, held: 7, lift: 4.5 };
 const LONG_SLEEVES = new Set(['hoodie', 'jacket', 'jumpsuit', 'pyjamas']);
 // Upper arm and forearm angles in degrees for the right arm; the left mirrors.
 const POSE = { down: [80, 95], out: [25, 60], bent: [100, 200], sip: [125, 245], wave: [-15, -80], wave2: [-15, -45] };
@@ -280,6 +280,34 @@ export function build(look0, fr = NEUTRAL, only = null) {
     }
   }
 
+  // Mode touches: one small thing for the kind of adventure, worn over the
+  // look without replacing anything chosen or unlocked. Arms, held items and
+  // props draw after, so they sit in front.
+  const touch = only ? null : look.touch;
+  if (touch === 'day') {
+    // a camera on a neck strap
+    const strap = [44, 44, 50], body = [58, 58, 66], ring = [150, 152, 162], lens = [96, 150, 204];
+    for (let y = 29; y <= 31; y++) { set(13, y, strap, 'touch', false); set(18, y, strap, 'touch', false); }
+    for (let y = 32; y <= 35; y++) for (let x = 12; x <= 19; x++) set(x, y, body, 'touch');
+    [[14, 33], [17, 33], [14, 34], [17, 34], [15, 32], [16, 32], [15, 35], [16, 35]].forEach(([x, y]) => set(x, y, ring, 'touch', false));
+    [[15, 33], [16, 33], [15, 34], [16, 34]].forEach(([x, y]) => set(x, y, lens, 'touch', false));
+    set(15, 33, mix(lens, WHITE, .6), 'touch', false);
+    set(18, 32, [226, 226, 214], 'touch', false);
+  }
+  if (touch === 'walk') {
+    // backpack straps, with a strap across the chest
+    const strap = [206, 112, 48], clip = [236, 232, 220];
+    for (let y = 29; y <= 36; y++) for (const x of [11, 12, 19, 20]) set(x, y, x === 12 || x === 19 ? mul(strap, 1.12) : strap, 'touch');
+    for (let x = 13; x <= 18; x++) set(x, 33, mul(strap, .9), 'touch', false);
+    [[15, 33], [16, 33]].forEach(([x, y]) => set(x, y, clip, 'touch', false));
+  }
+  if (touch === 'festival' && armL === 'down' && !fr.armSwing && top !== 'dress') {
+    // a wristband on the left wrist, while that arm hangs down
+    const y = (longSleeve ? 34 : 32) + 1;
+    set(8, y, [255, 206, 72], 'touch', false);
+    set(9, y, [168, 112, 240], 'touch', false);
+  }
+
   // head
   O = headO;
   for (let y = 5; y <= 29; y++) for (let x = 3; x <= 28; x++) if (ell(x, y, 16, 17.5, 12.5, 11.6)) set(x, y, C.skin, 'head');
@@ -374,6 +402,11 @@ export function build(look0, fr = NEUTRAL, only = null) {
   O = headO;
   const face = fr.face || { eyes: 'open', mouth: 'smile', brows: 'soft' };
   if (!only) drawFace(face, look, C, set);
+  if (touch === 'festival') {
+    // festival glitter under the eyes
+    const gold = [255, 224, 138];
+    [[8, 21, WHITE], [7, 22, gold], [23, 21, WHITE], [24, 22, gold]].forEach(([x, y, c]) => set(x, y, c, 'face', false));
+  }
 
   // glasses
   const gl = look.glasses;

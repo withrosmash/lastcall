@@ -10,7 +10,7 @@ import * as geo from './geo.js';
 import { requestActivityPermission } from './keepalive.js';
 import * as notify from './notify.js';
 import { createAvatar } from './avatar.js';
-import { avatarLook, openUnlocks, itemsForBadges } from './wardrobe.js';
+import { avatarLook, openUnlocks, itemsForBadges, dressedFor } from './wardrobe.js';
 import { t, phrase } from './words.js';
 
 /* ---------- avatar ---------- */
@@ -21,8 +21,9 @@ export { avatarLook };
 // across renders. A fresh one each time would cut every reaction off mid-way.
 let liveAv = null;
 function liveAvatar(ctx) {
-  if (!liveAv) liveAv = createAvatar({ cell: 3, look: avatarLook(ctx) });
-  liveAv.setLook(avatarLook(ctx));
+  const look = ctx.state.active ? dressedFor(ctx, avatarLook(ctx), S.currentPart(ctx.state.active).mode) : avatarLook(ctx);
+  if (!liveAv) liveAv = createAvatar({ cell: 3, look });
+  liveAv.setLook(look);
   // After mount: the loop stops itself while the canvas is off the page.
   queueMicrotask(() => liveAv.start());
   return liveAv;
@@ -488,7 +489,7 @@ export function recapScreen(ctx, session) {
   // Yawns and dozes off. Badges that come with an item open the unlock sheet
   // instead of a celebration here; other new badges still get one. Once per
   // night: the recap re-renders when you come back and shouldn't replay.
-  const av = createAvatar({ cell: 3, look: avatarLook(ctx) });
+  const av = createAvatar({ cell: 3, look: dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode) });
   av.setMood('Sleepy');
   if (ctx.recapPlayed !== s.id) {
     ctx.recapPlayed = s.id;

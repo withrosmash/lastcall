@@ -11,6 +11,12 @@ import { t } from './words.js';
 
 export const avatarLook = (ctx) => normaliseLook(ctx.state.prefs.avatar);
 
+/** The look dressed for a mode: one small touch, unless it's turned off. */
+export function dressedFor(ctx, look, mode) {
+  if (ctx.state.prefs.modeTouches === false || !mode || mode === 'night') return look;
+  return { ...look, touch: mode };
+}
+
 export function saveLook(ctx, look) {
   ctx.state.prefs.avatar = structuredClone(look);
   ctx.save();
