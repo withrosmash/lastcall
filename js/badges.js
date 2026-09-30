@@ -5,6 +5,7 @@ import { BADGES } from './badges-data.js';
 import { el, btn, spacer, foot, head, currentTheme } from './ui.js';
 import * as S from './state.js';
 import { t } from './words.js';
+import { NIGHT_BADGES } from './modes.js';
 
 const H = 60 * 60 * 1000;
 
@@ -118,12 +119,16 @@ export function evaluate({ sessions, prefs, flags = {} }) {
   const done = sessions.filter((s) => s.endedAt).sort((a, b) => a.startedAt - b.startedAt);
   const out = [];
 
+  // Night out badges only see the Night out part of an adventure, so coffees
+  // on a day out never count towards Mixologist.
+  const nightDone = done.filter((s) => S.hasMode(s, 'night')).map((s) => S.sliceTo(s, 'night'));
   for (const [slug, check] of Object.entries(NIGHT_CHECKS)) {
-    const hit = done.find((s) => check(s, prefs));
+    const pool = NIGHT_BADGES.has(slug) ? nightDone : done;
+    const hit = pool.find((s) => check(s, prefs));
     if (hit) out.push({ slug, sessionId: hit.id });
   }
   for (const [slug, check] of Object.entries(AGGREGATE_CHECKS)) {
-    if (check(done, prefs, flags)) out.push({ slug, sessionId: null });
+    if (check(NIGHT_BADGES.has(slug) ? nightDone : done, prefs, flags)) out.push({ slug, sessionId: null });
   }
   return out;
 }

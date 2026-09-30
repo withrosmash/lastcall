@@ -91,3 +91,40 @@ test('the drink picker splits recents from the rest of the mode list', async () 
   assert.ok(rest.includes('Coffee'));
   assert.deepEqual(recentAndRest(['Pint', 'Pint', 'Tea', 'Juice', 'Wine'], MODES.day.drinks).top, ['Pint', 'Tea', 'Juice']);
 });
+
+test('sliceTo keeps only what happened in one mode', async () => {
+  const { sliceTo, hasMode } = await import('../js/state.js');
+  const s = withParts([{ t: 0, mode: 'day', company: 'group' }, { t: 100, mode: 'night', company: 'group' }]);
+  s.endedAt = 300;
+  s.drinks = [{ t: 10, kind: 'Coffee' }, { t: 150, kind: 'Pint' }, { t: 250, kind: 'Pint' }];
+  s.waters = [{ t: 50 }, { t: 200 }];
+  s.meals = [{ t: 20 }];
+  const night = sliceTo(s, 'night');
+  assert.deepEqual(night.drinks.map((d) => d.kind), ['Pint', 'Pint']);
+  assert.equal(night.waters.length, 1);
+  assert.equal(night.meals.length, 0);
+  assert.equal(night.startedAt, 100);
+  assert.equal(night.endedAt, 300);
+  const day = sliceTo(s, 'day');
+  assert.deepEqual(day.drinks.map((d) => d.kind), ['Coffee']);
+  assert.equal(day.startedAt, 0);
+  assert.equal(day.endedAt, 100);
+  assert.equal(hasMode(s, 'night'), true);
+  assert.equal(hasMode(withParts([{ t: 0, mode: 'day', company: 'group' }]), 'night'), false);
+});
+
+test('sliceTo leaves an old session whole', async () => {
+  const { sliceTo, hasMode } = await import('../js/state.js');
+  const old = { startedAt: 5, endedAt: 50, drinks: [{ t: 6, kind: 'Pint' }], waters: [], meals: [], pins: [], challenges: [], trail: [] };
+  assert.equal(hasMode(old, 'night'), true);
+  const n = sliceTo(old, 'night');
+  assert.equal(n.drinks.length, 1);
+  assert.equal(n.startedAt, 5);
+  assert.equal(n.endedAt, 50);
+});
+
+test('the Night out badge set is the agreed thirteen', async () => {
+  const { NIGHT_BADGES } = await import('../js/modes.js');
+  assert.deepEqual([...NIGHT_BADGES].sort(), ['balanced-books', 'brand-loyal', 'dry-run', 'early-doors', 'french-exit', 'ghost',
+    'good-habits', 'hydro-homie', 'late-bite', 'metronome', 'mixologist', 'one-and-done', 'sunrise-service']);
+});

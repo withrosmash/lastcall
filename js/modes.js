@@ -16,6 +16,11 @@ export const MODE_KEYS = Object.keys(MODES);
 
 export const COMPANY = { group: 'With friends', solo: 'On my own' };
 
+// Badges that only count on the Night out part of an adventure (the spec's
+// Night out set). Everything else counts in any mode.
+export const NIGHT_BADGES = new Set(['french-exit', 'one-and-done', 'mixologist', 'brand-loyal', 'hydro-homie', 'balanced-books',
+  'metronome', 'dry-run', 'good-habits', 'early-doors', 'sunrise-service', 'late-bite', 'ghost']);
+
 const MAX_RECENT = 3;
 
 // Night out keeps the original recentDrinks list, so nothing needs migrating.

@@ -59,6 +59,32 @@ export function modeLine(s) {
 
 export const hasMorning = (s) => !!MODES[currentPart(s).mode]?.morning;
 
+export const hasMode = (s, mode) => partsOf(s).some((p) => p.mode === mode);
+
+/** The session as seen from one mode: only what was logged while in it. */
+export function sliceTo(s, mode) {
+  const parts = partsOf(s);
+  const spans = [];
+  parts.forEach((p, i) => {
+    if (p.mode !== mode) return;
+    const end = i + 1 < parts.length ? parts[i + 1].t : Infinity;
+    const last = spans.at(-1);
+    if (last && last[1] === p.t) last[1] = end; // company-only switch
+    else spans.push([p.t, end]);
+  });
+  const inside = (t) => spans.some(([a, b]) => t >= a && t < b);
+  const keep = (list) => (list || []).filter((e) => inside(e.t));
+  if (!spans.length) return { ...s, drinks: [], waters: [], meals: [], challenges: [], pins: [], trail: [] };
+  const lastEnd = spans.at(-1)[1];
+  return {
+    ...s,
+    startedAt: spans[0][0],
+    endedAt: lastEnd === Infinity ? s.endedAt : lastEnd,
+    drinks: keep(s.drinks), waters: keep(s.waters), meals: keep(s.meals),
+    challenges: keep(s.challenges), pins: keep(s.pins), trail: keep(s.trail),
+  };
+}
+
 export function addDrink(s, kind, now = Date.now()) {
   s.drinks.push({ t: now, kind: kind || 'Drink' });
   return s;
