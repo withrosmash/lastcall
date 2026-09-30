@@ -126,6 +126,33 @@ const DAY_CHECKS = {
 // Picked from the list or typed in: anything that's plainly a coffee counts.
 const COFFEE = /coffee|flat white|latte|cappuccino|americano|espresso|macchiato|mocha|cortado|piccolo/i;
 
+// Walk badges see only the walk part; Head Space reads the part's company.
+const WALK_CHECKS = {
+  'early-riser': (w) => { const h = new Date(w.startedAt).getHours(); return h >= 4 && h < 8; },
+  'trailblazer': (w) => S.trailDistance(w.trail) >= 15_000,
+  'tea-break': (w) => w.drinks.some((d) => COFFEE.test(d.kind) || /\btea\b/i.test(d.kind)),
+};
+
+const DAY_MS = 24 * 3600e3;
+// Monday of the week, as local midnight: weeks count by date, not by number,
+// so a run across New Year still counts.
+function weekStart(t) {
+  const d = new Date(t);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getTime();
+}
+
+function weeksRunning(done, n) {
+  const weeks = [...new Set(done.map((s) => weekStart(s.startedAt)))].sort((a, b) => a - b);
+  let run = 1;
+  for (let i = 1; i < weeks.length; i++) {
+    run = Math.round((weeks[i] - weeks[i - 1]) / DAY_MS) === 7 ? run + 1 : 1;
+    if (run >= n) return true;
+  }
+  return n <= 1 && weeks.length > 0;
+}
+
 const placeKey = (p) => (p.name || '').trim().toLowerCase();
 
 // Three stops on a day out whose names were never pinned in any earlier
@@ -167,6 +194,16 @@ export function evaluate({ sessions, prefs, flags = {} }) {
   }
   const found = explorer(done);
   if (found) out.push({ slug: 'explorer', sessionId: found.id });
+
+  const walks = done.filter((s) => S.hasMode(s, 'walk'));
+  for (const [slug, check] of Object.entries(WALK_CHECKS)) {
+    const hit = walks.find((s) => check(S.sliceTo(s, 'walk')));
+    if (hit) out.push({ slug, sessionId: hit.id });
+  }
+  const alone = walks.find((s) => S.partsOf(s).some((p) => p.mode === 'walk' && p.company === 'solo'));
+  if (alone) out.push({ slug: 'head-space', sessionId: alone.id });
+  if (weeksRunning(walks, 4)) out.push({ slug: 'weekly-walker', sessionId: null });
+  if (walks.length >= 10) out.push({ slug: 'out-and-about', sessionId: walks[9].id });
   return out;
 }
 

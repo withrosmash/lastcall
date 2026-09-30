@@ -27,8 +27,6 @@ export const COMPANY = { group: 'With friends', solo: 'On my own' };
 export const NIGHT_BADGES = new Set(['french-exit', 'one-and-done', 'mixologist', 'brand-loyal', 'hydro-homie', 'balanced-books',
   'metronome', 'dry-run', 'good-habits', 'early-doors', 'sunrise-service', 'late-bite', 'ghost']);
 
-// The Day out set: counted on the Day out part only.
-export const DAY_BADGES = new Set(['day-into-night', 'tourist', 'explorer', 'brunch-club', 'caffeine-trail', 'sunday-best']);
 
 const MAX_RECENT = 3;
 

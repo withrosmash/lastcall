@@ -354,5 +354,53 @@ export const BADGES = [
     "accent": "pink",
     "cat": "Day out",
     "hidden": false
+  },
+  {
+    "slug": "early-riser",
+    "name": "Early Riser",
+    "criteria": "Start a walk between 4am and 8am",
+    "accent": "amber",
+    "cat": "Walk",
+    "hidden": false
+  },
+  {
+    "slug": "trailblazer",
+    "name": "Trailblazer",
+    "criteria": "15 km in one walk",
+    "accent": "forest",
+    "cat": "Walk",
+    "hidden": false
+  },
+  {
+    "slug": "tea-break",
+    "name": "Tea Break",
+    "criteria": "Coffee or tea on a walk",
+    "accent": "mint",
+    "cat": "Walk",
+    "hidden": false
+  },
+  {
+    "slug": "head-space",
+    "name": "Head Space",
+    "criteria": "A walk on your own",
+    "accent": "mint",
+    "cat": "Walk",
+    "hidden": false
+  },
+  {
+    "slug": "weekly-walker",
+    "name": "Weekly Walker",
+    "criteria": "A walk in 4 weeks running",
+    "accent": "forest",
+    "cat": "Walk",
+    "hidden": false
+  },
+  {
+    "slug": "out-and-about",
+    "name": "Out and About",
+    "criteria": "10 walks, all time",
+    "accent": "forest",
+    "cat": "Walk",
+    "hidden": false
   }
 ];

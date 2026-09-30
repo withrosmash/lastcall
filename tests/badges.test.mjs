@@ -83,3 +83,58 @@ test('the six Day out badges are in the list, and First Night is First Adventure
   }
   assert.equal(BADGES.find((b) => b.slug === 'first-night').name, 'First Adventure');
 });
+
+const walk = (start, logs = {}, company = 'group') => {
+  const s = adv(start, [['walk', 0]], logs);
+  s.parts[0].company = company;
+  return s;
+};
+
+test('Early Riser: a walk started between 4am and 8am', () => {
+  assert.ok(earned([walk('2026-09-26T06:30')]).has('early-riser'));
+  assert.ok(!earned([walk('2026-09-26T02:00')]).has('early-riser'));
+  assert.ok(!earned([walk('2026-09-26T08:00')]).has('early-riser'));
+});
+
+test('Trailblazer: 15 km walked in the walk part', () => {
+  const t0 = at('2026-09-26T10:00');
+  // 0.009 degrees of latitude is about 1 km; 16 steps is about 16 km.
+  const trail = Array.from({ length: 17 }, (_, i) => ({ t: t0 + i * 600e3, lat: 51.5 + i * 0.009, lng: -0.1 }));
+  assert.ok(earned([walk('2026-09-26T10:00', { trail })]).has('trailblazer'));
+  const switched = adv('2026-09-26T10:00', [['walk', 0], ['night', 1]], { trail });
+  assert.ok(!earned([switched]).has('trailblazer'));
+});
+
+test('Tea Break: coffee or tea on a walk', () => {
+  const t0 = at('2026-09-26T10:00');
+  assert.ok(earned([walk('2026-09-26T10:00', { drinks: [{ t: t0 + 60e3, kind: 'Tea' }] })]).has('tea-break'));
+  assert.ok(earned([walk('2026-09-26T10:00', { drinks: [{ t: t0 + 60e3, kind: 'Flat white' }] })]).has('tea-break'));
+  assert.ok(!earned([walk('2026-09-26T10:00', { drinks: [{ t: t0 + 60e3, kind: 'Pint' }] })]).has('tea-break'));
+});
+
+test('Head Space: a walk on your own', () => {
+  assert.ok(earned([walk('2026-09-26T10:00', {}, 'solo')]).has('head-space'));
+  assert.ok(!earned([walk('2026-09-26T10:00')]).has('head-space'));
+  const soloNight = adv('2026-09-26T20:00', [['night', 0]]);
+  soloNight.parts[0].company = 'solo';
+  assert.ok(!earned([soloNight]).has('head-space'));
+});
+
+test('Weekly Walker: walks in four weeks running, across the new year', () => {
+  const weeks = ['2025-12-29T10:00', '2026-01-06T10:00', '2026-01-12T10:00', '2026-01-20T10:00'];
+  assert.ok(earned(weeks.map((d) => walk(d))).has('weekly-walker'));
+  const gap = ['2025-12-29T10:00', '2026-01-06T10:00', '2026-01-19T10:00', '2026-01-26T10:00'];
+  assert.ok(!earned(gap.map((d) => walk(d))).has('weekly-walker'));
+});
+
+test('Out and About: ten walks', () => {
+  const days = Array.from({ length: 10 }, (_, i) => walk(`2026-09-${String(i + 1).padStart(2, '0')}T10:00`));
+  assert.ok(earned(days).has('out-and-about'));
+  assert.ok(!earned(days.slice(1)).has('out-and-about'));
+});
+
+test('the six Walk badges are in the list', () => {
+  for (const slug of ['early-riser', 'trailblazer', 'tea-break', 'head-space', 'weekly-walker', 'out-and-about']) {
+    assert.equal(BADGES.find((x) => x.slug === slug)?.cat, 'Walk', slug);
+  }
+});
