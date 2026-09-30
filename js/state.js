@@ -1,7 +1,7 @@
 // Pure session model. No DOM, no storage — everything here is a plain
 // transform so the same code can be reasoned about and tested in isolation.
 
-import { MODES } from './modes.js';
+import { MODES, COMPANY } from './modes.js';
 
 export const TRAIL_MIN_M = 25;
 export const TRAIL_MIN_MS = 60_000;
@@ -30,7 +30,11 @@ export function newSession(now = Date.now(), { mode = 'night', company = 'group'
    from before modes have no parts and read as one Night out with friends. */
 
 export function partsOf(s) {
-  return s.parts?.length ? s.parts : [{ t: s.startedAt, mode: 'night', company: 'group' }];
+  if (!s.parts?.length) return [{ t: s.startedAt, mode: 'night', company: 'group' }];
+  // Read-only: a mode or company this build doesn't know reads as Night out
+  // with friends, and the stored value is left alone.
+  if (s.parts.every((p) => MODES[p.mode] && COMPANY[p.company])) return s.parts;
+  return s.parts.map((p) => ({ ...p, mode: MODES[p.mode] ? p.mode : 'night', company: COMPANY[p.company] ? p.company : 'group' }));
 }
 
 export function partAt(s, t) {

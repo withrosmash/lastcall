@@ -32,6 +32,10 @@ export const MODES = {
 
 export const MODE_KEYS = Object.keys(MODES);
 
+// A mode from a newer build (or a backup made by one) reads as Night out,
+// rather than crashing a screen that expects to find it here.
+export const modeOf = (key) => MODES[key] || MODES.night;
+
 export const COMPANY = { group: 'With friends', solo: 'On my own' };
 
 // Badges that only count on the Night out part of an adventure (the spec's
