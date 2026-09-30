@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'lastcall-v24';
+const CACHE = 'lastcall-v25';
 
 const SHELL = [
   './',
@@ -121,6 +121,42 @@ const SHELL = [
   './icons/badges/light/badge-late-bite.svg',
   './icons/badges/light/badge-long-haul.svg',
   './icons/badges/light/badge-snack-break.svg',
+  './icons/badges/badge-brunch-club.svg',
+  './icons/badges/badge-caffeine-trail.svg',
+  './icons/badges/badge-day-into-night.svg',
+  './icons/badges/badge-discovery.svg',
+  './icons/badges/badge-early-riser.svg',
+  './icons/badges/badge-explorer.svg',
+  './icons/badges/badge-front-row.svg',
+  './icons/badges/badge-full-weekend.svg',
+  './icons/badges/badge-head-space.svg',
+  './icons/badges/badge-headliner.svg',
+  './icons/badges/badge-hydration-station.svg',
+  './icons/badges/badge-out-and-about.svg',
+  './icons/badges/badge-stage-hopper.svg',
+  './icons/badges/badge-sunday-best.svg',
+  './icons/badges/badge-tea-break.svg',
+  './icons/badges/badge-tourist.svg',
+  './icons/badges/badge-trailblazer.svg',
+  './icons/badges/badge-weekly-walker.svg',
+  './icons/badges/light/badge-brunch-club.svg',
+  './icons/badges/light/badge-caffeine-trail.svg',
+  './icons/badges/light/badge-day-into-night.svg',
+  './icons/badges/light/badge-discovery.svg',
+  './icons/badges/light/badge-early-riser.svg',
+  './icons/badges/light/badge-explorer.svg',
+  './icons/badges/light/badge-front-row.svg',
+  './icons/badges/light/badge-full-weekend.svg',
+  './icons/badges/light/badge-head-space.svg',
+  './icons/badges/light/badge-headliner.svg',
+  './icons/badges/light/badge-hydration-station.svg',
+  './icons/badges/light/badge-out-and-about.svg',
+  './icons/badges/light/badge-stage-hopper.svg',
+  './icons/badges/light/badge-sunday-best.svg',
+  './icons/badges/light/badge-tea-break.svg',
+  './icons/badges/light/badge-tourist.svg',
+  './icons/badges/light/badge-trailblazer.svg',
+  './icons/badges/light/badge-weekly-walker.svg',
 ];
 
 self.addEventListener('install', (event) => {
