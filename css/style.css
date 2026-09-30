@@ -419,4 +419,6 @@ canvas.avatar{
 .mode-tile__name{font:600 15px/1.2 var(--font-sans);color:var(--text)}
 .mode-tile[aria-pressed="true"] .mode-tile__name{color:var(--mint)}
 .mode-tile__hint{font-size:12px;line-height:1.35;color:var(--muted)}
-.mode-chip{align-self:flex-start;gap:6px;color:var(--muted)}
+.mode-chip{align-self:flex-start;gap:7px;color:var(--text);padding:0 12px 0 13px}
+.mode-chip svg:first-child{color:var(--mint)}
+.mode-chip svg:last-child{color:var(--muted);margin-left:-1px}

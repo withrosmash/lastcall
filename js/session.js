@@ -2,7 +2,7 @@ import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast,
          hms, hm, longDuration, clockTime, shortDate, upperDate, km, words } from './ui.js';
 import * as S from './state.js';
 import { pickDrink } from './drinks.js';
-import { recentFor } from './modes.js';
+import { MODES, recentFor } from './modes.js';
 import { modePicker, modeChip } from './modepick.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
@@ -261,6 +261,7 @@ export function liveScreen(ctx) {
 
   return [
     head({ eyebrow: t('On the {n}') }),
+    modeChip(ctx),
     el('div', { class: 'live-top' },
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
       av.canvas),
@@ -295,24 +296,28 @@ export function liveScreen(ctx) {
 
     spacer(),
 
-    foot(
-      addDrinkButton(ctx),
-      el('div', { class: 'btn-pair' },
-        btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
-        btn('Food', 'btn--sec', () => ctx.logMeal()),
-      ),
-      el('div', { class: 'btn-pair' },
-        btn('Check in', 'btn--sec', () => checkIn(ctx, s), { iconName: 'map-pin' }),
-        btn('Challenge', 'btn--sec', () => ctx.openChallenge(ctx, s)),
-      ),
-      el('div', { class: 'btn-pair' },
-        btn('Map', 'btn--sec', () => ctx.go('map')),
-        // End gets its own half rather than sitting in a three-up row: it is
-        // the one irreversible action here and gets tapped at 2am.
-        btn(t('End {n}'), 'btn--sec', () => confirmEnd(ctx)),
-      ),
-    ),
+    foot(...liveButtons(ctx, s)),
   ];
+}
+
+// The mode decides which buttons show; the layout stays the same. Drink gets
+// the full-width slot when the mode has it, the rest pair up, and End always
+// takes the last half: it is the one irreversible action here and gets
+// tapped at 2am, so it never sits in a three-up row.
+function liveButtons(ctx, s) {
+  const make = {
+    water: () => btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
+    food: () => btn('Food', 'btn--sec', () => ctx.logMeal()),
+    checkin: () => btn('Check in', 'btn--sec', () => checkIn(ctx, s), { iconName: 'map-pin' }),
+    challenge: () => btn('Challenge', 'btn--sec', () => ctx.openChallenge(ctx, s)),
+    map: () => btn('Map', 'btn--sec', () => ctx.go('map')),
+  };
+  const keys = MODES[S.currentPart(s).mode].buttons;
+  const rest = [...keys.filter((k) => k !== 'drink' && make[k]).map((k) => make[k]()),
+    btn(t('End {n}'), 'btn--sec', () => confirmEnd(ctx))];
+  const rows = [];
+  for (let i = 0; i < rest.length; i += 2) rows.push(el('div', { class: 'btn-pair' }, rest.slice(i, i + 2)));
+  return [keys.includes('drink') ? addDrinkButton(ctx) : null, ...rows];
 }
 
 // The water tile doubles as the way into its reminder setting: it's where you

@@ -5,7 +5,7 @@ import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScre
 import { createAvatar } from './avatar.js';
 import { avatarLook } from './wardrobe.js';
 import { avatarScreen } from './avatarscreen.js';
-import { recentFor, rememberFor } from './modes.js';
+import { MODES, recentFor, rememberFor } from './modes.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen, appearanceScreen } from './history.js';
@@ -31,7 +31,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, back, render, save, beginNight, startNight, grantThenStart, endNight, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
+  go, back, render, save, beginNight, startNight, grantThenStart, endNight, switchMode, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
   setTheme,
 };
@@ -190,6 +190,17 @@ async function fixBattery() {
   if (granted === false) await keepalive.openAppSettings();
   ctx.batteryExempt = granted;
   render();
+}
+
+// Change of plan: same adventure, new mode or company from this moment.
+function switchMode(choice) {
+  const s = ctx.state.active;
+  if (!s || !S.switchPart(s, choice)) return;
+  save();
+  render();
+  react('checkin');
+  keepalive.showQuickLog(quickLogLabel());
+  toast(`Now a ${MODES[choice.mode].label.toLowerCase()}.`);
 }
 
 async function endNight() {

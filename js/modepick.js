@@ -74,5 +74,6 @@ export function modeChip(ctx) {
   return el('button', { class: 'chip press mode-chip', type: 'button', onclick: () => switchSheet(ctx),
     'aria-label': `${MODES[cur.mode].label}, ${COMPANY[cur.company].toLowerCase()}. Change of plan?` },
   icon(MODES[cur.mode].icon, { size: 14 }),
-  el('span', { text: `${MODES[cur.mode].label} · ${COMPANY[cur.company]}` }));
+  el('span', { text: `${MODES[cur.mode].label} · ${COMPANY[cur.company]}` }),
+  icon('chevron-down', { size: 14 }));
 }
