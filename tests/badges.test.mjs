@@ -143,3 +143,58 @@ test('Early Riser: a walk home after a night out does not count', () => {
   const home = adv('2026-09-26T21:00', [['night', 0], ['walk', 7.5]]);
   assert.ok(!earned([home]).has('early-riser'));
 });
+
+const fest = (start, sets = [], logs = {}) => {
+  const s = adv(start, [['festival', 0]], logs);
+  s.sets = sets.map(([name, iso, lat = null, lng = null]) => ({ t: at(iso), name, lat, lng }));
+  return s;
+};
+const earnedF = (sessions, festivals) => new Set(evaluate({ sessions, prefs: { hydrationEvery: 5 }, festivals }).map((b) => b.slug));
+
+test('Front Row: five sets in one festival day', () => {
+  const five = ['A', 'B', 'C', 'D', 'E'].map((n, i) => [n, `2026-06-26T1${i}:00`]);
+  assert.ok(earned([fest('2026-06-26T09:00', five)]).has('front-row'));
+  assert.ok(!earned([fest('2026-06-26T09:00', five.slice(1))]).has('front-row'));
+});
+
+test('Headliner: a set after 10pm, midnight included', () => {
+  assert.ok(earned([fest('2026-06-26T12:00', [['Late', '2026-06-27T00:30']])]).has('headliner'));
+  assert.ok(earned([fest('2026-06-26T12:00', [['Top', '2026-06-26T22:15']])]).has('headliner'));
+  assert.ok(!earned([fest('2026-06-26T12:00', [['Nine', '2026-06-26T21:00']])]).has('headliner'));
+});
+
+test('Stage Hopper: three spots at least 200m apart; sets without GPS never count', () => {
+  // 0.002 degrees of latitude is about 222 m.
+  const spread = [['A', '2026-06-26T13:00', 51.150, -2.58], ['B', '2026-06-26T14:00', 51.152, -2.58], ['C', '2026-06-26T15:00', 51.154, -2.58]];
+  assert.ok(earned([fest('2026-06-26T12:00', spread)]).has('stage-hopper'));
+  const close = [['A', '2026-06-26T13:00', 51.150, -2.58], ['B', '2026-06-26T14:00', 51.1505, -2.58], ['C', '2026-06-26T15:00', 51.154, -2.58]];
+  assert.ok(!earned([fest('2026-06-26T12:00', close)]).has('stage-hopper'));
+  const blind = [['A', '2026-06-26T13:00', 51.150, -2.58], ['B', '2026-06-26T14:00', 51.154, -2.58], ['C', '2026-06-26T15:00']];
+  assert.ok(!earned([fest('2026-06-26T12:00', blind)]).has('stage-hopper'));
+});
+
+test('Hydration Station: five waters in a festival day', () => {
+  const waters = [1, 2, 3, 4, 5].map((h) => ({ t: at(`2026-06-26T1${h}:00`) }));
+  assert.ok(earned([fest('2026-06-26T10:00', [], { waters })]).has('hydration-station'));
+  assert.ok(!earned([fest('2026-06-26T10:00', [], { waters: waters.slice(1) })]).has('hydration-station'));
+});
+
+test('Discovery and Full Weekend come from festival reviews', () => {
+  const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  const d1 = fest('2026-06-26T12:00', names.slice(0, 5).map((n, i) => [n, `2026-06-26T1${i + 3}:00`]));
+  const d2 = fest('2026-06-27T12:00', names.slice(5).map((n, i) => [n, `2026-06-27T1${i + 3}:00`]));
+  const d3 = fest('2026-06-28T12:00', [['a', '2026-06-28T13:00']]);
+  const review = (ids) => [{ id: 'fv1', name: 'Test', sessionIds: ids, createdAt: 0 }];
+  assert.ok(earnedF([d1, d2], review([d1.id, d2.id])).has('discovery'));
+  assert.ok(!earnedF([d1, d2], review([d1.id, d2.id])).has('full-weekend'));
+  assert.ok(earnedF([d1, d2, d3], review([d1.id, d2.id, d3.id])).has('full-weekend'));
+  assert.ok(!earnedF([d1, d2], []).has('discovery'));
+  // A deleted day doesn't count towards a festival's size.
+  assert.ok(!earnedF([d1, d2], review([d1.id, d2.id, 'gone'])).has('full-weekend'));
+});
+
+test('the six Festival badges are in the list', () => {
+  for (const slug of ['front-row', 'headliner', 'stage-hopper', 'hydration-station', 'discovery', 'full-weekend']) {
+    assert.equal(BADGES.find((x) => x.slug === slug)?.cat, 'Festival', slug);
+  }
+});

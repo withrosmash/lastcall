@@ -158,6 +158,25 @@ function weeksRunning(done, n) {
   return n <= 1 && weeks.length > 0;
 }
 
+// Festival badges see only the festival part. Stage Hopper needs three sets
+// logged with a location, each at least 200 m from the other two.
+const FESTIVAL_CHECKS = {
+  'front-row': (f) => (f.sets || []).length >= 5,
+  'headliner': (f) => (f.sets || []).some((x) => { const h = new Date(x.t).getHours(); return h >= 22 || h < 5; }),
+  'stage-hopper': (f) => {
+    const spots = (f.sets || []).filter((x) => x.lat != null && x.lng != null);
+    const far = (a, b) => S.haversineM(a.lat, a.lng, b.lat, b.lng) >= 200;
+    for (let i = 0; i < spots.length; i++) {
+      for (let j = i + 1; j < spots.length; j++) {
+        if (!far(spots[i], spots[j])) continue;
+        for (let k = j + 1; k < spots.length; k++) if (far(spots[i], spots[k]) && far(spots[j], spots[k])) return true;
+      }
+    }
+    return false;
+  },
+  'hydration-station': (f) => f.waters.length >= 5,
+};
+
 const placeKey = (p) => (p.name || '').trim().toLowerCase();
 
 // Three stops on a day out whose names were never pinned in any earlier
@@ -176,7 +195,7 @@ function explorer(done) {
 
 // Everything currently earnable, oldest qualifying night first so the badge
 // links to the night that actually earned it.
-export function evaluate({ sessions, prefs, flags = {} }) {
+export function evaluate({ sessions, prefs, flags = {}, festivals = [] }) {
   const done = sessions.filter((s) => s.endedAt).sort((a, b) => a.startedAt - b.startedAt);
   const out = [];
 
@@ -209,6 +228,16 @@ export function evaluate({ sessions, prefs, flags = {} }) {
   if (alone) out.push({ slug: 'head-space', sessionId: alone.id });
   if (weeksRunning(walks, 4)) out.push({ slug: 'weekly-walker', sessionId: null });
   if (walks.length >= 10) out.push({ slug: 'out-and-about', sessionId: walks[9].id });
+
+  const fests = done.filter((s) => S.hasMode(s, 'festival'));
+  for (const [slug, check] of Object.entries(FESTIVAL_CHECKS)) {
+    const hit = fests.find((s) => check(S.sliceTo(s, 'festival')));
+    if (hit) out.push({ slug, sessionId: hit.id });
+  }
+  // Reviews only count the days that still exist.
+  const reviewDays = festivals.map((f) => f.sessionIds.map((id) => done.find((s) => s.id === id)).filter(Boolean));
+  if (reviewDays.some((days) => S.festivalActs(days).length >= 10)) out.push({ slug: 'discovery', sessionId: null });
+  if (reviewDays.some((days) => days.length >= 3)) out.push({ slug: 'full-weekend', sessionId: null });
   return out;
 }
 

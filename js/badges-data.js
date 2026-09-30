@@ -402,5 +402,53 @@ export const BADGES = [
     "accent": "forest",
     "cat": "Walk",
     "hidden": false
+  },
+  {
+    "slug": "front-row",
+    "name": "Front Row",
+    "criteria": "5 sets in one festival day",
+    "accent": "pink",
+    "cat": "Festival",
+    "hidden": false
+  },
+  {
+    "slug": "headliner",
+    "name": "Headliner",
+    "criteria": "See a set after 10pm",
+    "accent": "pink",
+    "cat": "Festival",
+    "hidden": false
+  },
+  {
+    "slug": "stage-hopper",
+    "name": "Stage Hopper",
+    "criteria": "Sets from 3 spots at least 200m apart",
+    "accent": "mint",
+    "cat": "Festival",
+    "hidden": false
+  },
+  {
+    "slug": "hydration-station",
+    "name": "Hydration Station",
+    "criteria": "5 waters in a festival day",
+    "accent": "mint",
+    "cat": "Festival",
+    "hidden": false
+  },
+  {
+    "slug": "discovery",
+    "name": "Discovery",
+    "criteria": "10 different acts across one festival",
+    "accent": "amber",
+    "cat": "Festival",
+    "hidden": false
+  },
+  {
+    "slug": "full-weekend",
+    "name": "Full Weekend",
+    "criteria": "A festival of 3+ days",
+    "accent": "forest",
+    "cat": "Festival",
+    "hidden": false
   }
 ];

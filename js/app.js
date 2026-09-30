@@ -232,6 +232,7 @@ function syncBadges() {
     sessions: ctx.state.sessions,
     prefs: ctx.state.prefs,
     flags: ctx.state.flags,
+    festivals: ctx.state.festivals || [],
   });
   const fresh = earnable.filter((e) => !have.has(e.slug));
   if (fresh.length) {
