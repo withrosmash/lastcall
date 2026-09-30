@@ -1,7 +1,7 @@
 {
-  "name": "Last Call",
-  "short_name": "Last Call",
-  "description": "Track the night. Piece it together later.",
+  "name": "Leit",
+  "short_name": "Leit",
+  "description": "Track the adventure. Piece it together later.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

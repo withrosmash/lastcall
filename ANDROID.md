@@ -79,8 +79,8 @@ between nights. Within a night it is built to not drop out:
 ### Samsung, by hand
 
 The in-app prompt covers most of it. If the warning persists:
-Settings → Apps → Last Call → Battery → **Unrestricted**, and
-Settings → Battery → Background usage limits → make sure Last Call is **not** in
+Settings → Apps → Leit → Battery → **Unrestricted**, and
+Settings → Battery → Background usage limits → make sure Leit is **not** in
 **Sleeping apps** or **Deep sleeping apps**.
 
 ## The test that matters

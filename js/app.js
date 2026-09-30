@@ -443,7 +443,7 @@ function handoff() {
   av.play('hello');
   const node = el('div', { class: 'handoff', 'aria-hidden': 'true' },
     el('div', { class: 'handoff__disc' }, av.canvas),
-    el('span', { class: 'handoff__mark', text: 'Last Call' }));
+    el('span', { class: 'handoff__mark', text: 'Leit' }));
   document.body.append(node);
   av.start();
   setTimeout(() => {

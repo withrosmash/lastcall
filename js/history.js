@@ -315,13 +315,13 @@ const escapeXml = (str) => String(str).replace(/[<>&'"]/g, (c) =>
   ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 
 function toGpx(s) {
-  const name = `Last Call, ${shortDate(s.startedAt)}`;
+  const name = `Leit, ${shortDate(s.startedAt)}`;
   const points = s.trail.map((p) =>
     `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
   const stops = s.pins.map((p) =>
     `<wpt lat="${p.lat}" lon="${p.lng}"><name>${escapeXml(p.name)}</name><time>${new Date(p.t).toISOString()}</time></wpt>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Last Call" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Leit" xmlns="http://www.topografix.com/GPX/1/1">
 ${stops}
 <trk><name>${escapeXml(name)}</name><trkseg>
 ${points}
@@ -330,8 +330,8 @@ ${points}
 }
 
 async function exportGpx(s) {
-  const name = `lastcall-${new Date(s.startedAt).toISOString().slice(0, 10)}.gpx`;
-  await exportText(name, 'application/gpx+xml', toGpx(s), 'Route saved to Downloads › Last Call.');
+  const name = `leit-${new Date(s.startedAt).toISOString().slice(0, 10)}.gpx`;
+  await exportText(name, 'application/gpx+xml', toGpx(s), 'Route saved to Downloads › Leit.');
 }
 
 function confirmDelete(ctx, s) {
@@ -358,8 +358,8 @@ function confirmDelete(ctx, s) {
 /* ---------- export / import ---------- */
 
 function exportData() {
-  const name = `lastcall-${new Date().toISOString().slice(0, 10)}.json`;
-  exportText(name, 'application/json', store.exportJSON(), 'History saved to Downloads › Last Call.');
+  const name = `leit-${new Date().toISOString().slice(0, 10)}.json`;
+  exportText(name, 'application/json', store.exportJSON(), 'History saved to Downloads › Leit.');
 }
 
 // Native writes through MediaStore — the WebView silently drops <a download>
@@ -387,7 +387,7 @@ function importData(ctx) {
       toast('Imported.');
       ctx.go('history');
     } catch {
-      toast('That file didn’t read as Last Call data.');
+      toast('That file didn’t read as Leit data.');
     } finally {
       input.remove();
     }

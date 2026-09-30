@@ -31,7 +31,7 @@ export async function hydrationNudge(sinceCount) {
     await LocalNotifications.schedule({
       notifications: [{
         id: HYDRATION_ID,
-        title: 'Last Call',
+        title: 'Leit',
         body: 'Time for a water.',
         // Fires a moment later so it doesn't collide with the in-app banner
         // when the phone is actually in the user's hand.

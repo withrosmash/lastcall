@@ -51,7 +51,7 @@ export function startScreen(ctx) {
     el('div', { class: 'avatar-home' },
       av.canvas,
       el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')),
-    el('div', { class: 'eb eb--mint-dim', text: 'Last Call' }),
+    el('div', { class: 'eb eb--mint-dim', text: 'Leit' }),
     el('h1', { class: 'display', style: 'margin-top:10px' },
       'Track the night.', el('br'), 'Piece it together later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
@@ -87,7 +87,7 @@ export function startScreen(ctx) {
 
 const ONBOARD = [
   {
-    eyebrow: 'Last Call', title: 'This is you, roughly.',
+    eyebrow: 'Leit', title: 'This is you, roughly.',
     body: 'It lives on this phone and keeps you company on nights out. You can change how it looks whenever you like.',
     note: 'No account, no sign-up. Everything stays on the phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
@@ -284,7 +284,7 @@ export function liveScreen(ctx) {
     // Samsung will stop the service and the rest of the night goes unrecorded.
     ctx.batteryExempt === false ? el('div', { class: 'warn' },
       el('div', { class: 'warn__h', text: 'Android may stop tracking.' }),
-      el('div', { class: 'cap cap--up', text: 'Battery optimisation is on for Last Call, so your phone can put it to sleep mid-night.' }),
+      el('div', { class: 'cap cap--up', text: 'Battery optimisation is on for Leit, so your phone can put it to sleep while you’re out.' }),
       btn('Fix it', 'btn--pink', () => ctx.fixBattery()),
     ) : null,
 

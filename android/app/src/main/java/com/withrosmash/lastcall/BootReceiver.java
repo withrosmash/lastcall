@@ -47,7 +47,7 @@ public class BootReceiver extends BroadcastReceiver {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID, "Tracking interrupted", NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Shown when a night was still open after a restart.");
+            channel.setDescription("Shown when tracking was still on after a restart.");
             manager.createNotificationChannel(channel);
         }
 
@@ -58,8 +58,8 @@ public class BootReceiver extends BroadcastReceiver {
 
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_lastcall)
-                .setContentTitle("Last Call stopped tracking")
-                .setContentText("Your phone restarted. Tap to pick the night back up.")
+                .setContentTitle("Leit stopped tracking")
+                .setContentText("Your phone restarted. Tap to pick up where you left off.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pending)
                 .setAutoCancel(true)

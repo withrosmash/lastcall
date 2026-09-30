@@ -100,7 +100,7 @@ export function mount(nodes, { flush = false, bloom = 'hero', chrome = null } = 
 export const serviceNotice = () =>
   el('div', { class: 'service' },
     icon('circle-dot', { size: 13, color: 'var(--mint)' }),
-    el('span', { text: 'Last Call is tracking your night.' }));
+    el('span', { text: 'Leit is tracking your night.' }));
 
 /* ---------- bottom sheet ---------- */
 

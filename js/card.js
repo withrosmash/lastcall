@@ -663,7 +663,7 @@ function draw({ forExport = false, only = null, target = null } = {}) {
   }
   drawFree(g, w, h, forExport || !!only || !live, want, live);
   // The wordmark is the one fixed element on a photo card: mint, bottom right.
-  if (want('wordmark')) drawText(g, 'Last Call', w - PAD, h - PAD - 40, { size: 40, weight: 700, color: C.mint, align: 'right' });
+  if (want('wordmark')) drawText(g, 'Leit', w - PAD, h - PAD - 40, { size: 40, weight: 700, color: C.mint, align: 'right' });
 }
 
 function drawBloom(g, w, h) {
@@ -750,7 +750,7 @@ function drawRouteCard(g, w, h, want) {
   }
   if (want('time') && on.time.on) cell(M, 2, 'Time out', hm(ui.sum.ms));
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 64, { size: 30, weight: 400, color: T.date });
-  if (want('wordmark')) drawText(g, 'Last Call', M, h - M - 22, { size: 40, weight: 700, color: T.mark });
+  if (want('wordmark')) drawText(g, 'Leit', M, h - M - 22, { size: 40, weight: 700, color: T.mark });
   if (want('avatar') && ui.face !== 'none' && ui.look) paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
 }
 
@@ -994,7 +994,7 @@ function renderOnce() {
 }
 
 const filename = () =>
-  `lastcall-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
+  `leit-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
 
 async function shareCard() {
   let blob;
@@ -1022,7 +1022,7 @@ async function saveCard() {
     const base64 = await blobToBase64(blob);
     if (await saveImage(base64, filename())) {
       window.dispatchEvent(new Event('lc:card-exported'));
-      toast('Saved to your gallery, in Pictures › Last Call.');
+      toast('Saved to your gallery, in Pictures › Leit.');
       return;
     }
   } catch {
@@ -1174,7 +1174,7 @@ async function saveLayers(ids, full) {
     }
     window.dispatchEvent(new Event('lc:card-exported'));
     toast(native
-      ? `Saved ${files.length} see-through image${files.length === 1 ? '' : 's'} to Pictures › Last Call.`
+      ? `Saved ${files.length} see-through image${files.length === 1 ? '' : 's'} to Pictures › Leit.`
       : `Downloaded ${files.length} see-through images.`, 4000);
   } catch {
     toast('Saving to the gallery failed partway. Try again.');

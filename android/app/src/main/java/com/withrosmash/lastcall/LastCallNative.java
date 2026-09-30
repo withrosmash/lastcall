@@ -307,7 +307,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
             // it from making a sound anyway.
             NotificationChannel channel = new NotificationChannel(
                     QUICKLOG_CHANNEL, "Quick log", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Log a drink or water from the shade while a night is open.");
+            channel.setDescription("Log a drink or water from the shade while you’re out.");
             channel.setShowBadge(false);
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             manager.createNotificationChannel(channel);
@@ -370,7 +370,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
 
     @PluginMethod
     public void saveTextFile(PluginCall call) {
-        String name = call.getString("name", "lastcall.txt");
+        String name = call.getString("name", "leit.txt");
         String mime = call.getString("mime", "text/plain");
         String text = call.getString("data");
         if (text == null) { call.reject("No data"); return; }
@@ -382,7 +382,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Downloads.DISPLAY_NAME, name);
                 values.put(MediaStore.Downloads.MIME_TYPE, mime);
-                values.put(MediaStore.Downloads.RELATIVE_PATH, "Download/Last Call");
+                values.put(MediaStore.Downloads.RELATIVE_PATH, "Download/Leit");
                 Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                 if (uri == null) { call.reject("MediaStore refused the insert"); return; }
                 try (OutputStream out = resolver.openOutputStream(uri)) {
@@ -392,7 +392,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
             } else {
                 File dir = new File(
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                        "Last Call");
+                        "Leit");
                 if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("mkdir failed");
                 try (FileOutputStream out = new FileOutputStream(new File(dir, name))) {
                     out.write(bytes);
@@ -423,7 +423,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
     @PluginMethod
     public void saveToGallery(PluginCall call) {
         String data = call.getString("data");
-        String name = call.getString("name", "lastcall.png");
+        String name = call.getString("name", "leit.png");
         if (data == null || data.isEmpty()) {
             call.reject("No image data");
             return;
@@ -443,7 +443,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
             values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
             if (Build.VERSION.SDK_INT >= 29) {
-                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Last Call");
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Leit");
             }
             Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             if (uri == null) {
