@@ -6,6 +6,7 @@ import { createAvatar } from './avatar.js';
 import { avatarLook } from './wardrobe.js';
 import { avatarScreen } from './avatarscreen.js';
 import { MODES, recentFor, rememberFor } from './modes.js';
+import { bloomCss } from './glow.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen, appearanceScreen } from './history.js';
@@ -40,9 +41,9 @@ const ctx = {
 const SCREENS = {
   start: { build: startScreen, bloom: 'hero' },
   priming: { build: primingScreen, bloom: 'hero' },
-  live: { build: liveScreen, bloom: 'hero', tracking: true },
+  live: { build: liveScreen, bloom: 'hero', tracking: true, glow: (c) => c.state.active && S.currentPart(c.state.active).mode },
   map: { build: mapScreen, bloom: 'none', tracking: true },
-  recap: { build: (c) => recapScreen(c, c.arg), bloom: 'foot' },
+  recap: { build: (c) => recapScreen(c, c.arg), bloom: 'foot', glow: (c) => { const s = c.arg || c.lastSession; return s && S.currentPart(s).mode; } },
   card: { build: (c) => cardScreen(c, c.arg), bloom: 'none' },
   share: { build: (c) => shareScreen(c, c.arg), bloom: 'none' },
   history: { build: historyScreen, bloom: 'hero' },
@@ -51,7 +52,7 @@ const SCREENS = {
   badges: { build: badges.badgesScreen, bloom: 'hero' },
   atlas: { build: atlasScreen, bloom: 'none' },
   festivalPick: { build: festivalPickScreen, bloom: 'none' },
-  festival: { build: (c) => festivalScreen(c, c.arg), bloom: 'hero' },
+  festival: { build: (c) => festivalScreen(c, c.arg), bloom: 'hero', glow: () => 'festival' },
   avatar: { build: avatarScreen, bloom: 'hero' },
   appearance: { build: appearanceScreen, bloom: 'hero' },
   morning: { build: (c) => morningScreen(c, c.arg), bloom: 'hero' },
@@ -102,6 +103,22 @@ function render() {
     bloom: def.bloom,
     chrome: tracking ? serviceNotice() : null,
   });
+  applyGlow(def.glow?.(ctx));
+}
+
+// A mode's own glow on the screens that belong to an adventure; Night out and
+// every other screen keep the brand glow from the tokens.
+function applyGlow(mode) {
+  const node = document.getElementById('bloom');
+  const glow = mode && mode !== 'night' ? MODES[mode]?.glow : null;
+  if (!glow) {
+    node.style.removeProperty('--bloom-hero');
+    node.style.removeProperty('--bloom-foot');
+    return;
+  }
+  const { hero, foot } = bloomCss(glow, ctx.state.prefs.theme === 'light' ? 'light' : 'dark');
+  node.style.setProperty('--bloom-hero', hero);
+  node.style.setProperty('--bloom-foot', foot);
 }
 
 function save() { store.save(ctx.state); }

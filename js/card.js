@@ -6,6 +6,8 @@ import { badgeSrc, BADGES } from './badges.js';
 import * as SM from './staticmap.js';
 import { paintAvatar } from './avatar.js';
 import { avatarLook } from './wardrobe.js';
+import { MODES } from './modes.js';
+import { NIGHT_GLOW, cardBloom, photoBloom } from './glow.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
@@ -534,12 +536,12 @@ const ROUTE_THEMES = {
   dark: {
     bg: '#000000', rgb: '0,0,0', text: '#FFFFFF', label: '#A3A3A3', date: '#8A8A8A', pink: '#F06C9B',
     mark: '#7EE0C0', route: '#7EE0C0', under: 'rgba(0,0,0,.55)', underW: 10, ring: '#000000',
-    credit: 'rgba(255,255,255,.45)', bloom: ['rgba(33,118,79,.42)', 'rgba(10,36,25,.22)', 'rgba(0,0,0,0)'],
+    credit: 'rgba(255,255,255,.45)',
   },
   light: {
     bg: '#EEF2F8', rgb: '238,242,248', text: '#0B1526', label: '#626E81', date: '#4A576B', pink: '#C92F68',
     mark: '#0B6E55', route: '#7EE0C0', under: '#0B6E55', underW: 7, ring: '#FFFFFF',
-    credit: 'rgba(11,21,38,.45)', bloom: ['rgba(0,71,171,.26)', 'rgba(0,71,171,.10)', 'rgba(0,71,171,0)'],
+    credit: 'rgba(11,21,38,.45)',
   },
 };
 const routeTheme = () => ROUTE_THEMES[ui.cardTheme] || ROUTE_THEMES.dark;
@@ -667,11 +669,15 @@ function draw({ forExport = false, only = null, target = null } = {}) {
   if (want('wordmark')) drawText(g, 'Leit', w - PAD, h - PAD - 40, { size: 40, weight: 700, color: C.mint, align: 'right' });
 }
 
+// The card glows in the colour of the mode the adventure ended in.
+const modeGlow = () => MODES[S.currentPart(ui.session).mode]?.glow || NIGHT_GLOW;
+
 function drawBloom(g, w, h) {
   const grad = g.createRadialGradient(w / 2, 0, 0, w / 2, 0, w * 1.15);
-  grad.addColorStop(0, `rgba(${C.forest},.55)`);
-  grad.addColorStop(0.42, 'rgba(10,36,25,.35)');
-  grad.addColorStop(0.78, 'rgba(0,0,0,0)');
+  const [a, b, c] = photoBloom(modeGlow());
+  grad.addColorStop(0, a);
+  grad.addColorStop(0.42, b);
+  grad.addColorStop(0.78, c);
   g.fillStyle = grad;
   g.fillRect(0, 0, w, h);
 }
@@ -717,7 +723,7 @@ function drawRouteCard(g, w, h, want) {
     g.fillRect(0, 0, w, h);
     if (frame && !drawRouteMap(g, w, frame, mapH, T)) frame = null;
     const bloom = g.createRadialGradient(w / 2, h, 0, w / 2, h, w * 0.9);
-    T.bloom.forEach((c, i) => bloom.addColorStop(i / 2, c));
+    cardBloom(modeGlow(), ui.cardTheme === 'light' ? 'light' : 'dark').forEach((c, i) => bloom.addColorStop(i / 2, c));
     g.fillStyle = bloom;
     g.fillRect(0, 0, w, h);
   } else if (frame && SM.status(SM.tilesFor(frame, w, mapH, ui.cardTheme === 'light')) === 'failed') {
