@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'lastcall-v23';
+const CACHE = 'lastcall-v24';
 
 const SHELL = [
   './',
@@ -30,6 +30,7 @@ const SHELL = [
   './js/avatar.js',
   './js/avatarscreen.js',
   './js/wardrobe.js',
+  './js/words.js',
   './js/state.js',
   './js/storage.js',
   './js/ui.js',
