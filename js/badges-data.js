@@ -5,7 +5,7 @@
 export const BADGES = [
   {
     "slug": "first-night",
-    "name": "First Night",
+    "name": "First Adventure",
     "criteria": "End your first session",
     "accent": "mint",
     "cat": "Firsts",
@@ -305,6 +305,54 @@ export const BADGES = [
     "criteria": "One year since your first {n}",
     "accent": "mint",
     "cat": "Streaks",
+    "hidden": false
+  },
+  {
+    "slug": "day-into-night",
+    "name": "Day Into Night",
+    "criteria": "Turn a day out into a night out",
+    "accent": "pink",
+    "cat": "Day out",
+    "hidden": false
+  },
+  {
+    "slug": "tourist",
+    "name": "Tourist",
+    "criteria": "6+ stops in one day out",
+    "accent": "mint",
+    "cat": "Day out",
+    "hidden": false
+  },
+  {
+    "slug": "explorer",
+    "name": "Explorer",
+    "criteria": "3 stops you’ve never been to before",
+    "accent": "forest",
+    "cat": "Day out",
+    "hidden": false
+  },
+  {
+    "slug": "brunch-club",
+    "name": "Brunch Club",
+    "criteria": "Food before 11am on a day out",
+    "accent": "amber",
+    "cat": "Day out",
+    "hidden": false
+  },
+  {
+    "slug": "caffeine-trail",
+    "name": "Caffeine Trail",
+    "criteria": "3 coffees in one day out",
+    "accent": "amber",
+    "cat": "Day out",
+    "hidden": false
+  },
+  {
+    "slug": "sunday-best",
+    "name": "Sunday Best",
+    "criteria": "A day out on a Sunday",
+    "accent": "pink",
+    "cat": "Day out",
     "hidden": false
   }
 ];

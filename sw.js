@@ -34,6 +34,7 @@ const SHELL = [
   './js/modes.js',
   './js/modepick.js',
   './js/challenges-data.js',
+  './js/badge-checks.js',
   './js/state.js',
   './js/storage.js',
   './js/ui.js',
