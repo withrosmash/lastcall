@@ -1,7 +1,8 @@
 // Choosing the kind of adventure: at the start, and partway through when
 // plans change. Both sheets share one chooser so they can't drift apart.
 
-import { el, btn, sheet, icon } from './ui.js';
+import { el, btn, sheet, icon, currentTheme } from './ui.js';
+import { bloomCss } from './glow.js';
 import { t } from './words.js';
 import { MODES, MODE_KEYS, COMPANY } from './modes.js';
 import * as S from './state.js';
@@ -23,6 +24,8 @@ function chooser(initial, onChange) {
   const paint = () => {
     tiles.replaceChildren(...MODE_KEYS.map((k) => el('button', {
       class: 'mode-tile press', type: 'button', 'aria-pressed': pick.mode === k ? 'true' : 'false',
+      // Each tile carries its mode's glow, so the colour is part of the choice.
+      style: `background:${bloomCss(MODES[k].glow, currentTheme()).hero},var(--surface)`,
       // Night out starts with friends; going solo on a night out is a choice
       // you make, not one carried over from last time's day out.
       onclick: () => { pick.mode = k; if (k === 'night') pick.company = 'group'; paint(); onChange({ ...pick }); },

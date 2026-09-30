@@ -403,9 +403,9 @@ export function build(look0, fr = NEUTRAL, only = null) {
   const face = fr.face || { eyes: 'open', mouth: 'smile', brows: 'soft' };
   if (!only) drawFace(face, look, C, set);
   if (touch === 'festival') {
-    // festival glitter under the eyes
+    // festival glitter on the cheekbones, below any glasses frame
     const gold = [255, 224, 138];
-    [[8, 21, WHITE], [7, 22, gold], [23, 21, WHITE], [24, 22, gold]].forEach(([x, y, c]) => set(x, y, c, 'face', false));
+    [[8, 24, WHITE], [7, 23, gold], [23, 24, WHITE], [24, 23, gold]].forEach(([x, y, c]) => set(x, y, c, 'face', false));
   }
 
   // glasses

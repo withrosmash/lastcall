@@ -500,7 +500,7 @@ export function recapScreen(ctx, session) {
     if (unlocking) {
       // A beat after the recap lands, so the night's numbers register first.
       setTimeout(() => {
-        if (ctx.screen === 'recap') openUnlocks(ctx, slugs, { onClose: () => av.setLook(avatarLook(ctx)) });
+        if (ctx.screen === 'recap') openUnlocks(ctx, slugs, { onClose: () => av.setLook(dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode)) });
       }, 900);
     }
   }
