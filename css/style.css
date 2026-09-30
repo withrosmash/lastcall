@@ -237,6 +237,7 @@ input::placeholder{color:var(--placeholder)}
 .leaflet-bar,.leaflet-bar a{background:var(--surface);color:var(--text);border-color:var(--line)}
 .dot-me{width:14px;height:14px;border-radius:var(--r-pill);background:var(--text);box-shadow:var(--me-halo)}
 .dot-stop{width:11px;height:11px;border-radius:var(--r-pill);background:var(--pink);box-shadow:var(--stop-halo)}
+.dot-set{width:11px;height:11px;border-radius:3px;background:var(--amber);box-shadow:var(--stop-halo)}
 /* Chrome over the map sits on a protection gradient, never a capsule. */
 .map-foot{
   position:absolute;left:0;right:0;bottom:0;z-index:500;

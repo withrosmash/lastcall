@@ -230,13 +230,14 @@ export function detailScreen(ctx, session) {
       const entries = [
         ...s.pins.map((p) => ({ t: p.t, pin: true, label: p.note ? `${p.name} · ${p.note}` : p.name })),
         ...(s.meals || []).map((m) => ({ t: m.t, pin: false, label: 'Food' })),
+        ...(s.sets || []).map((x) => ({ t: x.t, pin: false, set: true, label: `Set: ${x.name}` })),
         ...(s.challenges || []).map((c) => ({ t: c.t, pin: false, label: `Challenge: ${c.text}` })),
         ...s.waters.map((w) => ({ t: w.t, pin: false, label: 'Water' })),
       ].sort((a, b) => a.t - b.t);
       return entries.length
         ? el('div', { class: 'tl' }, entries.map((e) =>
             el('div', { class: 'tl__i' },
-              e.pin ? icon('map-pin', { size: 15 }) : el('span', { style: 'width:15px' }),
+              e.pin ? icon('map-pin', { size: 15 }) : e.set ? el('span', { style: 'display:inline-flex;color:var(--amber)' }, icon('music', { size: 15 })) : el('span', { style: 'width:15px' }),
               el('span', { class: 'tl__n', text: e.label }),
               el('span', { class: 'tl__t', text: clockTime(e.t) }),
             )))

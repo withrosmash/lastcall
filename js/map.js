@@ -89,6 +89,7 @@ function initMap(host, s) {
   layers.trail = addRoute(route(s.trail.map((p) => [p.lat, p.lng])));
 
   for (const pin of s.pins) addPinMarker(pin);
+  for (const set of s.sets || []) addSetMarker(set);
 
   const last = s.trail[s.trail.length - 1];
   if (last) {
@@ -136,6 +137,23 @@ function addPinMarker(pin) {
       html: `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
                <div class="dot-stop"></div>
                <span style="font:600 11px system-ui;color:#F06C9B">${label}</span>
+             </div>`,
+      iconSize: [11, 11],
+      iconAnchor: [5, 5],
+    }),
+  }).addTo(map);
+  layers.pins.push(marker);
+}
+
+// Sets are amber, stops are pink: a festival map reads acts at a glance.
+function addSetMarker(set) {
+  if (set.lat == null || set.lng == null) return;
+  const marker = L.marker([set.lat, set.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+               <div class="dot-set"></div>
+               <span style="font:600 11px system-ui;color:var(--amber)">${escapeHtml(set.name)}</span>
              </div>`,
       iconSize: [11, 11],
       iconAnchor: [5, 5],
@@ -372,6 +390,7 @@ export function nightMap(host, s, look = null) {
     addRoute(route(all, { opacity: 0.3 }));
     const walked = addRoute(route(all));
     for (const pin of s.pins) addPinMarker(pin);
+    for (const set of s.sets || []) addSetMarker(set);
 
     let sprite = null;
     let icon = L.divIcon({ className: '', html: '<div class="dot-me"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });

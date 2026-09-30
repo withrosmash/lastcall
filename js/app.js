@@ -31,7 +31,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, back, render, save, beginNight, startNight, grantThenStart, endNight, switchMode, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
+  go, back, render, save, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
   setTheme,
 };
@@ -334,6 +334,23 @@ function logMeal() {
   react('food');
   toast('Food logged. Tap to undo.', 4000, () => {
     s.meals.pop();
+    save();
+    render();
+    toast('Undone.');
+  });
+}
+
+function logSet(name) {
+  const s = ctx.state.active;
+  if (!s || !name.trim()) return;
+  const fix = s.trail[s.trail.length - 1];
+  S.addSet(s, { name, lat: fix?.lat ?? null, lng: fix?.lng ?? null });
+  save();
+  render();
+  buzz();
+  react('checkin');
+  toast(`${name.trim()} logged. Tap to undo.`, 4000, () => {
+    s.sets.pop();
     save();
     render();
     toast('Undone.');

@@ -266,7 +266,14 @@ export function liveScreen(ctx) {
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
       av.canvas),
 
-    MODES[S.currentPart(s).mode].headline === 'walk'
+    MODES[S.currentPart(s).mode].headline === 'festival'
+      ? tiles(
+        tile('Drinks', s.drinks.length, { tone: 'drinks' }),
+        waterTile(ctx, s),
+        tile('Sets', (s.sets || []).length),
+        ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : tile('Distance', km(s.distanceM), { unit: 'km' }),
+      )
+      : MODES[S.currentPart(s).mode].headline === 'walk'
       ? tiles(
         ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : tile('Stops', s.pins.length),
         tile('Distance', km(s.distanceM), { unit: 'km' }),
@@ -318,6 +325,7 @@ function liveButtons(ctx, s) {
     water: () => btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
     food: () => btn(label('food', 'Food'), 'btn--sec', () => ctx.logMeal()),
     more: () => btn('More', 'btn--sec', () => moreSheet(ctx)),
+    set: () => btn('Saw a set', 'btn--sec', () => setSheet(ctx), { iconName: 'music' }),
     checkin: () => btn('Check in', 'btn--sec', () => checkIn(ctx, s), { iconName: 'map-pin' }),
     challenge: () => btn('Challenge', 'btn--sec', () => ctx.openChallenge(ctx, s)),
     map: () => btn('Map', 'btn--sec', () => ctx.go('map')),
@@ -338,6 +346,31 @@ function liveButtons(ctx, s) {
 // taking, not a running split. Only the walk part counts.
 function paceTile(p) {
   return p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', 'Not yet');
+}
+
+// Saw a set: type the act, or tap one already logged at this festival (any
+// festival day in the last five, so day two can pick up day one's names).
+function setSheet(ctx) {
+  const s = ctx.state.active;
+  const since = Date.now() - 5 * 24 * 3600e3;
+  const recent = [s, ...ctx.state.sessions.filter((x) => x.startedAt >= since && S.hasMode(x, 'festival'))];
+  const acts = S.festivalActs(recent).slice(-12).reverse();
+  let name = '';
+  sheet((close) => {
+    const go = btn('Log set', 'btn--pri', () => { close(); ctx.logSet(name); }, { lg: true, disabled: true, iconName: 'music' });
+    const input = el('input', {
+      type: 'text', placeholder: 'Act name', 'aria-label': 'Act name', autocapitalize: 'words', enterkeyhint: 'done',
+      oninput: (e) => { name = e.target.value; go.disabled = !name.trim(); },
+      onkeydown: (e) => { if (e.key === 'Enter' && !go.disabled) go.click(); },
+    });
+    return [
+      el('h2', { class: 'title', style: 'margin:0', text: 'Who are you watching?' }),
+      acts.length ? el('div', { class: 'chips' }, acts.map((a) =>
+        el('button', { class: 'chip press', type: 'button', onclick: () => { close(); ctx.logSet(a); } }, a))) : null,
+      el('label', { class: 'field' }, el('div', { class: 'field__k', text: acts.length ? 'Someone else' : 'Act' }), input),
+      foot(go),
+    ];
+  });
 }
 
 // Modes that keep the drink button out of the way put it here.
@@ -487,7 +520,14 @@ export function recapScreen(ctx, session) {
 
     // Walk tiles only for a walk from start to finish; a night out with a
     // walk home keeps its drinks.
-    S.onlyMode(s, 'walk')
+    S.hasMode(s, 'festival')
+      ? tiles(
+        tile('Drinks', sum.drinks, { tone: 'drinks' }),
+        tile('Water', sum.waters),
+        tile('Sets', (s.sets || []).length),
+        sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
+      )
+      : S.onlyMode(s, 'walk')
       ? tiles(
         sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Water', sum.waters),
         tile('Distance', km(sum.distanceM), { unit: 'km' }),
