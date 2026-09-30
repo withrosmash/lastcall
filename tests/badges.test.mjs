@@ -198,3 +198,9 @@ test('the six Festival badges are in the list', () => {
     assert.equal(BADGES.find((x) => x.slug === slug)?.cat, 'Festival', slug);
   }
 });
+
+test('a festival review’s own badges link to the review', () => {
+  const days = ['2026-06-26', '2026-06-27', '2026-06-28'].map((d) => fest(`${d}T12:00`));
+  const out = evaluate({ sessions: days, prefs: { hydrationEvery: 5 }, festivals: [{ id: 'fv1', name: 'X', sessionIds: days.map((d) => d.id), createdAt: 0 }] });
+  assert.equal(out.find((b) => b.slug === 'full-weekend')?.sessionId, 'fv1');
+});

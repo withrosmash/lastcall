@@ -157,6 +157,8 @@ export function mergeSessions(sessions) {
     sessionIds: days.map((d) => d.id),
     startedAt: days[0].startedAt,
     endedAt: Math.max(...days.map((d) => d.endedAt || d.startedAt)),
+    // Time out is the days added up, not the nights in between.
+    activeMs: days.reduce((n, d) => n + elapsedMs(d), 0),
     parts: [{ t: days[0].startedAt, mode: 'festival', company: 'group' }],
     drinks: all('drinks'), waters: all('waters'), meals: all('meals'), challenges: all('challenges'),
     pins: all('pins'), trail: all('trail'), sets: all('sets'),
@@ -269,7 +271,7 @@ export function summarise(s) {
     id: s.id,
     startedAt: s.startedAt,
     endedAt: s.endedAt,
-    ms: elapsedMs(s),
+    ms: s.activeMs ?? elapsedMs(s),
     drinks: s.drinks.length,
     waters: s.waters.length,
     stops: s.pins.length,

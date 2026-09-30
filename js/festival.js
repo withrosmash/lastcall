@@ -13,7 +13,7 @@ const festivalDays = (ctx) => ctx.state.sessions.filter((s) => s.endedAt && S.ha
 const views = new Map();
 function viewOf(f, days) {
   const key = `${f.id}:${days.map((d) => d.id).join(',')}`;
-  if (!views.has(key)) views.set(key, S.mergeSessions(days));
+  if (!views.has(key)) views.set(key, { ...S.mergeSessions(days), festivalId: f.id });
   return views.get(key);
 }
 
@@ -80,7 +80,7 @@ export function festivalScreen(ctx, f) {
   const merged = viewOf(f, days);
   const acts = S.festivalActs(days);
   const ids = new Set(days.map((d) => d.id));
-  const earned = ctx.state.badges.filter((b) => ids.has(b.sessionId));
+  const earned = ctx.state.badges.filter((b) => ids.has(b.sessionId) || b.sessionId === f.id);
   const first = days.reduce((a, b) => (a.startedAt < b.startedAt ? a : b));
   const last = days.reduce((a, b) => (a.startedAt > b.startedAt ? a : b));
 

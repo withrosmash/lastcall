@@ -235,9 +235,12 @@ export function evaluate({ sessions, prefs, flags = {}, festivals = [] }) {
     if (hit) out.push({ slug, sessionId: hit.id });
   }
   // Reviews only count the days that still exist.
-  const reviewDays = festivals.map((f) => f.sessionIds.map((id) => done.find((s) => s.id === id)).filter(Boolean));
-  if (reviewDays.some((days) => S.festivalActs(days).length >= 10)) out.push({ slug: 'discovery', sessionId: null });
-  if (reviewDays.some((days) => days.length >= 3)) out.push({ slug: 'full-weekend', sessionId: null });
+  // They link to the festival itself, so its screen and card can show them.
+  const reviews = festivals.map((f) => ({ f, days: f.sessionIds.map((id) => done.find((s) => s.id === id)).filter(Boolean) }));
+  const discovered = reviews.find(({ days }) => S.festivalActs(days).length >= 10);
+  if (discovered) out.push({ slug: 'discovery', sessionId: discovered.f.id });
+  const weekend = reviews.find(({ days }) => days.length >= 3);
+  if (weekend) out.push({ slug: 'full-weekend', sessionId: weekend.f.id });
   return out;
 }
 

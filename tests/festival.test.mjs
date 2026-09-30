@@ -70,3 +70,11 @@ test('old data without festival reviews still loads', () => {
   const out = migrate({ v: 1, sessions: [], prefs: {}, badges: [], flags: {} });
   assert.deepEqual(out.festivals, []);
 });
+
+test('a festival’s time out adds up the days, not the nights between', async () => {
+  const { summarise } = await import('../js/state.js');
+  const H = 3600e3;
+  const d1 = { ...newSession(at('2026-06-26T12:00'), { mode: 'festival' }), endedAt: at('2026-06-26T12:00') + 10 * H };
+  const d2 = { ...newSession(at('2026-06-27T12:00'), { mode: 'festival' }), endedAt: at('2026-06-27T12:00') + 11 * H };
+  assert.equal(summarise(mergeSessions([d1, d2])).ms, 21 * H);
+});
