@@ -4,16 +4,17 @@
 import { el, btn, sheet, toast } from './ui.js';
 import { t } from './words.js';
 import * as S from './state.js';
-import { CHALLENGES, poolFor } from './challenges-data.js';
+import { CHALLENGES, poolFor, pickFrom } from './challenges-data.js';
 
 export { CHALLENGES };
 
 // Random from the ones that fit the mode and company you're in right now,
 // never one already done or skipped this adventure until they've all had a go.
-export function pick(session, exclude = []) {
+// `avoid` is the one on screen, so Another always changes the text even once
+// a small pool has started again.
+export function pick(session, exclude = [], avoid = null) {
   const done = new Set([...(session.challenges || []).map((c) => c.id), ...exclude]);
-  const pool = poolFor(CHALLENGES, S.currentPart(session), done);
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pickFrom(poolFor(CHALLENGES, S.currentPart(session), done), avoid);
 }
 
 // Filled before it's shown, so the text saved with the challenge reads right.
@@ -29,7 +30,7 @@ export function openChallenge(ctx, session) {
 
     const next = () => {
       skipped.push(current.id);
-      current = worded(pick(session, skipped));
+      current = worded(pick(session, skipped, current.id));
       body.textContent = current.text;
     };
 

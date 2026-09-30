@@ -71,3 +71,9 @@ export function poolFor(list, part, done) {
   const fresh = fits.filter((c) => !done.has(c.id));
   return fresh.length ? fresh : fits;
 }
+
+/** A random one from the pool, never the one already on screen unless it's the only one. */
+export function pickFrom(pool, avoidId = null) {
+  const choices = pool.length > 1 ? pool.filter((c) => c.id !== avoidId) : pool;
+  return choices[Math.floor(Math.random() * choices.length)];
+}

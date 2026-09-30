@@ -45,3 +45,13 @@ test('once every fitting challenge is done, the pool starts again', () => {
 test('a mode with nothing tagged falls back to everything', () => {
   assert.equal(poolFor(CHALLENGES, { mode: 'moon-base', company: 'group' }, new Set()).length, 43);
 });
+
+test('Another never shows the same challenge twice in a row', async () => {
+  const { pickFrom } = await import('../js/challenges-data.js');
+  const pool = poolFor(CHALLENGES, { mode: 'night', company: 'solo' }, new Set());
+  for (const c of pool) {
+    for (let i = 0; i < 50; i++) assert.notEqual(pickFrom(pool, c.id).id, c.id);
+  }
+  const one = pool.slice(0, 1);
+  assert.equal(pickFrom(one, one[0].id).id, one[0].id);
+});
