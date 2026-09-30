@@ -69,7 +69,7 @@ test('recent drinks are kept per mode', () => {
 });
 
 test('every mode is fully described', () => {
-  assert.deepEqual(MODE_KEYS, ['night', 'day']);
+  assert.deepEqual(MODE_KEYS, ['night', 'day', 'walk']);
   for (const k of MODE_KEYS) {
     const m = MODES[k];
     assert.ok(m.label, k);
@@ -80,6 +80,10 @@ test('every mode is fully described', () => {
   assert.equal(MODES.night.label, 'Night out');
   assert.equal(MODES.day.label, 'Day out');
   assert.deepEqual(MODES.day.drinks, ['Coffee', 'Tea', 'Soft drink', 'Juice', 'Pint', 'Wine', 'Low/no']);
+  assert.deepEqual(MODES.walk.drinks, ['Coffee', 'Tea', 'Soft drink', 'Pint', 'Low/no']);
+  assert.equal(MODES.walk.label, 'Walk');
+  assert.ok(MODES.walk.buttons.includes('more') && !MODES.walk.buttons.includes('drink'));
+  assert.equal(MODES.walk.morning, false);
   assert.deepEqual(COMPANY, { group: 'With friends', solo: 'On my own' });
 });
 
@@ -127,4 +131,20 @@ test('the Night out badge set is the agreed thirteen', async () => {
   const { NIGHT_BADGES } = await import('../js/modes.js');
   assert.deepEqual([...NIGHT_BADGES].sort(), ['balanced-books', 'brand-loyal', 'dry-run', 'early-doors', 'french-exit', 'ghost',
     'good-habits', 'hydro-homie', 'late-bite', 'metronome', 'mixologist', 'one-and-done', 'sunrise-service']);
+});
+
+test('pace reads minutes per kilometre, and waits for 200 m', async () => {
+  const { pace } = await import('../js/state.js');
+  assert.equal(pace(30 * 60e3, 2500), '12:00');
+  assert.equal(pace(25 * 60e3 + 30e3, 2000), '12:45');
+  assert.equal(pace(1000, 150), null);
+  assert.equal(pace(0, 0), null);
+});
+
+test('trailDistance sums the trail', async () => {
+  const { trailDistance } = await import('../js/state.js');
+  // 0.009 degrees of latitude is about 1 km.
+  const d = trailDistance([{ lat: 51.5, lng: -0.1, t: 0 }, { lat: 51.509, lng: -0.1, t: 1 }]);
+  assert.ok(Math.abs(d - 1000) < 10, String(d));
+  assert.equal(trailDistance([]), 0);
 });

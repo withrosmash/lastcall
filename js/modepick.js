@@ -10,6 +10,7 @@ import * as S from './state.js';
 const HINT = {
   night: 'Bars, clubs, the last train home.',
   day: 'Cafés, markets, somewhere new.',
+  walk: 'Parks, paths, the long way round.',
 };
 
 /** Mode tiles plus the company chips. Calls onChange({ mode, company }) on every tap. */

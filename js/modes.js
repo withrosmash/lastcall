@@ -1,6 +1,6 @@
 // The kinds of adventure. Each mode is described once, here, and screens read
-// from it rather than checking for a mode by name. Walk and Festival join in
-// later steps (docs/superpowers/specs/2026-09-30-m2-modes-design.md).
+// from it rather than checking for a mode by name. Festival joins in
+// a later step (docs/superpowers/specs/2026-09-30-m2-modes-design.md).
 // No imports, so node can test it.
 
 // Night out's list is the one the app has always had.
@@ -8,8 +8,14 @@ const NIGHT_DRINKS = ['Pint', 'Wine', 'Spirit + mixer', 'Shot', 'Cider', 'Cockta
 const BUTTONS = ['drink', 'water', 'food', 'checkin', 'challenge', 'map'];
 
 export const MODES = {
-  night: { label: 'Night out', icon: 'moon', buttons: BUTTONS, drinks: NIGHT_DRINKS, drinkHint: 'Negroni', morning: true },
-  day: { label: 'Day out', icon: 'sun', buttons: BUTTONS, drinks: ['Coffee', 'Tea', 'Soft drink', 'Juice', 'Pint', 'Wine', 'Low/no'], drinkHint: 'Flat white', morning: false },
+  night: { label: 'Night out', icon: 'moon', buttons: BUTTONS, drinks: NIGHT_DRINKS, drinkHint: 'Negroni', morning: true, headline: 'default' },
+  day: { label: 'Day out', icon: 'sun', buttons: BUTTONS, drinks: ['Coffee', 'Tea', 'Soft drink', 'Juice', 'Pint', 'Wine', 'Low/no'], drinkHint: 'Flat white', morning: false, headline: 'default' },
+  // Steps and pace lead on a walk; the drink button tucks under More for the
+  // pub at the end.
+  walk: {
+    label: 'Walk', icon: 'footprints', buttons: ['water', 'food', 'checkin', 'challenge', 'map', 'more'], labels: { food: 'Snack' },
+    drinks: ['Coffee', 'Tea', 'Soft drink', 'Pint', 'Low/no'], drinkHint: 'Oat latte', morning: false, headline: 'walk',
+  },
 };
 
 export const MODE_KEYS = Object.keys(MODES);

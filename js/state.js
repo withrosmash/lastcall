@@ -59,6 +59,20 @@ export function modeLine(s) {
 
 export const hasMorning = (s) => !!MODES[currentPart(s).mode]?.morning;
 
+/** Minutes per kilometre as "m:ss", or null until there's 200 m to go on. */
+export function pace(ms, m) {
+  if (!(m >= 200) || !(ms > 0)) return null;
+  const secPerKm = Math.round(ms / 1000 / (m / 1000));
+  return `${Math.floor(secPerKm / 60)}:${String(secPerKm % 60).padStart(2, '0')}`;
+}
+
+/** Metres along a trail. A slice of an adventure has no distanceM of its own. */
+export function trailDistance(trail = []) {
+  let d = 0;
+  for (let i = 1; i < trail.length; i++) d += haversineM(trail[i - 1].lat, trail[i - 1].lng, trail[i].lat, trail[i].lng);
+  return d;
+}
+
 export const hasMode = (s, mode) => partsOf(s).some((p) => p.mode === mode);
 
 /** The session as seen from one mode: only what was logged while in it. */

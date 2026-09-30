@@ -266,14 +266,21 @@ export function liveScreen(ctx) {
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
       av.canvas),
 
-    tiles(
-      tile('Drinks', s.drinks.length, { tone: 'drinks' }),
-      waterTile(ctx, s),
-      ctx.stepsAvailable
-        ? tile('Steps', s.steps.toLocaleString())
-        : tile('Stops', s.pins.length),
-      tile('Distance', km(s.distanceM), { unit: 'km' }),
-    ),
+    MODES[S.currentPart(s).mode].headline === 'walk'
+      ? tiles(
+        ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : tile('Stops', s.pins.length),
+        tile('Distance', km(s.distanceM), { unit: 'km' }),
+        paceTile(S.elapsedMs(s), s.distanceM),
+        waterTile(ctx, s),
+      )
+      : tiles(
+        tile('Drinks', s.drinks.length, { tone: 'drinks' }),
+        waterTile(ctx, s),
+        ctx.stepsAvailable
+          ? tile('Steps', s.steps.toLocaleString())
+          : tile('Stops', s.pins.length),
+        tile('Distance', km(s.distanceM), { unit: 'km' }),
+      ),
 
     behind ? el('div', { class: 'warn' },
       el('div', { class: 'warn__h', text: `${words(since)} drinks since your last water.` }),
@@ -305,19 +312,44 @@ export function liveScreen(ctx) {
 // takes the last half: it is the one irreversible action here and gets
 // tapped at 2am, so it never sits in a three-up row.
 function liveButtons(ctx, s) {
+  const mode = S.currentPart(s).mode;
+  const label = (k, fallback) => MODES[mode].labels?.[k] || fallback;
   const make = {
     water: () => btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
-    food: () => btn('Food', 'btn--sec', () => ctx.logMeal()),
+    food: () => btn(label('food', 'Food'), 'btn--sec', () => ctx.logMeal()),
+    more: () => btn('More', 'btn--sec', () => moreSheet(ctx)),
     checkin: () => btn('Check in', 'btn--sec', () => checkIn(ctx, s), { iconName: 'map-pin' }),
     challenge: () => btn('Challenge', 'btn--sec', () => ctx.openChallenge(ctx, s)),
     map: () => btn('Map', 'btn--sec', () => ctx.go('map')),
   };
-  const keys = MODES[S.currentPart(s).mode].buttons;
-  const rest = [...keys.filter((k) => k !== 'drink' && make[k]).map((k) => make[k]()),
-    btn(t('End {n}'), 'btn--sec', () => confirmEnd(ctx))];
+  const keys = MODES[mode].buttons;
+  // The mode's first button leads full width: Add drink on a night out,
+  // Hydrate on a walk.
+  const [lead, ...others] = keys.filter((k) => k === 'drink' || make[k]);
+  const top = lead === 'drink' ? addDrinkButton(ctx) : make[lead]();
+  if (lead !== 'drink') top.classList.add('btn--lg');
+  const rest = [...others.map((k) => make[k]()), btn(t('End {n}'), 'btn--sec', () => confirmEnd(ctx))];
   const rows = [];
   for (let i = 0; i < rest.length; i += 2) rows.push(el('div', { class: 'btn-pair' }, rest.slice(i, i + 2)));
-  return [keys.includes('drink') ? addDrinkButton(ctx) : null, ...rows];
+  return [top, ...rows];
+}
+
+// Pace over the whole walk so far, stops included: it's how long the walk is
+// taking, not a running split.
+function paceTile(ms, m) {
+  const p = S.pace(ms, m);
+  return p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', 'Not yet');
+}
+
+// Modes that keep the drink button out of the way put it here.
+function moreSheet(ctx) {
+  sheet((close) => [
+    el('h2', { class: 'title', style: 'margin:0', text: 'More' }),
+    foot(
+      btn('Add drink', 'btn--pri', () => { close(); pickDrink(ctx.state.prefs, liveMode(ctx), (kind) => ctx.logDrink(kind)); }, { iconName: 'plus', lg: true }),
+      btn('Keep going', 'btn--sec', close),
+    ),
+  ]);
 }
 
 // The water tile doubles as the way into its reminder setting: it's where you
@@ -454,12 +486,19 @@ export function recapScreen(ctx, session) {
 
     glass(routeSvg(s, 190)),
 
-    tiles(
-      tile('Drinks', sum.drinks, { tone: 'drinks' }),
-      tile('Water', sum.waters),
-      ctx.stepsAvailable ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
-      tile('Stops', sum.stops),
-    ),
+    MODES[S.currentPart(s).mode].headline === 'walk'
+      ? tiles(
+        sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Water', sum.waters),
+        tile('Distance', km(sum.distanceM), { unit: 'km' }),
+        paceTile(sum.ms, sum.distanceM),
+        tile('Stops', sum.stops),
+      )
+      : tiles(
+        tile('Drinks', sum.drinks, { tone: 'drinks' }),
+        tile('Water', sum.waters),
+        ctx.stepsAvailable ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
+        tile('Stops', sum.stops),
+      ),
 
     gapNote(s),
 
