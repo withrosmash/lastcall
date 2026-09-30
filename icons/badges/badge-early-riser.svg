@@ -8,5 +8,5 @@
 <circle cx="256" cy="256" r="225" fill="url(#early-riser-bloom)"></circle>
 <path d="M 63.7 145 A 222 222 0 0 1 448.3 145" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" stroke-linecap="round"></path>
 <circle cx="256" cy="256" r="190" fill="none" stroke="rgba(239,159,39,0.2)" stroke-width="7"></circle>
-<g transform="translate(120 120) scale(11.3333)" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8"></path><path d="m4.93 10.93 1.41 1.41"></path><path d="M2 18h2"></path><path d="M20 18h2"></path><path d="m19.07 10.93-1.41 1.41"></path><path d="M22 22H2"></path><path d="m8 6 4-4 4 4"></path><path d="M16 18a4 4 0 0 0-8 0"></path></g>
+<g transform="translate(120 120) scale(11.3333)" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M5 3 2 6"></path><path d="m22 6-3-3"></path><path d="M6.38 18.7 4 21"></path><path d="M17.64 18.67 20 21"></path></g>
 </svg>

@@ -8,5 +8,5 @@
 <circle cx="256" cy="256" r="225" fill="url(#day-into-night-bloom)"></circle>
 <path d="M 63.7 145 A 222 222 0 0 1 448.3 145" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" stroke-linecap="round"></path>
 <circle cx="256" cy="256" r="190" fill="none" stroke="rgba(240,108,155,0.2)" stroke-width="7"></circle>
-<g transform="translate(120 120) scale(11.3333)" fill="none" stroke="#F06C9B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V2"></path><path d="m4.93 10.93 1.41 1.41"></path><path d="M2 18h2"></path><path d="M20 18h2"></path><path d="m19.07 10.93-1.41 1.41"></path><path d="M22 22H2"></path><path d="m16 6-4 4-4-4"></path><path d="M16 18a4 4 0 0 0-8 0"></path></g>
+<g transform="translate(120 120) scale(11.3333)" fill="none" stroke="#F06C9B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"></path><path d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715"></path><path d="M16 12a4 4 0 0 0-4-4"></path><path d="m19 5-1.256 1.256"></path><path d="M20 12h2"></path></g>
 </svg>

@@ -36,6 +36,13 @@ function template(slug, accent, glyph) {
 `;
 }
 
+// Glyphs we chose over the delivery's: its sunset/sunrise pair sat too close to
+// Early Doors (also a sun on the horizon) at badge size. Lucide, same as theirs.
+const GLYPH = {
+  'day-into-night': '<path d="M12 2v2"></path><path d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715"></path><path d="M16 12a4 4 0 0 0-4-4"></path><path d="m19 5-1.256 1.256"></path><path d="M20 12h2"></path>',
+  'early-riser': '<circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M5 3 2 6"></path><path d="m22 6-3-3"></path><path d="M6.38 18.7 4 21"></path><path d="M17.64 18.67 20 21"></path>',
+};
+
 let n = 0;
 for (const f of (await readdir(from)).filter((f) => f.endsWith('.svg') && !f.endsWith('-light.svg'))) {
   const s = await readFile(resolve(from, f), 'utf8');
@@ -44,7 +51,7 @@ for (const f of (await readdir(from)).filter((f) => f.endsWith('.svg') && !f.end
   const accent = g?.[1].match(/stroke="(#[0-9A-Fa-f]{6})"/)?.[1]?.toUpperCase();
   if (!g || !RGB[accent]) { console.warn(`skipped ${f}: no glyph group or unknown accent ${accent}`); continue; }
   const slug = basename(f, '.svg');
-  await writeFile(resolve(root, `icons/badges/badge-${slug}.svg`), template(slug, accent, g[2].trim()));
+  await writeFile(resolve(root, `icons/badges/badge-${slug}.svg`), template(slug, accent, GLYPH[slug] || g[2].trim()));
   n++;
 }
 console.log(`imported ${n} badges into icons/badges/`);
