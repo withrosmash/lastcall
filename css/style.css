@@ -423,3 +423,12 @@ canvas.avatar{
 .mode-chip{align-self:flex-start;gap:7px;color:var(--text);padding:0 12px 0 13px}
 .mode-chip svg:first-child{color:var(--mint)}
 .mode-chip svg:last-child{color:var(--muted);margin-left:-1px}
+
+/* ---------- festival reviews ---------- */
+.pickrow{border:1px solid transparent}
+.pickrow[aria-pressed="true"]{border-color:var(--mint)}
+.pickrow .listrow__d{display:flex;align-items:center;gap:10px}
+.pickrow__box{width:20px;height:20px;border-radius:6px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--mint);flex:0 0 auto}
+.pickrow[aria-pressed="true"] .pickrow__box{border-color:var(--mint)}
+.chip--static{pointer-events:none}
+.badge-row{display:flex;flex-wrap:wrap;gap:10px}

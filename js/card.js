@@ -198,7 +198,7 @@ function makeState(s, allBadges = []) {
   // Badges the night itself earned, art preloaded for the canvas. The SVGs are
   // same-origin, so drawing them never taints the export.
   const sessionBadges = allBadges
-    .filter((b) => b.sessionId === s.id)
+    .filter((b) => (s.sessionIds || [s.id]).includes(b.sessionId))
     .map((b) => BADGES.find((m) => m.slug === b.slug))
     .filter(Boolean)
     .slice(0, 4);

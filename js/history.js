@@ -8,6 +8,7 @@ import { avatarLook } from './wardrobe.js';
 import { saveTextFile } from './keepalive.js';
 import { BADGES } from './badges-data.js';
 import { t } from './words.js';
+import { canMakeFestival } from './festival.js';
 
 /* ---------- 11 history ---------- */
 
@@ -67,6 +68,8 @@ export function historyScreen(ctx) {
         )
       : null,
 
+    ...festivalRows(ctx),
+
     el('div', { class: 'eb', text: t('{Ns}') }),
     el('div', { class: 'stack', style: 'gap:6px' },
       shown.slice(0, 40).map((s) => {
@@ -86,6 +89,25 @@ export function historyScreen(ctx) {
       btn('Export history', 'btn--sec', () => exportData(), { iconName: 'download' }),
       btn('Settings', 'btn--sec', () => ctx.go('settings')),
     ),
+  ];
+}
+
+// Festival reviews, newest first, and the way to make one once there are two
+// festival days to bring together.
+function festivalRows(ctx) {
+  const reviews = ctx.state.festivals || [];
+  if (!reviews.length && !canMakeFestival(ctx)) return [];
+  return [
+    el('div', { class: 'eb', text: 'Festivals' }),
+    el('div', { class: 'stack', style: 'gap:6px' },
+      reviews.map((f) => el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('festival', f) },
+        el('span', { class: 'listrow__d', text: f.name }),
+        el('span', { class: 'listrow__m' }, el('span', { text: `${f.sessionIds.filter((id) => ctx.state.sessions.some((s) => s.id === id)).length} days` })))),
+      canMakeFestival(ctx)
+        ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('festivalPick') },
+          el('span', { class: 'listrow__d', text: 'Make a festival' }),
+          el('span', { class: 'listrow__m' }, icon('plus', { size: 14 })))
+        : null),
   ];
 }
 

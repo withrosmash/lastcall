@@ -12,6 +12,7 @@ import { historyScreen, detailScreen, settingsScreen, appearanceScreen } from '.
 import { cardScreen, shareScreen } from './card.js';
 import * as badges from './badges.js';
 import { atlasScreen } from './map.js';
+import { festivalPickScreen, festivalScreen } from './festival.js';
 import { openChallenge } from './challenges.js';
 import * as steps from './steps.js';
 import * as notify from './notify.js';
@@ -31,7 +32,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, back, render, save, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
+  go, back, render, save, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, makeFestival, deleteFestival, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
   setTheme,
 };
@@ -49,6 +50,8 @@ const SCREENS = {
   settings: { build: settingsScreen, bloom: 'hero' },
   badges: { build: badges.badgesScreen, bloom: 'hero' },
   atlas: { build: atlasScreen, bloom: 'none' },
+  festivalPick: { build: festivalPickScreen, bloom: 'none' },
+  festival: { build: (c) => festivalScreen(c, c.arg), bloom: 'hero' },
   avatar: { build: avatarScreen, bloom: 'hero' },
   appearance: { build: appearanceScreen, bloom: 'hero' },
   morning: { build: (c) => morningScreen(c, c.arg), bloom: 'hero' },
@@ -338,6 +341,24 @@ function logMeal() {
     render();
     toast('Undone.');
   });
+}
+
+/* ---------- festival reviews ---------- */
+
+function makeFestival({ name, sessionIds }) {
+  const f = { id: 'fv' + Date.now().toString(36), name, sessionIds, createdAt: Date.now() };
+  ctx.state.festivals = [f, ...(ctx.state.festivals || [])];
+  const fresh = syncBadges();
+  save();
+  go('festival', f, { replace: true });
+  const meta = fresh.length && badges.BADGES.find((b) => b.slug === fresh[0].slug);
+  toast(meta ? `Festival made. Badge earned: ${meta.name}.` : 'Festival made.');
+}
+
+function deleteFestival(id) {
+  ctx.state.festivals = (ctx.state.festivals || []).filter((f) => f.id !== id);
+  save();
+  go('history', null, { replace: true });
 }
 
 function logSet(name) {
