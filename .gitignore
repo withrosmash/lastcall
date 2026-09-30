@@ -17,3 +17,6 @@ android/app/src/main/assets/capacitor.plugins.json
 *.apk
 *.aab
 *.keystore
+
+# Plan execution scratch (superpowers)
+.superpowers/
