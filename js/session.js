@@ -270,7 +270,7 @@ export function liveScreen(ctx) {
       ? tiles(
         ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : tile('Stops', s.pins.length),
         tile('Distance', km(s.distanceM), { unit: 'km' }),
-        paceTile(S.elapsedMs(s), s.distanceM),
+        paceTile(S.walkPace(s)),
         waterTile(ctx, s),
       )
       : tiles(
@@ -334,10 +334,9 @@ function liveButtons(ctx, s) {
   return [top, ...rows];
 }
 
-// Pace over the whole walk so far, stops included: it's how long the walk is
-// taking, not a running split.
-function paceTile(ms, m) {
-  const p = S.pace(ms, m);
+// Pace over the walk so far, stops included: it's how long the walk is
+// taking, not a running split. Only the walk part counts.
+function paceTile(p) {
   return p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', 'Not yet');
 }
 
@@ -486,11 +485,13 @@ export function recapScreen(ctx, session) {
 
     glass(routeSvg(s, 190)),
 
-    MODES[S.currentPart(s).mode].headline === 'walk'
+    // Walk tiles only for a walk from start to finish; a night out with a
+    // walk home keeps its drinks.
+    S.onlyMode(s, 'walk')
       ? tiles(
         sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Water', sum.waters),
         tile('Distance', km(sum.distanceM), { unit: 'km' }),
-        paceTile(sum.ms, sum.distanceM),
+        paceTile(S.walkPace(s)),
         tile('Stops', sum.stops),
       )
       : tiles(

@@ -138,3 +138,8 @@ test('the six Walk badges are in the list', () => {
     assert.equal(BADGES.find((x) => x.slug === slug)?.cat, 'Walk', slug);
   }
 });
+
+test('Early Riser: a walk home after a night out does not count', () => {
+  const home = adv('2026-09-26T21:00', [['night', 0], ['walk', 7.5]]);
+  assert.ok(!earned([home]).has('early-riser'));
+});

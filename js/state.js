@@ -73,6 +73,27 @@ export function trailDistance(trail = []) {
   return d;
 }
 
+/** The time spans spent in one mode, as [start, end] pairs; an open one ends now. */
+export function modeSpans(s, mode, now = Date.now()) {
+  const parts = partsOf(s);
+  const spans = [];
+  parts.forEach((p, i) => {
+    if (p.mode !== mode) return;
+    const end = i + 1 < parts.length ? parts[i + 1].t : (s.endedAt ?? now);
+    if (spans.length && spans.at(-1)[1] === p.t) spans.at(-1)[1] = end;
+    else spans.push([p.t, end]);
+  });
+  return spans;
+}
+
+/** Pace over the walk part only, so a night out with a walk home reads true. */
+export function walkPace(s, now = Date.now()) {
+  const ms = modeSpans(s, 'walk', now).reduce((n, [a, b]) => n + (b - a), 0);
+  return pace(ms, trailDistance(sliceTo(s, 'walk').trail));
+}
+
+export const onlyMode = (s, mode) => partsOf(s).every((p) => p.mode === mode);
+
 export const hasMode = (s, mode) => partsOf(s).some((p) => p.mode === mode);
 
 /** The session as seen from one mode: only what was logged while in it. */

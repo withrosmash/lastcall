@@ -128,7 +128,12 @@ const COFFEE = /coffee|flat white|latte|cappuccino|americano|espresso|macchiato|
 
 // Walk badges see only the walk part; Head Space reads the part's company.
 const WALK_CHECKS = {
-  'early-riser': (w) => { const h = new Date(w.startedAt).getHours(); return h >= 4 && h < 8; },
+  // An early start, not the walk home: the walk can't follow a night out.
+  'early-riser': (w, s) => {
+    const h = new Date(w.startedAt).getHours();
+    const first = S.partsOf(s).findIndex((p) => p.mode === 'walk');
+    return h >= 4 && h < 8 && !S.partsOf(s).slice(0, first).some((p) => p.mode === 'night');
+  },
   'trailblazer': (w) => S.trailDistance(w.trail) >= 15_000,
   'tea-break': (w) => w.drinks.some((d) => COFFEE.test(d.kind) || /\btea\b/i.test(d.kind)),
 };
@@ -197,7 +202,7 @@ export function evaluate({ sessions, prefs, flags = {} }) {
 
   const walks = done.filter((s) => S.hasMode(s, 'walk'));
   for (const [slug, check] of Object.entries(WALK_CHECKS)) {
-    const hit = walks.find((s) => check(S.sliceTo(s, 'walk')));
+    const hit = walks.find((s) => check(S.sliceTo(s, 'walk'), s));
     if (hit) out.push({ slug, sessionId: hit.id });
   }
   const alone = walks.find((s) => S.partsOf(s).some((p) => p.mode === 'walk' && p.company === 'solo'));

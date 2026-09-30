@@ -148,3 +148,15 @@ test('trailDistance sums the trail', async () => {
   assert.ok(Math.abs(d - 1000) < 10, String(d));
   assert.equal(trailDistance([]), 0);
 });
+
+test('walk pace counts only the walk part', async () => {
+  const { walkPace, onlyMode } = await import('../js/state.js');
+  const t0 = 0, min = 60e3;
+  // An hour out, then a 30-minute walk covering 2.5 km.
+  const s = withParts([{ t: t0, mode: 'night', company: 'group' }, { t: t0 + 60 * min, mode: 'walk', company: 'group' }]);
+  s.endedAt = t0 + 90 * min;
+  s.trail = Array.from({ length: 6 }, (_, i) => ({ t: t0 + 60 * min + i * 6 * min, lat: 51.5 + i * 0.0044966, lng: -0.1 }));
+  assert.equal(walkPace(s), '12:00');
+  assert.equal(onlyMode(s, 'walk'), false);
+  assert.equal(onlyMode(withParts([{ t: 0, mode: 'walk', company: 'solo' }]), 'walk'), true);
+});
