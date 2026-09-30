@@ -100,8 +100,8 @@ const AGGREGATE_CHECKS = {
   'century-club': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 100_000,
   'archivist': (done) => done.length >= 25,
   'ringleader': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 25,
-  // All-time, not per night: the pool is 26 dares, so 100 in one night would
-  // mean running the whole set four times over.
+  // All-time, not per adventure: 100 in one go would mean running the whole
+  // challenge list twice over.
   'chaos-agent': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 100,
   'long-haul': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 50_000,
   'just-add-water': (done) => done.reduce((n, s) => n + s.waters.length, 0) >= 50,
@@ -118,10 +118,13 @@ const DAY_CHECKS = {
     return parts.some((p, i) => p.mode === 'day' && parts.slice(i + 1).some((q) => q.mode === 'night'));
   },
   'tourist': (d) => d.pins.length >= 6,
-  'brunch-club': (d) => d.meals.some((m) => new Date(m.t).getHours() < 11),
-  'caffeine-trail': (d) => d.drinks.filter((x) => x.kind === 'Coffee').length >= 3,
+  'brunch-club': (d) => d.meals.some((m) => { const h = new Date(m.t).getHours(); return h >= 6 && h < 12; }),
+  'caffeine-trail': (d) => d.drinks.filter((x) => COFFEE.test(x.kind)).length >= 3,
   'sunday-best': (d) => new Date(d.startedAt).getDay() === 0,
 };
+
+// Picked from the list or typed in: anything that's plainly a coffee counts.
+const COFFEE = /coffee|flat white|latte|cappuccino|americano|espresso|macchiato|mocha|cortado|piccolo/i;
 
 const placeKey = (p) => (p.name || '').trim().toLowerCase();
 

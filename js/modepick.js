@@ -21,7 +21,9 @@ function chooser(initial, onChange) {
   const paint = () => {
     tiles.replaceChildren(...MODE_KEYS.map((k) => el('button', {
       class: 'mode-tile press', type: 'button', 'aria-pressed': pick.mode === k ? 'true' : 'false',
-      onclick: () => { pick.mode = k; paint(); onChange({ ...pick }); },
+      // Night out starts with friends; going solo on a night out is a choice
+      // you make, not one carried over from last time's day out.
+      onclick: () => { pick.mode = k; if (k === 'night') pick.company = 'group'; paint(); onChange({ ...pick }); },
     },
     icon(MODES[k].icon, { size: 22 }),
     el('span', { class: 'mode-tile__name', text: MODES[k].label }),
@@ -40,7 +42,9 @@ const startLabel = (mode) => `Start ${MODES[mode].label.toLowerCase()}`;
 /** Start adventure: pick a mode and company, remembered from last time. */
 export function modePicker(ctx) {
   const prefs = ctx.state.prefs;
-  let pick = { mode: MODES[prefs.lastMode] ? prefs.lastMode : 'night', company: COMPANY[prefs.lastCompany] ? prefs.lastCompany : 'group' };
+  const mode = MODES[prefs.lastMode] ? prefs.lastMode : 'night';
+  const company = mode !== 'night' && COMPANY[prefs.lastCompany] ? prefs.lastCompany : 'group';
+  let pick = { mode, company };
   sheet((close) => {
     const go = btn(startLabel(pick.mode), 'btn--pri', () => { close(); ctx.beginNight(pick); }, { lg: true });
     return [

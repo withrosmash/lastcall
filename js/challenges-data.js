@@ -58,6 +58,15 @@ export const CHALLENGES = [
   { id: 'photobomb', text: 'Get your group into the background of someone else’s photo without them noticing.', modes: ['festival', 'day'], group: true },
   { id: 'new-chant', text: 'Get your group chanting for an act you’ve only just discovered.', modes: ['festival'], group: true },
   { id: 'oldest-date', text: 'Race your group to find the oldest date written or carved on anything nearby.', modes: ['walk', 'day'], group: true },
+  // On your own on a night out (M3). Also fit other modes where they work.
+  { id: 'best-name', text: 'Find the best-named thing on the menu and tell whoever’s serving why it won.', modes: ['night', 'day'], group: false },
+  { id: 'staff-song', text: 'Ask whoever’s working which song they’d play if it were up to them.', modes: ['night'], group: false },
+  { id: 'oldest-thing', text: 'Find the oldest-looking thing in the room and make up its life story.', modes: ['night', 'day'], group: false },
+  { id: 'next-time', text: 'Ask someone nearby where you should go next time. Write it down.', modes: ['night', 'day', 'festival'], group: false },
+  { id: 'one-fact', text: 'Learn someone’s name and one thing about them you’d never have guessed.', modes: ['night', 'day', 'festival'], group: false },
+  { id: 'dramatic-angle', text: 'Take a photo of the room from the most dramatic angle you can find.', modes: ['night', 'day'], group: false },
+  { id: 'three-songs', text: 'Rate the next three songs out of ten. If one gets a ten, find out who it’s by.', modes: ['night', 'festival'], group: false },
+  { id: 'opening-line', text: 'Write the opening line of a novel set right here, in your notes app.', modes: ALL, group: false },
 ];
 
 /**

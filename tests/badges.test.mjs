@@ -41,9 +41,15 @@ test('Explorer: three places never pinned before', () => {
   assert.ok(!earned([before, adv('2026-09-26T10:00', [['day', 0]], { pins: three })]).has('explorer'));
 });
 
-test('Brunch Club: food before 11am on a day out', () => {
-  assert.ok(earned([adv('2026-09-26T09:00', [['day', 0]], { meals: [{ t: at('2026-09-26T10:30') }] })]).has('brunch-club'));
-  assert.ok(!earned([adv('2026-09-26T09:00', [['night', 0]], { meals: [{ t: at('2026-09-26T10:30') }] })]).has('brunch-club'));
+test('Brunch Club: food between 6am and midday on a day out', () => {
+  const meal = (iso, mode = 'day') => earned([adv('2026-09-26T05:00', [[mode, 0]], { meals: [{ t: at(iso) }] })]).has('brunch-club');
+  assert.ok(meal('2026-09-26T06:00'));
+  assert.ok(meal('2026-09-26T11:59'));
+  assert.ok(!meal('2026-09-26T12:00'));
+  assert.ok(!meal('2026-09-26T05:30'));
+  assert.ok(!meal('2026-09-26T10:30', 'night'));
+  const lateDay = adv('2026-09-26T20:00', [['day', 0]], { meals: [{ t: at('2026-09-27T00:30') }] });
+  assert.ok(!earned([lateDay]).has('brunch-club'));
 });
 
 test('Caffeine Trail: three coffees on a day out', () => {
@@ -51,6 +57,8 @@ test('Caffeine Trail: three coffees on a day out', () => {
   const drink = (kind, i) => ({ t: t0 + i * H, kind });
   assert.ok(earned([adv('2026-09-26T09:00', [['day', 0]], { drinks: [0, 1, 2].map((i) => drink('Coffee', i)) })]).has('caffeine-trail'));
   assert.ok(!earned([adv('2026-09-26T09:00', [['day', 0]], { drinks: [drink('Coffee', 0), drink('Coffee', 1), drink('Tea', 2)] })]).has('caffeine-trail'));
+  const typed = [drink('Flat white', 0), drink('oat latte', 1), drink('Espresso', 2)];
+  assert.ok(earned([adv('2026-09-26T09:00', [['day', 0]], { drinks: typed })]).has('caffeine-trail'));
 });
 
 test('Sunday Best: a day out on a Sunday', () => {

@@ -1,7 +1,7 @@
 // Generated from the Claude Design badge delivery (badges.json), plus the six
 // round 2 badges that unlock avatar items (design/BADGES-ROUND-2.md).
 // slug/name/criteria/accent/cat/hidden are the design system's own manifest;
-// evaluation logic lives in badges.js.
+// evaluation logic lives in badge-checks.js.
 export const BADGES = [
   {
     "slug": "first-night",
@@ -326,7 +326,7 @@ export const BADGES = [
   {
     "slug": "explorer",
     "name": "Explorer",
-    "criteria": "3 stops you’ve never been to before",
+    "criteria": "3 new stops on a day out",
     "accent": "forest",
     "cat": "Day out",
     "hidden": false
@@ -334,7 +334,7 @@ export const BADGES = [
   {
     "slug": "brunch-club",
     "name": "Brunch Club",
-    "criteria": "Food before 11am on a day out",
+    "criteria": "Food between 6am and midday on a day out",
     "accent": "amber",
     "cat": "Day out",
     "hidden": false
