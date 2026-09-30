@@ -1,15 +1,18 @@
 // Pure session model. No DOM, no storage — everything here is a plain
 // transform so the same code can be reasoned about and tested in isolation.
 
+import { MODES } from './modes.js';
+
 export const TRAIL_MIN_M = 25;
 export const TRAIL_MIN_MS = 60_000;
 export const AUTO_END_MS = 14 * 60 * 60 * 1000;
 
-export function newSession(now = Date.now()) {
+export function newSession(now = Date.now(), { mode = 'night', company = 'group' } = {}) {
   return {
     id: 's' + now.toString(36),
     startedAt: now,
     endedAt: null,
+    parts: [{ t: now, mode, company }],
     drinks: [],
     waters: [],
     meals: [],
@@ -21,6 +24,40 @@ export function newSession(now = Date.now()) {
     place: null,
   };
 }
+
+/* ---------- modes ----------
+   An adventure is a run of parts, one per switch of mode or company. Sessions
+   from before modes have no parts and read as one Night out with friends. */
+
+export function partsOf(s) {
+  return s.parts?.length ? s.parts : [{ t: s.startedAt, mode: 'night', company: 'group' }];
+}
+
+export function partAt(s, t) {
+  const parts = partsOf(s);
+  let found = parts[0];
+  for (const p of parts) if (p.t <= t) found = p;
+  return found;
+}
+
+export const currentPart = (s) => partsOf(s).at(-1);
+
+/** Appends a part when the mode or company changes. Returns whether it did. */
+export function switchPart(s, { mode, company }, now = Date.now()) {
+  const cur = currentPart(s);
+  if (cur.mode === mode && cur.company === company) return false;
+  s.parts = [...partsOf(s), { t: now, mode, company }];
+  return true;
+}
+
+/** "Night out", or "Day out, then Night out" for a switched adventure. */
+export function modeLine(s) {
+  const seq = [];
+  for (const p of partsOf(s)) if (seq.at(-1) !== p.mode) seq.push(p.mode);
+  return seq.map((m) => MODES[m]?.label || m).join(', then ');
+}
+
+export const hasMorning = (s) => !!MODES[currentPart(s).mode]?.morning;
 
 export function addDrink(s, kind, now = Date.now()) {
   s.drinks.push({ t: now, kind: kind || 'Drink' });
