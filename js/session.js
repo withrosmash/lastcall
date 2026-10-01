@@ -1,9 +1,10 @@
 import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast, icon, iconBtn,
-         hms, hm, longDuration, clockTime, shortDate, upperDate, km, words } from './ui.js';
+         hms, hm, longDuration, clockTime, shortDate, upperDate, km, words, currentTheme } from './ui.js';
 import * as S from './state.js';
 import { pickDrink } from './drinks.js';
-import { MODES, recentFor } from './modes.js';
-import { modePicker, modeChip } from './modepick.js';
+import { MODES, MODE_KEYS, recentFor } from './modes.js';
+import { modePicker, modeChip, HINT } from './modepick.js';
+import { bloomCss } from './glow.js';
 import { wordmarkSvg } from './wordmark.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
@@ -87,7 +88,8 @@ export function startScreen(ctx) {
 }
 
 /* ---------- first launch ----------
-   Four steps, one idea each (design/round2/designs/Extras, 8c). The avatar
+   Five steps, one idea each (design/round2/designs/Extras, 8c, plus the
+   four kinds of adventure from M6). The avatar
    introduces itself and stays at the top, reacting to each step. Each
    permission step says why it's needed and what still works without it.
    Only for a genuinely new install: anyone with a night recorded skips it. */
@@ -98,6 +100,13 @@ const ONBOARD = [
     body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like.',
     note: 'No account, no sign-up. Everything stays on the phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
+  },
+  {
+    // A preview only: tapping a kind dresses the avatar for it and saves nothing.
+    eyebrow: 'Four kinds', title: 'Four kinds of {n}', modes: true,
+    body: 'Choose one when you start. Each has its own colour, buttons and challenges, and you can switch partway if plans change.',
+    note: 'Tap one to see what your avatar wears for it.',
+    primary: 'Next', secondary: null, face: null,
   },
   {
     eyebrow: 'Location', title: 'Your phone will be in your pocket',
@@ -157,14 +166,34 @@ export function onboardingScreen(ctx) {
     step.brand
       ? el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(15))
       : el('div', { class: 'eb eb--mint-dim', text: step.eyebrow }),
-    el('h1', { class: 'display', style: 'margin-top:10px', text: step.title }),
+    el('h1', { class: 'display', style: 'margin-top:10px', text: t(step.title) }),
     el('p', { class: 'body', style: 'margin:12px 0 0', text: t(step.body) }),
+    step.modes ? modeRow(ctx, av) : null,
     el('p', { class: 'cap', style: 'margin:10px 0 0;color:var(--mint-dim)', text: step.note }),
     foot(
       btn(step.primary, 'btn--pri', allow, { lg: true }),
-      btn(step.secondary, 'btn--sec', () => (i === 0 ? ctx.go('avatar') : next())),
+      step.secondary ? btn(step.secondary, 'btn--sec', () => (i === 0 ? ctx.go('avatar') : next())) : null,
     ),
   ];
+}
+
+// The four kinds in their glows. Tapping one dresses the avatar for it, the
+// way it will look on that kind of adventure.
+function modeRow(ctx, av) {
+  const look = avatarLook(ctx);
+  const row = el('div', { class: 'mode-row', role: 'group', 'aria-label': t('Kinds of {n}') });
+  const show = (k) => {
+    row.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === k ? 'true' : 'false'));
+    av.setLook(dressedFor(ctx, look, k));
+    av.play('checkin');
+  };
+  row.append(...MODE_KEYS.map((k) => el('button', {
+    class: 'mode-tile mode-tile--mini press', type: 'button', 'data-mode': k, 'aria-pressed': 'false',
+    'aria-label': `${MODES[k].label}. ${HINT[k]}`,
+    style: `background:${bloomCss(MODES[k].glow, currentTheme()).hero},var(--surface)`,
+    onclick: () => show(k),
+  }, icon(MODES[k].icon, { size: 20 }), el('span', { class: 'mode-tile__name', text: MODES[k].label }))));
+  return row;
 }
 
 /* ---------- the morning after ----------

@@ -8,7 +8,7 @@ import { MODES, MODE_KEYS, COMPANY } from './modes.js';
 import * as S from './state.js';
 
 // One line each, so the tiles say what a mode is for rather than just naming it.
-const HINT = {
+export const HINT = {
   night: 'Bars, clubs, the last train home.',
   day: 'Cafés, markets, somewhere new.',
   walk: 'Parks, paths, the long way round.',
