@@ -734,7 +734,7 @@ function drawRouteCard(g, w, h, want) {
   if (want('title') && title) drawText(g, title, M, M + 6, { size: 64, weight: 700, color: T.text, spacing: -1 });
   const noRoute = trail.length < 2;
   if (want('route') && on.route.on && !noRoute) {
-    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.map((p) => SM.toCard(frame, p.lat, p.lng)), T);
+    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.filter((p) => p.lat != null).map((p) => SM.toCard(frame, p.lat, p.lng)), T);
     else outlineRoute(g, region, T);
   }
 

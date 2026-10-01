@@ -171,3 +171,16 @@ test('a mode or company this build does not know reads as Night out with friends
   assert.equal(modeLine(withParts([{ t: 0, mode: 'moon-base', company: 'group' }])), 'Night out');
   assert.equal(s.parts[0].mode, 'moon-base');
 });
+
+test('a stop saved without a position gets the next fix', async () => {
+  const { addPin, addFix, placePending } = await import('../js/state.js');
+  const s = newSession(0);
+  addPin(s, { lat: null, lng: null, name: 'The Crown' }, 100);
+  assert.equal(s.pins[0].lat, null);
+  addFix(s, { lat: 51.5, lng: -0.12, t: 200 });
+  placePending(s, s.trail.at(-1));
+  assert.deepEqual([s.pins[0].lat, s.pins[0].lng], [51.5, -0.12]);
+  addPin(s, { lat: 51.6, lng: -0.1, name: 'Placed' }, 300);
+  placePending(s, { lat: 1, lng: 1, t: 400 });
+  assert.equal(s.pins[1].lat, 51.6);
+});

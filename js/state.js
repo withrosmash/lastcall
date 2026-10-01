@@ -206,6 +206,12 @@ export function addPin(s, { lat, lng, name, note }, now = Date.now()) {
   return s;
 }
 
+/** A stop named before the GPS had a position takes the first one that arrives. */
+export function placePending(s, fix) {
+  for (const p of s.pins) if (p.lat == null && fix && p.t <= fix.t) { p.lat = fix.lat; p.lng = fix.lng; }
+  return s;
+}
+
 // Returns true when the fix was actually recorded. Points are throttled so a
 // ten-hour night stays a few hundred entries rather than tens of thousands.
 export function addFix(s, { lat, lng, t = Date.now() }) {

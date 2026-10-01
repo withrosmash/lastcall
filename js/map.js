@@ -130,6 +130,7 @@ function setMe(fix) {
 }
 
 function addPinMarker(pin) {
+  if (pin.lat == null || pin.lng == null) return;
   const label = escapeHtml(pin.name);
   const marker = L.marker([pin.lat, pin.lng], {
     icon: L.divIcon({
@@ -177,7 +178,9 @@ export { dropPin as checkIn };
 function dropPin(ctx, s) {
   const here = s.trail[s.trail.length - 1]
     || (map && { lat: map.getCenter().lat, lng: map.getCenter().lng });
-  if (!here) { toast('No position yet. Give GPS a moment.'); return; }
+  // Without a position the stop is still named and still counts: it goes on
+  // the map when a fix arrives, or stays off the map if location is off.
+  const gpsOff = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported';
 
   let name = '';
   let note = '';
@@ -198,7 +201,12 @@ function dropPin(ctx, s) {
     const chips = el('div', { class: 'chips' });
     const suggestions = el('div', { class: 'stack', style: 'gap:6px' }, label, chips, status);
 
-    nearbyVenues(here).then((venues) => {
+    if (!here) {
+      label.hidden = true;
+      status.textContent = gpsOff
+        ? 'Location is off, so this stop won’t be on the map. It still counts.'
+        : 'Still finding you. The stop goes on the map once your position arrives.';
+    } else nearbyVenues(here).then((venues) => {
       if (!suggestions.isConnected) return;
       if (!venues.length) {
         status.textContent = 'Nothing found nearby. Type the name instead.';
@@ -238,7 +246,7 @@ function dropPin(ctx, s) {
       foot(btn('Drop pin', 'btn--pri', () => {
         close();
         // Empty name falls back rather than blocking the save.
-        const pin = { lat: here.lat, lng: here.lng, name: name.trim() || 'Unnamed stop', note: note.trim() };
+        const pin = { lat: here?.lat ?? null, lng: here?.lng ?? null, name: name.trim() || 'Unnamed stop', note: note.trim() };
         ctx.addPin(pin);
         if (map) addPinMarker({ ...pin, t: Date.now() });
         ctx.render();

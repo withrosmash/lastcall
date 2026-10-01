@@ -396,7 +396,7 @@ function toGpx(s) {
   const name = `Leit, ${shortDate(s.startedAt)}`;
   const points = s.trail.map((p) =>
     `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
-  const stops = s.pins.map((p) =>
+  const stops = s.pins.filter((p) => p.lat != null).map((p) =>
     `<wpt lat="${p.lat}" lon="${p.lng}"><name>${escapeXml(p.name)}</name><time>${new Date(p.t).toISOString()}</time></wpt>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Leit" xmlns="http://www.topografix.com/GPX/1/1">

@@ -439,6 +439,7 @@ async function startTracking() {
       const s = ctx.state.active;
       if (!s) return;
       if (S.addFix(s, fix)) {
+        S.placePending(s, s.trail[s.trail.length - 1]);
         save();
         if (ctx.screen === 'live') render();
         window.dispatchEvent(new CustomEvent('lc:fix', { detail: fix }));
