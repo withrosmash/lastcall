@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "design/avatar-gallery.html"
+        ],
+        "createdAt": "2026-10-01T09:03:29.875Z",
+        "reason": "Claude verified in browser: lowest computed text contrast 6.43:1; detector reads var() colours as black on a design-review page that isn't shipped"
+      }
+    ]
+  }
+}
