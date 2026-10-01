@@ -222,3 +222,21 @@ test('a malformed festival entry never breaks badges', () => {
   const s = fest('2026-06-26T12:00');
   assert.doesNotThrow(() => evaluate({ sessions: [s], prefs: {}, festivals: [{}, null, { id: 'x', sessionIds: 'nope' }] }));
 });
+
+test('Explorer links to the adventure that found the third new place', () => {
+  const t1 = at('2026-09-20T10:00'), t2 = at('2026-09-26T10:00');
+  const first = adv('2026-09-20T10:00', [['day', 0]], { pins: [pin(t1 + H, 'Cafe A'), pin(t1 + 2 * H, 'Park B')] });
+  const second = adv('2026-09-26T10:00', [['day', 0]], { pins: ['Cafe A', 'Museum C', 'Pier D', 'Market E'].map((n, i) => pin(t2 + (i + 1) * H, n)) });
+  const t3 = at('2026-09-28T10:00');
+  const third = adv('2026-09-28T10:00', [['day', 0]], { pins: ['Zoo F', 'Lido G', 'Fort H'].map((n, i) => pin(t3 + (i + 1) * H, n)) });
+  const got = evaluate({ sessions: [third, second, first], prefs: { hydrationEvery: 5 } }).find((b) => b.slug === 'explorer');
+  assert.equal(got?.sessionId, second.id);
+});
+
+test('Explorer ignores stops made in the night part of a day out', () => {
+  const t0 = at('2026-09-26T10:00');
+  const s = adv('2026-09-26T10:00', [['day', 0], ['night', 6]], {
+    pins: [pin(t0 + H, 'Cafe A'), pin(t0 + 7 * H, 'Bar B'), pin(t0 + 7.5 * H, 'Bar C'), pin(t0 + 7.8 * H, 'Club D')],
+  });
+  assert.ok(!earned([s]).has('explorer'));
+});

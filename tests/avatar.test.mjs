@@ -21,3 +21,14 @@ test('no touch without look.touch, and none on wardrobe tiles', () => {
   assert.ok(!plain.some((p) => p?.part === 'touch'));
   assert.ok(!build(look({ touch: 'walk' }), {}, 'tee').some((p) => p?.part === 'touch'));
 });
+
+test('dressedFor adds the mode touch, except on a night out or when turned off', async () => {
+  const { dressedFor } = await import('../js/wardrobe.js');
+  const look = normaliseLook(null);
+  const ctx = (prefs = {}) => ({ state: { prefs } });
+  assert.equal(dressedFor(ctx(), look, 'walk').touch, 'walk');
+  assert.equal(dressedFor(ctx(), look, 'festival').touch, 'festival');
+  assert.equal(dressedFor(ctx(), look, 'night'), look);
+  assert.equal(dressedFor(ctx(), look, undefined), look);
+  assert.equal(dressedFor(ctx({ modeTouches: false }), look, 'day'), look);
+});

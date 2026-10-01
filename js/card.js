@@ -14,7 +14,7 @@ const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
 const C = {
   bg: '#000', text: '#fff', mint: '#7EE0C0', pink: '#F06C9B',
-  faint: '#4D4D4D', muted: '#8A8A8A', forest: '33,118,79',
+  faint: '#4D4D4D', muted: '#8A8A8A',
 };
 const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 

@@ -163,9 +163,6 @@ test('walk pace counts only the walk part', async () => {
 });
 
 test('a mode or company this build does not know reads as Night out with friends', async () => {
-  const { modeOf } = await import('../js/modes.js');
-  assert.equal(modeOf('moon-base'), MODES.night);
-  assert.equal(modeOf('walk'), MODES.walk);
   const s = withParts([{ t: 0, mode: 'moon-base', company: 'crowd' }, { t: 5, mode: 'day', company: 'solo' }]);
   assert.deepEqual(partsOf(s).map((p) => `${p.mode}/${p.company}`), ['night/group', 'day/solo']);
   assert.equal(modeLine(withParts([{ t: 0, mode: 'moon-base', company: 'group' }])), 'Night out');

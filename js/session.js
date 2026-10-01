@@ -11,6 +11,7 @@ import * as geo from './geo.js';
 import { requestActivityPermission } from './keepalive.js';
 import * as notify from './notify.js';
 import { createAvatar } from './avatar.js';
+import { liveTileKeys, doneTileKeys } from './stats.js';
 import { avatarLook, openUnlocks, itemsForBadges, dressedFor } from './wardrobe.js';
 import { t, phrase } from './words.js';
 
@@ -93,7 +94,7 @@ export function startScreen(ctx) {
 
 const ONBOARD = [
   {
-    eyebrow: 'Leit', brand: true, title: 'This is you, roughly.',
+    brand: true, title: 'This is you, roughly.',
     body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like.',
     note: 'No account, no sign-up. Everything stays on the phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
@@ -329,39 +330,39 @@ function liveButtons(ctx, s) {
 }
 
 /* ---------- stat tiles ----------
-   Four tiles, chosen in the mode's order of interest from what was actually
-   measured: with location off there's no distance or pace, without a step
-   counter no steps, so those never show as zeros. */
-
-const firstFour = (list) => tiles(list.filter(Boolean).slice(0, 4));
+   Which four show is decided in stats.js (liveTileKeys, doneTileKeys); this
+   turns the keys into tiles. */
 
 function liveTiles(ctx, s) {
   const gps = !(ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported');
-  const steps = ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : null;
-  const dist = gps ? tile('Distance', km(s.distanceM), { unit: 'km' }) : null;
-  const drinks = tile('Drinks', s.drinks.length, { tone: 'drinks' });
-  const stops = tile('Stops', s.pins.length);
-  const food = tile(MODES[S.currentPart(s).mode].labels?.food || 'Food', (s.meals || []).length);
-  const dares = tile('Challenges', (s.challenges || []).length);
-  const head = MODES[S.currentPart(s).mode].headline;
-  if (head === 'walk') return firstFour([steps, dist, gps ? paceTile(S.walkPace(s)) : null, waterTile(ctx, s), stops, food, dares]);
-  if (head === 'festival') return firstFour([drinks, waterTile(ctx, s), tile('Sets', (s.sets || []).length), steps || dist, food, dares]);
-  return firstFour([drinks, waterTile(ctx, s), steps || dist, steps && dist ? dist : stops, food, dares]);
+  const make = {
+    steps: () => tile('Steps', s.steps.toLocaleString()),
+    distance: () => tile('Distance', km(s.distanceM), { unit: 'km' }),
+    pace: () => paceTile(S.walkPace(s)),
+    water: () => waterTile(ctx, s),
+    drinks: () => tile('Drinks', s.drinks.length, { tone: 'drinks' }),
+    stops: () => tile('Stops', s.pins.length),
+    sets: () => tile('Sets', (s.sets || []).length),
+    food: () => tile(MODES[S.currentPart(s).mode].labels?.food || 'Food', (s.meals || []).length),
+    challenges: () => tile('Challenges', (s.challenges || []).length),
+  };
+  return tiles(liveTileKeys(s, { gps, steps: ctx.stepsAvailable }).map((k) => make[k]()));
 }
 
 function doneTiles(s) {
   const sum = S.summarise(s);
-  const route = s.trail.length > 1;
-  const steps = sum.steps ? tile('Steps', sum.steps.toLocaleString()) : null;
-  const dist = route ? tile('Distance', km(sum.distanceM), { unit: 'km' }) : null;
-  const water = tile('Water', sum.waters);
-  const stops = tile('Stops', sum.stops);
-  const food = tile('Food', (s.meals || []).length);
-  const dares = tile('Challenges', (s.challenges || []).length);
-  if (S.onlyMode(s, 'walk')) return firstFour([steps, dist, route ? paceTile(S.walkPace(s), true) : null, stops, water, food, dares]);
-  const drinks = tile('Drinks', sum.drinks, { tone: 'drinks' });
-  if (S.hasMode(s, 'festival')) return firstFour([drinks, water, tile('Sets', (s.sets || []).length), steps || dist, food, dares]);
-  return firstFour([drinks, water, steps || dist, stops, food, dares]);
+  const make = {
+    steps: () => tile('Steps', sum.steps.toLocaleString()),
+    distance: () => tile('Distance', km(sum.distanceM), { unit: 'km' }),
+    pace: () => paceTile(S.walkPace(s), true),
+    water: () => tile('Water', sum.waters),
+    drinks: () => tile('Drinks', sum.drinks, { tone: 'drinks' }),
+    stops: () => tile('Stops', sum.stops),
+    sets: () => tile('Sets', (s.sets || []).length),
+    food: () => tile(S.onlyMode(s, 'walk') ? MODES.walk.labels.food : 'Food', (s.meals || []).length),
+    challenges: () => tile('Challenges', (s.challenges || []).length),
+  };
+  return tiles(doneTileKeys(s).map((k) => make[k]()));
 }
 
 // Pace over the walk so far, stops included: it's how long the walk is

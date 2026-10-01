@@ -60,3 +60,10 @@ test('a night out on your own has at least ten', () => {
   const pool = poolFor(CHALLENGES, { mode: 'night', company: 'solo' }, new Set());
   assert.ok(pool.length >= 10, `only ${pool.length}`);
 });
+
+test('pick() works on an adventure saved before modes and challenges existed', async () => {
+  const { pick } = await import('../js/challenges.js');
+  const old = { id: 'old', startedAt: 0, drinks: [], waters: [], pins: [], trail: [] };
+  const c = pick(old);
+  assert.ok(c && c.modes.includes('night'));
+});

@@ -286,9 +286,9 @@ export function build(look0, fr = NEUTRAL, only = null) {
   const touch = only ? null : look.touch;
   if (touch === 'day') {
     // a camera on a neck strap
-    const strap = [44, 44, 50], body = [58, 58, 66], ring = [150, 152, 162], lens = [96, 150, 204];
+    const strap = [44, 44, 50], cam = [58, 58, 66], ring = [150, 152, 162], lens = [96, 150, 204];
     for (let y = 29; y <= 31; y++) { set(13, y, strap, 'touch', false); set(18, y, strap, 'touch', false); }
-    for (let y = 32; y <= 35; y++) for (let x = 12; x <= 19; x++) set(x, y, body, 'touch');
+    for (let y = 32; y <= 35; y++) for (let x = 12; x <= 19; x++) set(x, y, cam, 'touch');
     [[14, 33], [17, 33], [14, 34], [17, 34], [15, 32], [16, 32], [15, 35], [16, 35]].forEach(([x, y]) => set(x, y, ring, 'touch', false));
     [[15, 33], [16, 33], [15, 34], [16, 34]].forEach(([x, y]) => set(x, y, lens, 'touch', false));
     set(15, 33, mix(lens, WHITE, .6), 'touch', false);

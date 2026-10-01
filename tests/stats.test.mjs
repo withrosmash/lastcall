@@ -73,3 +73,42 @@ test('the 30-day window includes exactly 30 days and no more', () => {
   const past = { ...newSession(NOW - 30 * D - 60e3), endedAt: NOW - 30 * D + H };
   assert.equal(testerStats({ sessions: [edge, past], badges: [], flags: {}, festivals: [] }, NOW).last30, 1);
 });
+
+/* ---------- which four tiles show ---------- */
+
+test('live night: drinks and water first, then steps and distance when both are measured', async () => {
+  const { liveTileKeys } = await import('../js/stats.js');
+  const s = adv('2026-09-20T19:00');
+  assert.deepEqual(liveTileKeys(s, { gps: true, steps: true }), ['drinks', 'water', 'steps', 'distance']);
+  assert.deepEqual(liveTileKeys(s, { gps: true, steps: false }), ['drinks', 'water', 'distance', 'stops']);
+  assert.deepEqual(liveTileKeys(s, { gps: false, steps: false }), ['drinks', 'water', 'stops', 'food']);
+});
+
+test('live walk with location off has no distance or pace, and never a zero', async () => {
+  const { liveTileKeys } = await import('../js/stats.js');
+  const s = adv('2026-09-20T09:00', [['walk', 0]]);
+  assert.deepEqual(liveTileKeys(s, { gps: true, steps: true }), ['steps', 'distance', 'pace', 'water']);
+  assert.deepEqual(liveTileKeys(s, { gps: false, steps: false }), ['water', 'stops', 'food', 'challenges']);
+});
+
+test('live festival puts sets third, and follows the current part', async () => {
+  const { liveTileKeys } = await import('../js/stats.js');
+  const s = adv('2026-09-20T12:00', [['day', 0], ['festival', 2]]);
+  assert.deepEqual(liveTileKeys(s, { gps: true, steps: true }), ['drinks', 'water', 'sets', 'steps']);
+  assert.deepEqual(liveTileKeys(s, { gps: false, steps: false }), ['drinks', 'water', 'sets', 'food']);
+});
+
+test('a finished walk shows pace only with a route, and skips steps it never counted', async () => {
+  const { doneTileKeys } = await import('../js/stats.js');
+  const pt = (t) => ({ t, lat: 51.5, lng: -0.1 });
+  const s = adv('2026-09-20T09:00', [['walk', 0]], { steps: 4000, trail: [pt(1), pt(2)] });
+  assert.deepEqual(doneTileKeys(s), ['steps', 'distance', 'pace', 'stops']);
+  const bare = adv('2026-09-20T09:00', [['walk', 0]]);
+  assert.deepEqual(doneTileKeys(bare), ['stops', 'water', 'food', 'challenges']);
+});
+
+test('a finished mixed adventure uses the night layout; any festival part brings sets', async () => {
+  const { doneTileKeys } = await import('../js/stats.js');
+  assert.deepEqual(doneTileKeys(adv('2026-09-20T12:00', [['walk', 0], ['night', 2]], { steps: 9000 })), ['drinks', 'water', 'steps', 'stops']);
+  assert.deepEqual(doneTileKeys(adv('2026-09-20T12:00', [['festival', 0], ['night', 6]])), ['drinks', 'water', 'sets', 'food']);
+});

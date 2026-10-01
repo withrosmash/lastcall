@@ -3,7 +3,7 @@
 // nothing is sent anywhere. No DOM, so node can test it.
 
 import * as S from './state.js';
-import { MODE_KEYS } from './modes.js';
+import { MODES, MODE_KEYS } from './modes.js';
 
 const DAY = 24 * 3600e3;
 
@@ -41,4 +41,30 @@ export function countCard(flags, now = Date.now()) {
   flags.cardsShared += 1;
   flags.cardExported = true;
   return flags;
+}
+
+/* ---------- which four tiles show ----------
+   In the mode's order of interest, from what was actually measured: with
+   location off there's no distance or pace, without a step counter no steps,
+   so those never show as zeros. */
+
+const firstFour = (list) => list.filter(Boolean).slice(0, 4);
+const either = (a, b) => a || b || null;
+
+/** Tiles for the live screen. `gps` and `steps` say what the phone can measure. */
+export function liveTileKeys(s, { gps, steps }) {
+  const st = steps ? 'steps' : null, dist = gps ? 'distance' : null;
+  const head = MODES[S.currentPart(s).mode].headline;
+  if (head === 'walk') return firstFour([st, dist, dist && 'pace', 'water', 'stops', 'food', 'challenges']);
+  if (head === 'festival') return firstFour(['drinks', 'water', 'sets', either(st, dist), 'food', 'challenges']);
+  return firstFour(['drinks', 'water', either(st, dist), st && dist ? dist : 'stops', 'food', 'challenges']);
+}
+
+/** Tiles for a finished adventure, from what it recorded. */
+export function doneTileKeys(s) {
+  const route = s.trail.length > 1;
+  const st = s.steps ? 'steps' : null, dist = route ? 'distance' : null;
+  if (S.onlyMode(s, 'walk')) return firstFour([st, dist, dist && 'pace', 'stops', 'water', 'food', 'challenges']);
+  if (S.hasMode(s, 'festival')) return firstFour(['drinks', 'water', 'sets', either(st, dist), 'food', 'challenges']);
+  return firstFour(['drinks', 'water', either(st, dist), 'stops', 'food', 'challenges']);
 }

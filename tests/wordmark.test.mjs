@@ -50,3 +50,34 @@ test('the Play feature graphic is a 24-bit PNG with no alpha', () => {
   assert.equal(buf[24], 8);
   assert.equal(buf[25], 2);
 });
+
+// The paths only use M, H, V, L and Z, so each subpath is a polygon.
+function polygons(d) {
+  const out = []; let cur = null, x = 0, y = 0;
+  for (const [, c, a, b] of d.matchAll(/([MHVLZ])\s*([-\d.]+)?(?:[\s,]+([-\d.]+))?/g)) {
+    if (c === 'M') { cur = []; out.push(cur); x = +a; y = +b; }
+    else if (c === 'L') { x = +a; y = +b; }
+    else if (c === 'H') x = +a;
+    else if (c === 'V') y = +a;
+    else continue;
+    cur.push([x, y]);
+  }
+  return out;
+}
+const inside = (polys, px, py) => polys.reduce((hit, poly) => {
+  let n = 0;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) n++;
+  }
+  return hit !== (n % 2 === 1);
+}, false);
+
+test('every rectangle sits on the letters, not in the gaps between them', () => {
+  const polys = WORDMARK.paths.map(polygons);
+  for (const q of rects(52)) {
+    const e = 0.05;
+    const pts = [[q.x + e, q.y + e], [q.x + q.w - e, q.y + e], [q.x + e, q.y + q.h - e], [q.x + q.w - e, q.y + q.h - e], [q.x + q.w / 2, q.y + q.h / 2]];
+    for (const [px, py] of pts) assert.ok(polys.some((p) => inside(p, px, py)), `(${px.toFixed(2)}, ${py.toFixed(2)}) is off the letters`);
+  }
+});
