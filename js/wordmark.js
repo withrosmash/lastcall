@@ -31,6 +31,8 @@ export function rects(height) {
   return RECTS.map(([x, y, w, h]) => ({ x: x * k, y: y * k, w: w * k, h: h * k }));
 }
 
+let whole = null;
+
 export const wordmarkWidth = (height) => (WORDMARK.w / WORDMARK.h) * Math.max(height, MIN_HEIGHT);
 
 /** Inline SVG in the current text colour. */
@@ -66,8 +68,10 @@ export function drawWordmark(g, x, y, height, { color, align = 'left', shadow = 
   g.translate(x0, y);
   g.scale(h / WORDMARK.h, h / WORDMARK.h);
   g.fillStyle = color;
-  if (shadow) { g.shadowColor = shadow.color; g.shadowBlur = shadow.blur * (WORDMARK.h / h); }
-  for (const d of WORDMARK.paths) g.fill(new Path2D(d));
+  // shadowBlur ignores the transform, so the theme's blur is used as it is,
+  // and one fill keeps a letter's halo off the letters beside it.
+  if (shadow) { g.shadowColor = shadow.color; g.shadowBlur = shadow.blur; }
+  g.fill(whole ||= new Path2D(WORDMARK.paths.join('')));
   g.restore();
   return w;
 }

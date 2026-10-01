@@ -130,13 +130,19 @@ function chunk(tag, data) {
   return Buffer.concat([len, body, crc]);
 }
 
-async function png(path, w, h, rgba) {
+// `opaque` writes 24-bit RGB with no alpha, which Google Play asks for.
+async function png(path, w, h, rgba, { opaque = false } = {}) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0);
   ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; ihdr[9] = 6; // 8-bit RGBA
-  const raw = Buffer.alloc((w * 4 + 1) * h);
-  for (let y = 0; y < h; y++) rgba.copy(raw, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4);
+  ihdr[8] = 8; ihdr[9] = opaque ? 2 : 6; // 8-bit RGB or RGBA
+  const bpp = opaque ? 3 : 4;
+  const raw = Buffer.alloc((w * bpp + 1) * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = (y * w + x) * 4, o = y * (w * bpp + 1) + 1 + x * bpp;
+    raw[o] = rgba[k]; raw[o + 1] = rgba[k + 1]; raw[o + 2] = rgba[k + 2];
+    if (!opaque) raw[o + 3] = rgba[k + 3];
+  }
   const buf = Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
@@ -216,7 +222,7 @@ function featureGraphic(W, H) {
 }
 
 await png(resolve(root, 'design/round3/store-lockup.png'), 1024, 300, lockup(1024, 300));
-await png(resolve(root, 'design/round3/feature-graphic.png'), 1024, 500, featureGraphic(1024, 500));
+await png(resolve(root, 'design/round3/feature-graphic.png'), 1024, 500, featureGraphic(1024, 500), { opaque: true });
 
 /* ---------- Android launcher ---------- */
 

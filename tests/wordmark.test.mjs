@@ -32,3 +32,21 @@ test('width follows height, and nothing goes below the minimum', () => {
   assert.equal(MIN_HEIGHT, 8);
   assert.equal(wordmarkWidth(4), wordmarkWidth(8));
 });
+
+test('the halo uses the theme blur as is, in one fill', async () => {
+  const { drawWordmark } = await import('../js/wordmark.js');
+  globalThis.Path2D = class { constructor(d) { this.d = d; } };
+  let fills = 0, blur = null;
+  const g = { save() {}, restore() {}, translate() {}, scale() {}, fill() { fills++; blur = this.shadowBlur; } };
+  drawWordmark(g, 0, 0, 30, { color: '#7EE0C0', shadow: { color: 'rgba(0,0,0,.5)', blur: 26 } });
+  assert.equal(blur, 26);
+  assert.equal(fills, 1);
+});
+
+test('the Play feature graphic is a 24-bit PNG with no alpha', () => {
+  const buf = readFileSync(new URL('../design/round3/feature-graphic.png', import.meta.url));
+  assert.equal(buf.readUInt32BE(16), 1024);
+  assert.equal(buf.readUInt32BE(20), 500);
+  assert.equal(buf[24], 8);
+  assert.equal(buf[25], 2);
+});
