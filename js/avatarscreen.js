@@ -45,7 +45,7 @@ export function avatarScreen(ctx) {
   const SIL = light ? '#C3CCD9' : '#3A3A3A';
   const SIL_SHEET = light ? '#AEB9C8' : '#4D4D4D';
 
-  const av = createAvatar({ cell: 4, look: draft, onTap: () => nextFace(), label: 'Your avatar. Tap for another face.' });
+  const av = createAvatar({ cell: 2, look: draft, onTap: () => nextFace(), label: 'Your avatar. Tap for another face.' });
   queueMicrotask(() => av.start());
   const caption = el('span', { class: 'cap', style: 'text-align:center' });
   const nextFace = () => {
@@ -109,7 +109,7 @@ export function avatarScreen(ctx) {
     if (tab === 'hair') {
       tiles = HAIRS.map(([k, name]) => tile({
         name, selected: draft.hair === k,
-        canvas: tileCanvas({ ...base(), hair: k, hat: null, glasses: 'none' }, { scale: 2, crop: CROP.head }),
+        canvas: tileCanvas({ ...base(), hair: k, hat: null, glasses: 'none' }, { scale: 1.25, crop: CROP.head }),
         onclick: () => { draft = { ...draft, hair: k, costume: null }; changed(); },
       }));
     }
@@ -120,7 +120,7 @@ export function avatarScreen(ctx) {
         const look = { ...base(), glasses: k, hat: null };
         return tile({
           name, selected: draft.glasses === k, locked, sub: item ? badgeName(item.badge) : null,
-          canvas: tileCanvas(look, locked ? { scale: 2, crop: CROP.head, only: 'sun', silhouette: SIL } : { scale: 2, crop: CROP.head }),
+          canvas: tileCanvas(look, locked ? { scale: 1.25, crop: CROP.head, only: 'sun', silhouette: SIL } : { scale: 1.25, crop: CROP.head }),
           onclick: () => { if (locked) { lockedSheet(item); return; } draft = { ...draft, glasses: k, costume: null }; changed(); },
         });
       });
@@ -128,7 +128,7 @@ export function avatarScreen(ctx) {
     if (tab === 'top') {
       tiles = TOPS.map(([k, name]) => tile({
         name, selected: draft.top === k,
-        canvas: tileCanvas({ ...base(), top: k, held: null }, { scale: 3, crop: CROP.body }),
+        canvas: tileCanvas({ ...base(), top: k, held: null }, { scale: 1.75, crop: CROP.body }),
         onclick: () => { draft = { ...draft, top: k, costume: null }; changed(); },
       }));
     }
@@ -140,7 +140,7 @@ export function avatarScreen(ctx) {
         const worn = { ...base(), hat: it.slot === 'hat' ? it.id : null, held: it.slot === 'held' ? it.id : null,
           costume: it.slot === 'costume' ? it.id : null, shoes: it.slot === 'shoes' ? it.id : 'plain', glasses: 'none' };
         const onHead = it.slot === 'hat' || it.slot === 'costume';
-        const opts = onHead ? { scale: 2, crop: CROP.head } : { fit: [72, 56] };
+        const opts = onHead ? { scale: 1.25, crop: CROP.head } : { fit: [72, 56] };
         return tile({
           name: it.name, selected: on, locked, sub: it.badge ? badgeName(it.badge) : null,
           canvas: tileCanvas(worn, locked ? { ...opts, only: it.id, silhouette: SIL } : onHead ? opts : { ...opts, only: it.id }),

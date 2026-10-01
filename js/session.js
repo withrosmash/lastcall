@@ -25,7 +25,7 @@ export { avatarLook };
 let liveAv = null;
 function liveAvatar(ctx) {
   const look = ctx.state.active ? dressedFor(ctx, avatarLook(ctx), S.currentPart(ctx.state.active).mode) : avatarLook(ctx);
-  if (!liveAv) liveAv = createAvatar({ cell: 3, look });
+  if (!liveAv) liveAv = createAvatar({ cell: 1.5, look });
   liveAv.setLook(look);
   // After mount: the loop stops itself while the canvas is off the page.
   queueMicrotask(() => liveAv.start());
@@ -51,7 +51,7 @@ function moodFor(s, prefs, now = Date.now()) {
 
 export function startScreen(ctx) {
   const last = ctx.state.sessions.find((s) => s.endedAt);
-  const av = createAvatar({ cell: 4, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' });
+  const av = createAvatar({ cell: 2, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' });
   queueMicrotask(() => av.start());
   return [
     el('div', { class: 'topbar' }, iconBtn('settings', 'Settings', () => ctx.go('settings'))),
@@ -138,7 +138,7 @@ export const needsOnboarding = (state) => !state.flags?.onboarded && !state.sess
 export function onboardingScreen(ctx) {
   const i = Math.min(ctx.onboardStep || 0, ONBOARD.length - 1);
   const step = ONBOARD[i];
-  const av = createAvatar({ cell: 4, look: avatarLook(ctx), label: 'Your avatar' });
+  const av = createAvatar({ cell: 2, look: avatarLook(ctx), label: 'Your avatar' });
   if (step.face) av.setFace(step.face);
   else av.play('hello');
   queueMicrotask(() => av.start());
@@ -221,7 +221,7 @@ export function morningScreen(ctx, night) {
     glasses: base.glasses === 'sun' ? 'none' : base.glasses,
     colors: { ...base.colors, top: '#3D6FB0' },
   };
-  const av = createAvatar({ cell: 4, look, label: 'Your avatar, the morning after', onTap: () => av.play('morningwave') });
+  const av = createAvatar({ cell: 2, look, label: 'Your avatar, the morning after', onTap: () => av.play('morningwave') });
   av.setMood('Morning');
   queueMicrotask(() => av.start());
 
@@ -544,7 +544,7 @@ export function recapScreen(ctx, session) {
   // Yawns and dozes off. Badges that come with an item open the unlock sheet
   // instead of a celebration here; other new badges still get one. Once per
   // night: the recap re-renders when you come back and shouldn't replay.
-  const av = createAvatar({ cell: 3, look: dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode) });
+  const av = createAvatar({ cell: 1.5, look: dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode) });
   av.setMood('Sleepy');
   if (ctx.recapPlayed !== s.id) {
     ctx.recapPlayed = s.id;

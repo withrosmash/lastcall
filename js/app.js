@@ -545,7 +545,7 @@ function setTheme(theme) {
    fades into the app. Native only: the web preview has no system splash. */
 function handoff() {
   if (!geo.isNative()) return;
-  const av = createAvatar({ cell: 3, look: avatarLook(ctx), label: 'Your avatar' });
+  const av = createAvatar({ cell: 1.5, look: avatarLook(ctx), label: 'Your avatar' });
   av.play('hello');
   const node = el('div', { class: 'handoff', 'aria-hidden': 'true' },
     el('div', { class: 'handoff__disc' }, av.canvas),

@@ -428,18 +428,18 @@ export function nightMap(host, s, look = null) {
     if (look) {
       sprite = document.createElement('canvas');
       sprite.className = 'walker__sprite';
-      drawMini(sprite, look, { frame: 0 });
+      drawMini(sprite, look, { frame: 0, scale: 1.5 });
       const wrap = document.createElement('div');
       wrap.className = 'walker';
       wrap.append(Object.assign(document.createElement('div'), { className: 'walker__halo' }), sprite);
-      icon = L.divIcon({ className: '', html: wrap, iconSize: [24, 32], iconAnchor: [12, 30] });
+      icon = L.divIcon({ className: '', html: wrap, iconSize: [24, 33], iconAnchor: [12, 31] });
     }
     const here = L.marker(all[all.length - 1], { icon, keyboard: false, interactive: false }).addTo(map);
     const walk = { frame: 0, flip: false, dist: 0, last: null };
     const pose = (frame, flip) => {
       if (!sprite || (frame === walk.frame && flip === walk.flip)) return;
       walk.frame = frame; walk.flip = flip;
-      drawMini(sprite, look, { frame, flip });
+      drawMini(sprite, look, { frame, flip, scale: 1.5 });
     };
     controller.stand = () => { walk.last = null; pose(0, walk.flip); };
 

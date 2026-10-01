@@ -118,7 +118,7 @@ export function openUnlocks(ctx, slugs, { onClose } = {}) {
     const name = el('h2', { class: 'title', style: 'margin:0' });
     const body = el('p', { class: 'body', style: 'margin:0' });
     const next = btn('Next badge', 'btn--sec', () => advance());
-    const av = createAvatar({ cell: 3, look: base, label: 'Your avatar wearing the new item' });
+    const av = createAvatar({ cell: 1.5, look: base, label: 'Your avatar wearing the new item' });
     box.append(el('div', { class: 'unlock__bloom' }), av.canvas, count, dots);
 
     const show = (first) => {

@@ -148,6 +148,9 @@ const LOOK = {
 /* ================= from a frame to the art ================= */
 
 const ARM = { wave: 'wave1' };
+// The animations' drink is a glass and their water a cup; in the art, the
+// cup is the soft drink with a straw and the glass is water.
+const PROP = { glass: 'cup', cup: 'glass' };
 const SLEEPY = new Set(['heavy', 'tired']);
 const GRINS = new Set(['smile', 'cat', 'wide']);
 
@@ -171,11 +174,11 @@ export function artLook(look, fr, { fxFrame = 0 } = {}) {
   if (effect) { a.effect = effect; a.fxFrame = fxFrame; }
   if (fr.badge === 'held' || fr.badge === 'pin') a.badge = fr.badge;
 
-  // What's in the hands. A reaction's prop goes in the hand it names (the
-  // drink is always the soft drink with a straw); a worn item shows only
+  // What's in the hands. A reaction's prop goes in the hand it names (a drink
+  // is always the soft drink with a straw); a worn item shows only
   // while both arms rest, and then the art poses the arms for it.
   const armL = ARM[fr.armL] || fr.armL || 'down', armR = ARM[fr.armR] || fr.armR || 'down';
-  const prop = fr.prop && fr.prop[1] === 'hand' ? (fr.prop[0] === 'glass' ? 'cup' : fr.prop[0]) : null;
+  const prop = fr.prop && fr.prop[1] === 'hand' ? PROP[fr.prop[0]] || fr.prop[0] : null;
   const resting = armL === 'down' && armR === 'down' && !fr.armSwing && fr.badge !== 'held';
   if (prop) Object.assign(a, { held: prop, armL, armR });
   else if (resting && look.held) a.held = look.held;
@@ -360,8 +363,9 @@ export function build(look0, fr = NEUTRAL, only = null, { fxFrame = 0, room = fa
 }
 
 // Whole device pixels per art pixel, so a fractional CSS size stays crisp.
-export function deviceCell(cell, dpr = Math.min(3, globalThis.devicePixelRatio || 1)) {
-  return Math.max(1, Math.round(cell * dpr));
+// Stills round down, so a tile's art never outgrows the box it was sized for.
+export function deviceCell(cell, dpr = Math.min(3, globalThis.devicePixelRatio || 1), round = Math.round) {
+  return Math.max(1, round(cell * dpr));
 }
 
 export const CROP = { head: [6, 0, 52, 50], body: [6, 44, 52, 30], held: [30, 40, 32, 32], shoes: [10, 66, 44, 14] };
@@ -377,7 +381,7 @@ export function drawStill(canvas, look, opts = {}) {
     if (x1 >= 0) { crop = [x0, y0, x1 - x0 + 1, y1 - y0 + 1]; s = Math.max(0.5, Math.min(opts.fit[0] / crop[2], opts.fit[1] / crop[3])); }
   }
   const dpr = Math.min(3, window.devicePixelRatio || 1);
-  const d = deviceCell(s, dpr);
+  const d = deviceCell(s, dpr, Math.floor);
   canvas.width = crop[2] * d; canvas.height = crop[3] * d;
   canvas.style.width = `${(crop[2] * d) / dpr}px`; canvas.style.height = `${(crop[3] * d) / dpr}px`;
   const g = canvas.getContext('2d');
@@ -612,7 +616,7 @@ export const setAvatarCalm = (on) => { calm = !!on; };
 const LIVELY = new Set(['dance', 'hello', 'tap']);
 const WARM = ['drink', 'water', 'food', 'checkin', 'cheer', 'start', 'badge', 'end'];
 
-export function createAvatar({ cell = 3, look = DEFAULT_LOOK, onTap = null, label = 'Your avatar' } = {}) {
+export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, label = 'Your avatar' } = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'avatar';
   canvas.setAttribute('role', 'img');

@@ -4,7 +4,7 @@ import { fitPoints } from './session.js';
 import { saveImage } from './keepalive.js';
 import { badgeSrc, BADGES } from './badges.js';
 import * as SM from './staticmap.js';
-import { paintAvatar } from './avatar.js';
+import { paintAvatar, W as AW, H as AH } from './avatar.js';
 import { avatarLook, dressedFor } from './wardrobe.js';
 import { MODES } from './modes.js';
 import { NIGHT_GLOW, cardBloom, photoBloom } from './glow.js';
@@ -264,8 +264,15 @@ const SCALE_MAX = 2.5;
 const clampScale = (n) => (Number.isFinite(n) ? Math.min(SCALE_MAX, Math.max(SCALE_MIN, n)) : 1);
 // The avatar is pixel art, so it only ever grows in whole pixels: 6x to 18x,
 // with scale 1 meaning 10x.
-const avatarCell = (e) => Math.min(18, Math.max(6, Math.round(10 * (e.scale || 1))));
-const snapScale = (key, node) => { if (key === 'avatar') node.scale = avatarCell(node) / 10; };
+// The photo card's avatar: 5 card pixels per avatar pixel at scale 1 (as wide
+// as the round 2 avatar at 10), always whole pixels, 3 to 9.
+export const avatarCell = (e) => Math.min(9, Math.max(3, Math.round(5 * (e.scale || 1))));
+const snapScale = (key, node) => { if (key === 'avatar') node.scale = avatarCell(node) / 5; };
+
+/** With no route, the avatar's scale in the map's space, or 0 when there isn't room for it. */
+export function cardAvatarScale(regionH) {
+  return regionH >= AH * 3 ? Math.min(9, Math.max(3, Math.floor((regionH * 0.9) / AH))) : 0;
+}
 
 function elementToggles() {
   // The badges toggle only exists when the night actually earned some.
@@ -773,10 +780,9 @@ function drawRouteCard(g, w, h, want) {
     // no empty half; otherwise it stands beside the stats.
     // Only when there's room for it at a readable size; otherwise it stands
     // beside the stats as usual, clear of the title.
-    if (noRoute && region.h >= 43 * 6) {
-      const s = Math.min(18, Math.floor((region.h * 0.9) / 43));
-      paintAvatar(g, ui.look, Math.round(w / 2 - 16 * s), Math.round(region.y + (region.h - 43 * s) / 2), s, FACE_STATE[ui.face]);
-    } else paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
+    const s = noRoute ? cardAvatarScale(region.h) : 0;
+    if (s) paintAvatar(g, ui.look, Math.round(w / 2 - (AW * s) / 2), Math.round(region.y + (region.h - AH * s) / 2), s, FACE_STATE[ui.face]);
+    else paintAvatar(g, ui.look, w - M - 290, h - M - 440, 5, FACE_STATE[ui.face]);
   }
 }
 
@@ -872,7 +878,7 @@ function drawFree(g, w, h, forExport, want, live) {
       if (ui.face === 'none' || !ui.look) continue;
       const cellSize = avatarCell(e);
       paintAvatar(g, ui.look, e.x, e.y, cellSize, FACE_STATE[ui.face]);
-      setBounds(key, { x: e.x, y: e.y, w: 32 * cellSize, h: 43 * cellSize });
+      setBounds(key, { x: e.x, y: e.y, w: AW * cellSize, h: AH * cellSize });
       continue;
     }
     const scale = e.scale || 1;

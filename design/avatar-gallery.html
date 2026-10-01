@@ -33,7 +33,7 @@ import {
 
 // Every card is numbered, so notes can say "#12 looks slow".
 let n = 0;
-let cell = 4;
+let cell = 2;
 const base = normaliseLook(null);
 const out = document.getElementById('out');
 const loops = [];
@@ -75,7 +75,7 @@ function idle(grid, mood, when, look = base) {
 
 function still(grid, look, name, when, opts = {}) {
   const c = document.createElement('canvas');
-  drawStill(c, look, { scale: Math.max(2, cell - 1), ...opts });
+  drawStill(c, look, { scale: cell, ...opts });
   card(grid, c, name, when);
 }
 
@@ -139,9 +139,9 @@ document.getElementById('theme').onclick = (e) => {
   e.target.setAttribute('aria-pressed', on ? 'true' : 'false');
 };
 document.getElementById('size').onclick = (e) => {
-  cell = cell === 4 ? 6 : 4;
-  e.target.setAttribute('aria-pressed', cell === 6 ? 'true' : 'false');
-  e.target.textContent = cell === 6 ? 'Smaller' : 'Bigger';
+  cell = cell === 2 ? 3 : 2;
+  e.target.setAttribute('aria-pressed', cell === 3 ? 'true' : 'false');
+  e.target.textContent = cell === 3 ? 'Smaller' : 'Bigger';
   render();
 };
 </script>

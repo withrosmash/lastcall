@@ -94,6 +94,10 @@ test('never drunk: sleepy eyes never smile, and a drink is a soft drink', () => 
     const a = artLook(look, toFrame(st, { still: false }));
     if (st.prop) assert.equal(a.held, 'cup');
   }
+  for (const [, st] of __ANIM.water) {
+    const a = artLook(look, toFrame(st, { still: false }));
+    if (st.prop) assert.equal(a.held, 'glass', 'water is the water glass');
+  }
 });
 
 test('a blink closes open eyes', () => {
