@@ -63,7 +63,7 @@ export function startScreen(ctx) {
     el('h1', { class: 'display', style: 'margin-top:10px' },
       t('Track the {n}.'), el('br'), 'Piece it together later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
-      text: 'Steps, stops, drinks and water. Kept on this phone, nowhere else.' }),
+      text: 'Steps, stops, drinks and water, saved on this phone.' }),
     el('div', { style: 'height:20px' }),
     // Caught before a night rather than discovered after one went unrecorded.
     ctx.permissions && Object.values(ctx.permissions).some((v) => !v)
@@ -98,7 +98,7 @@ const ONBOARD = [
   {
     brand: true, title: 'This is you, roughly.',
     body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like.',
-    note: 'No account, no sign-up. Everything stays on the phone.',
+    note: 'No account needed. What you record is saved on this phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
   },
   {
@@ -111,7 +111,7 @@ const ONBOARD = [
   {
     eyebrow: 'Location', title: 'Your phone will be in your pocket',
     body: 'Your phone will ask about location. Choose the option that allows it all the time, so the map keeps drawing with the screen off.',
-    note: 'Your location never leaves the phone. Without it there’s no map, but drinks, water and time still work.',
+    note: 'Your route is saved on this phone. Without location there’s no map, but drinks, water and time still work.',
     primary: 'Allow location', secondary: 'Skip, track without the map', face: { eyes: 'up', mouth: 'ooh' },
     // The settings route rather than the plugin's own prompt: "Allow all the
     // time" lives there on Android, and it's the path proven in the field.
@@ -119,7 +119,7 @@ const ONBOARD = [
   },
   {
     eyebrow: 'Steps', title: 'Counting steps',
-    body: 'Your phone will ask about motion and activity. That is the step counter, which is how each {n} gets its steps and the walk gets its pace.',
+    body: 'Your phone will ask about physical activity. That’s the step counter, which gives each {n} its step count.',
     note: 'Without it, there are no steps. Everything else still works.',
     primary: 'Allow steps', secondary: 'Skip steps', face: { eyes: 'wide', mouth: 'small' },
     ask: () => requestActivityPermission(),
@@ -127,7 +127,7 @@ const ONBOARD = [
   {
     eyebrow: 'Notifications', title: 'One quiet notification',
     body: 'While {a} is running, a notification stays on your lock screen. It keeps tracking going, and you can log a drink or water from it without opening the app.',
-    note: 'There are no other notifications and no reminders sent from anywhere else.',
+    note: 'The only other one is the water reminder, which you can turn off.',
     primary: 'Allow and start', secondary: 'Not now', face: { eyes: 'content', mouth: 'smile', blush: 2 },
     ask: () => notify.init(),
   },
@@ -255,7 +255,7 @@ export function primingScreen(ctx) {
     el('p', { class: 'body', style: 'margin:12px 0 0' },
       'Android opens its settings screen for this one. Pick “Allow all the time”, then come back.'),
     el('p', { class: 'cap', style: 'color:var(--mint);margin:10px 0 0',
-      text: 'Your location never leaves the phone.' }),
+      text: 'Your route is saved on this phone.' }),
     spacer(),
     foot(
       btn('Open settings', 'btn--pri', () => ctx.grantThenStart(), { lg: true }),

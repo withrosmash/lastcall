@@ -54,7 +54,7 @@ export const BADGES = [
   {
     "slug": "one-and-done",
     "name": "One and Done",
-    "criteria": "Exactly one drink, whole {n}",
+    "criteria": "Exactly one drink in the whole {n}",
     "accent": "mint",
     "cat": "Funny",
     "hidden": false
@@ -126,7 +126,7 @@ export const BADGES = [
   {
     "slug": "hydro-homie",
     "name": "Hydro Homie",
-    "criteria": "More waters than drinks (min 3 drinks)",
+    "criteria": "More waters than drinks, with 3+ drinks",
     "accent": "mint",
     "cat": "Health",
     "hidden": false
@@ -134,7 +134,7 @@ export const BADGES = [
   {
     "slug": "balanced-books",
     "name": "Balanced Books",
-    "criteria": "Waters ≥ drinks with 4+ drinks",
+    "criteria": "At least as many waters as drinks, with 4+ drinks",
     "accent": "mint",
     "cat": "Health",
     "hidden": false
@@ -142,7 +142,7 @@ export const BADGES = [
   {
     "slug": "metronome",
     "name": "Metronome",
-    "criteria": "4+ drinks and the hydration nudge never fired",
+    "criteria": "4+ drinks and the water reminder never fired",
     "accent": "mint",
     "cat": "Health",
     "hidden": false
@@ -166,7 +166,7 @@ export const BADGES = [
   {
     "slug": "dry-run",
     "name": "Dry Run",
-    "criteria": "A tracked {n} of waters only (3+)",
+    "criteria": "A tracked {n} with 3+ waters and no drinks",
     "accent": "mint",
     "cat": "Health",
     "hidden": false
@@ -174,7 +174,7 @@ export const BADGES = [
   {
     "slug": "good-habits",
     "name": "Good Habits",
-    "criteria": "Nudge never fired, 3 {ns} running",
+    "criteria": "No water reminder, 3 {ns} running",
     "accent": "mint",
     "cat": "Streaks",
     "hidden": false
@@ -198,7 +198,7 @@ export const BADGES = [
   {
     "slug": "fifty-stops",
     "name": "Fifty Stops",
-    "criteria": "50 stops pinned all-time",
+    "criteria": "50 stops pinned, all time",
     "accent": "pink",
     "cat": "Aspirational",
     "hidden": false
@@ -214,7 +214,7 @@ export const BADGES = [
   {
     "slug": "archivist",
     "name": "The Archivist",
-    "criteria": "25 {ns} tracked all-time",
+    "criteria": "25 {ns} tracked, all time",
     "accent": "amber",
     "cat": "Aspirational",
     "hidden": false
@@ -246,7 +246,7 @@ export const BADGES = [
   {
     "slug": "chaos-agent",
     "name": "Chaos Agent",
-    "criteria": "100 challenges all-time",
+    "criteria": "100 challenges, all time",
     "accent": "pink",
     "cat": "Funny",
     "hidden": true
@@ -254,7 +254,7 @@ export const BADGES = [
   {
     "slug": "ringleader",
     "name": "Ringleader",
-    "criteria": "25 challenges all-time",
+    "criteria": "25 challenges, all time",
     "accent": "amber",
     "cat": "Aspirational",
     "hidden": false
@@ -262,7 +262,7 @@ export const BADGES = [
   {
     "slug": "long-haul",
     "name": "Long Haul",
-    "criteria": "Walk 50 km all-time",
+    "criteria": "Walk 50 km, all time",
     "accent": "forest",
     "cat": "Aspirational",
     "hidden": false
@@ -270,7 +270,7 @@ export const BADGES = [
   {
     "slug": "just-add-water",
     "name": "Just Add Water",
-    "criteria": "50 waters all-time",
+    "criteria": "50 waters, all time",
     "accent": "mint",
     "cat": "Health",
     "hidden": false
@@ -326,7 +326,7 @@ export const BADGES = [
   {
     "slug": "explorer",
     "name": "Explorer",
-    "criteria": "3 new stops on a day out",
+    "criteria": "3 places you’ve never pinned before, on a day out",
     "accent": "forest",
     "cat": "Day out",
     "hidden": false
@@ -390,7 +390,7 @@ export const BADGES = [
   {
     "slug": "weekly-walker",
     "name": "Weekly Walker",
-    "criteria": "A walk in 4 weeks running",
+    "criteria": "A walk every week, 4 weeks running",
     "accent": "forest",
     "cat": "Walk",
     "hidden": false

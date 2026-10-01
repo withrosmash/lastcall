@@ -307,7 +307,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
             // it from making a sound anyway.
             NotificationChannel channel = new NotificationChannel(
                     QUICKLOG_CHANNEL, "Quick log", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Log a drink or water from the shade while you’re out.");
+            channel.setDescription("Log a drink or water from your notifications while you’re out.");
             channel.setShowBadge(false);
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             manager.createNotificationChannel(channel);

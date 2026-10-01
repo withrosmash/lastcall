@@ -181,7 +181,7 @@ export function permissionRows(ctx) {
     el('p', { class: 'cap cap--up', style: 'margin:0',
       text: missing.length
         ? `${missing.length} of ${PERMISSIONS.length} still needed. Tracking works best with all of them.`
-        : t('All set. Nothing will stop {a} recording.') }),
+        : t('All set. Your {ns} can record with the screen off.') }),
     ...PERMISSIONS.map((p) => {
       const ok = status[p.key];
       return el('div', { class: 'tile', style: 'display:flex;gap:10px;align-items:flex-start' },
@@ -235,7 +235,7 @@ export function settingsScreen(ctx) {
     row,
     el('p', { class: 'body', style: 'margin:0' },
       p.hydrationEvery
-        ? `The nudge shows on the live screen once you’re ${p.hydrationEvery} drinks past your last water.`
+        ? `You’ll get a nudge once you’re ${p.hydrationEvery} drinks past your last water.`
         : 'No water reminders. Everything else is tracked the same.'),
 
     el('h2', { class: 'eb', style: 'margin:0', text: 'Accessibility' }),
