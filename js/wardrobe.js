@@ -41,12 +41,37 @@ const REQ = {
   'first-dare': 'Complete your first challenge.',
 };
 const PHRASE = {
-  cap: 'cap', party: 'party hat', headphones: 'headphones', bucket: 'bucket hat', cowboy: 'cowboy hat',
-  crown: 'crown', panda: 'panda hood', dino: 'dinosaur hood', duck: 'duck hood', elvis: 'Elvis costume',
-  bottle: 'water bottle', pizza: 'pizza slice', balloon: 'balloon', trainers: 'trainers', sun: 'sunglasses',
+  cap: 'cap', party: 'party hat', headphones: 'headphones', sunhat: 'sun hat', cowboy: 'cowboy hat',
+  bowler: 'bowler hat', flowercrown: 'flower crown', bunnyears: 'bunny ears', nightcap: 'nightcap', crown: 'crown',
+  panda: 'panda costume', dino: 'dinosaur costume', duck: 'duck costume', teddy: 'teddy costume',
+  explorer: 'explorer outfit', chef: 'chef’s whites', superhero: 'superhero suit', pirate: 'pirate outfit',
+  wizard: 'wizard robes', astronaut: 'spacesuit', elvis: 'Elvis costume',
+  bottle: 'water bottle', coffee: 'coffee', pizza: 'pizza slice', balloon: 'balloon', map: 'map', camera: 'camera',
+  binoculars: 'binoculars', umbrella: 'umbrella', torch: 'torch', skateboard: 'skateboard', rod: 'fishing rod',
+  guitar: 'guitar', trainers: 'trainers', sun: 'sunglasses',
+  confetti: 'confetti', hearts: 'hearts', rainbow: 'rainbow', fireworks: 'fireworks', snow: 'snow',
+  bubbles: 'bubbles', thought: 'thought bubble', aura: 'golden aura',
 };
 
-export const requirement = (slug) => t(REQ[slug] || '');
+// Badges without a line of their own read their criteria as a sentence.
+export const requirement = (slug) => {
+  const criteria = BADGES.find((b) => b.slug === slug)?.criteria;
+  return t(REQ[slug] || (criteria ? `${criteria}.` : ''));
+};
+
+/** The look with one item on. Scarf and backpack are switches, not slots. */
+export function wear(look, item) {
+  if (item.slot === 'shoes') return { ...look, shoes: item.id };
+  if (item.slot === 'extra') return { ...look, [item.id]: true };
+  return { ...look, [item.slot]: item.id };
+}
+
+/** Whether the look has the item on. */
+export function wears(look, item) {
+  if (item.slot === 'shoes') return look.shoes === item.id;
+  if (item.slot === 'extra') return !!look[item.id];
+  return look[item.slot] === item.id;
+}
 export const badgeName = (slug) => {
   const b = BADGES.find((x) => x.slug === slug);
   return b?.hidden ? 'Hidden badge' : (b?.name || slug);
@@ -109,7 +134,7 @@ export function openUnlocks(ctx, slugs, { onClose } = {}) {
   let i = 0;
   const base = avatarLook(ctx);
   // Read fresh each page, so anything put on with Wear it stays on for the next.
-  const wearing = (item) => ({ ...avatarLook(ctx), ...(item.slot === 'shoes' ? { shoes: item.id } : { [item.slot]: item.id }), badge: 'pin' });
+  const wearing = (item) => ({ ...wear(avatarLook(ctx), item), badge: 'pin' });
 
   sheet((close) => {
     const box = el('div', { class: 'unlock__stage' });
@@ -144,12 +169,8 @@ export function openUnlocks(ctx, slugs, { onClose } = {}) {
       i++;
       show(false);
     };
-    const wear = btn('Wear it', 'btn--pri', () => {
-      const item = items[i];
-      const look = avatarLook(ctx);
-      if (item.slot === 'shoes') look.shoes = item.id;
-      else look[item.slot] = item.id;
-      saveLook(ctx, look);
+    const wearBtn = btn('Wear it', 'btn--pri', () => {
+      saveLook(ctx, wear(avatarLook(ctx), items[i]));
       advance();
     }, { lg: true });
 
@@ -158,7 +179,7 @@ export function openUnlocks(ctx, slugs, { onClose } = {}) {
       box,
       el('div', { class: 'stack', style: 'gap:6px' },
         el('div', { class: 'eb', text: 'New badge' }), name, body),
-      el('div', { class: 'stack', style: 'gap:7px' }, wear, next),
+      el('div', { class: 'stack', style: 'gap:7px' }, wearBtn, next),
     ];
   }, { onClose });
   return true;

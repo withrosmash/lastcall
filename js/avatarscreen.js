@@ -11,7 +11,7 @@ import {
   createAvatar, drawStill, HAIRS, GLASSES, TOPS, ITEMS, SLOTS, SWATCHES, CROP,
   SUNGLASSES_BADGE, toHsl, fromHsl, shuffleLook,
 } from './avatar.js';
-import { avatarLook, saveLook, isUnlocked, requirement, badgeName, progress } from './wardrobe.js';
+import { avatarLook, saveLook, isUnlocked, requirement, badgeName, progress, wear, wears } from './wardrobe.js';
 
 // Tap the preview to cycle these.
 const FACES = [
@@ -35,7 +35,11 @@ function colourName(hex) {
   return l < 30 ? `dark ${hue}` : l > 75 ? `light ${hue}` : hue;
 }
 
-const TABS = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['items', 'Items'], ['colours', 'Colours']];
+const TABS = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['hats', 'Hats'], ['costumes', 'Costumes'],
+  ['hold', 'Hold'], ['extras', 'Extras'], ['effects', 'Effects'], ['colours', 'Colours']];
+// Each item tab is one group of the unlock table (items-data.js).
+const GROUP_OF = { hats: 'Hats', costumes: 'Costumes', hold: 'Hold', extras: 'Extras', effects: 'Effects' };
+const BARE = { hat: null, held: null, costume: null, effect: null, scarf: false, backpack: false, shoes: 'plain', glasses: 'none' };
 
 export function avatarScreen(ctx) {
   const original = avatarLook(ctx);
@@ -87,9 +91,7 @@ export function avatarScreen(ctx) {
       sub ? el('span', { class: 'wtile__sub' }, locked ? icon('lock', { size: 11 }) : null, el('span', { text: sub })) : null);
 
   function lockedSheet(item) {
-    const worn = { ...base(), glasses: item.slot === 'glasses' ? item.id : 'none', hat: item.slot === 'hat' ? item.id : null,
-      held: item.slot === 'held' ? item.id : null, costume: item.slot === 'costume' ? item.id : null,
-      shoes: item.slot === 'shoes' ? item.id : 'plain' };
+    const worn = wear({ ...base(), ...BARE }, item);
     const line = progress(ctx, item.badge);
     sheet((close) => [
       el('h2', { class: 'title', style: 'margin:0', text: item.name }),
@@ -132,21 +134,24 @@ export function avatarScreen(ctx) {
         onclick: () => { draft = { ...draft, top: k, costume: null }; changed(); },
       }));
     }
-    if (tab === 'items') {
-      tiles = ITEMS.map((it) => {
-        if (it.group) return el('span', { class: 'wardrobe__group', text: it.group });
+    if (GROUP_OF[tab]) {
+      const start = ITEMS.findIndex((it) => it.group === GROUP_OF[tab]);
+      const end = ITEMS.findIndex((it, k) => k > start && it.group);
+      tiles = ITEMS.slice(start + 1, end < 0 ? undefined : end).map((it) => {
         const locked = !isUnlocked(ctx, it);
-        const on = it.slot === 'shoes' ? draft.shoes === it.id : draft[it.slot] === it.id;
-        const worn = { ...base(), hat: it.slot === 'hat' ? it.id : null, held: it.slot === 'held' ? it.id : null,
-          costume: it.slot === 'costume' ? it.id : null, shoes: it.slot === 'shoes' ? it.id : 'plain', glasses: 'none' };
-        const onHead = it.slot === 'hat' || it.slot === 'costume';
-        const opts = onHead ? { scale: 1.25, crop: CROP.head } : { fit: [72, 56] };
+        const on = wears(draft, it);
+        const worn = wear({ ...base(), ...BARE }, it);
+        // Hats and costumes show on the head, effects around the head and
+        // shoulders; anything else is drawn on its own.
+        const onHead = it.slot === 'hat' || it.slot === 'costume', around = it.slot === 'effect';
+        const opts = onHead ? { scale: 1.25, crop: CROP.head } : around ? { scale: 1, crop: CROP.upper } : { fit: [72, 56] };
         return tile({
           name: it.name, selected: on, locked, sub: it.badge ? badgeName(it.badge) : null,
-          canvas: tileCanvas(worn, locked ? { ...opts, only: it.id, silhouette: SIL } : onHead ? opts : { ...opts, only: it.id }),
+          canvas: tileCanvas(worn, locked ? { ...opts, only: it.id, silhouette: SIL } : onHead || around ? opts : { ...opts, only: it.id }),
           onclick: () => {
             if (locked) { lockedSheet(it); return; }
             if (it.slot === 'shoes') draft = { ...draft, shoes: on ? 'plain' : it.id };
+            else if (it.slot === 'extra') draft = { ...draft, [it.id]: !on };
             else draft = { ...draft, [it.slot]: on ? null : it.id };
             changed();
           },

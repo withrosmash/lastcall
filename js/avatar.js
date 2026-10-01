@@ -13,6 +13,7 @@
 // tracking. The movement brief is design/AVATAR-MOTION.md.
 
 import * as Art from './avatar-art.js';
+import { fxFrame } from './items-data.js';
 
 export const { W, H, MW, MH } = Art;
 // The animations were written for the 32 x 43 avatar. One of their pixels is
@@ -31,40 +32,18 @@ export const HAIRS = Art.HAIRS.filter((k) => HAIR_NAMES[k]).map((k) => [k, HAIR_
 export const GLASSES = [['none', 'None'], ['round', 'Round'], ['square', 'Square'], ['browline', 'Browline'], ['sun', 'Sunglasses']];
 export const TOPS = [['tee', 'T-shirt'], ['hoodie', 'Hoodie'], ['shirt', 'Shirt'], ['jacket', 'Jacket'], ['dress', 'Dress'], ['pyjamas', 'Pyjamas']];
 
-// Items and the badge that unlocks each. `badge: null` is free from install.
-// Nothing unlocks from a drinking badge (design/BADGES-ROUND-2.md).
-export const ITEMS = [
-  { group: 'Hats' },
-  { id: 'cap', slot: 'hat', name: 'Cap', badge: 'early-doors' },
-  { id: 'party', slot: 'hat', name: 'Party hat', badge: 'game-on' },
-  { id: 'headphones', slot: 'hat', name: 'Headphones', badge: 'no-notes' },
-  { id: 'sunhat', slot: 'hat', name: 'Sun hat', badge: 'ringleader' },
-  { id: 'cowboy', slot: 'hat', name: 'Cowboy hat', badge: 'long-haul' },
-  { id: 'crown', slot: 'hat', name: 'Crown', badge: 'chaos-agent' },
-  { group: 'Costumes' },
-  { id: 'catears', slot: 'hat', name: 'Cat ears', badge: null },
-  { id: 'panda', slot: 'costume', name: 'Panda', badge: 'snack-break' },
-  { id: 'dino', slot: 'costume', name: 'Dinosaur', badge: 'big-stomp' },
-  { id: 'duck', slot: 'costume', name: 'Duck', badge: 'just-add-water' },
-  { id: 'elvis', slot: 'costume', name: 'Elvis', badge: 'pin-cushion' },
-  { group: 'Other' },
-  { id: 'mug', slot: 'held', name: 'Mug', badge: null },
-  { id: 'bottle', slot: 'held', name: 'Water bottle', badge: 'hydro-homie' },
-  { id: 'pizza', slot: 'held', name: 'Pizza slice', badge: 'late-bite' },
-  { id: 'balloon', slot: 'held', name: 'Balloon', badge: 'anniversary' },
-  { id: 'trainers', slot: 'shoes', name: 'Trainers', badge: 'ten-k' },
-];
-// Sunglasses live in the Glasses tab but unlock like an item.
-export const SUNGLASSES_BADGE = 'first-dare';
+// The wardrobe's items and what unlocks each live in items-data.js.
+export { ITEMS, SUNGLASSES_BADGE } from './items-data.js';
 
 export const SLOTS = [['skin', 'Skin'], ['hair', 'Hair & brows'], ['eyes', 'Eyes'], ['cheeks', 'Cheeks'],
-  ['top', 'Top'], ['bottoms', 'Bottoms'], ['shoes', 'Shoes']];
+  ['top', 'Top'], ['bottoms', 'Bottoms'], ['shoes', 'Shoes'], ['glasses', 'Glasses frame'], ['hat', 'Hat']];
 export const SWATCHES = {
   skin: ['#F6D5BD', '#E8B48F', '#D19A6E', '#A96F45', '#7A4A2A', '#4E2F1C'],
   hair: ['#1E1A18', '#3B2A20', '#7A4B2A', '#C98A4B', '#E6C77A', '#B9B4AE', '#D95B7C', '#4B7BD9'],
   eyes: ['#2B2B2B', '#5B3A24', '#4A7A5C', '#3D6FB0', '#7A6A9E', '#8A8A8A'],
   cheeks: ['#F08A8A', '#F4A6C0', '#E07A5F', '#C85A7A'],
   cloth: ['#EDEDED', '#1E1E1E', '#21764F', '#7EE0C0', '#F06C9B', '#3D6FB0', '#E3B23C', '#8B3A3A'],
+  glasses: ['#24252B', '#6B4A2E', '#B9B4AE', '#C9A227', '#8B3A3A', '#3D6FB0'],
 };
 
 export const DEFAULT_LOOK = {
@@ -110,8 +89,10 @@ export function normaliseLook(saved) {
     scarf: !!src.scarf, backpack: !!src.backpack,
     effect: Art.EFFECTS.includes(src.effect) ? src.effect : null,
     colors,
-    // The mode touch is added at draw time (wardrobe.dressedFor), never saved.
+    // Added at draw time, never saved: the mode touch (wardrobe.dressedFor)
+    // and the badge pin the unlock sheet shows.
     ...(Art.MODES.includes(src.touch) ? { touch: src.touch } : {}),
+    ...(src.badge === 'pin' ? { badge: 'pin' } : {}),
   };
 }
 
@@ -173,6 +154,7 @@ export function artLook(look, fr, { fxFrame = 0 } = {}) {
   const effect = fr.sparkles ? 'sparkles' : look.effect;
   if (effect) { a.effect = effect; a.fxFrame = fxFrame; }
   if (fr.badge === 'held' || fr.badge === 'pin') a.badge = fr.badge;
+  else if (look.badge) a.badge = look.badge;
 
   // What's in the hands. A reaction's prop goes in the hand it names (a drink
   // is always the soft drink with a straw); a worn item shows only
@@ -368,11 +350,12 @@ export function deviceCell(cell, dpr = Math.min(3, globalThis.devicePixelRatio |
   return Math.max(1, round(cell * dpr));
 }
 
-export const CROP = { head: [6, 0, 52, 50], body: [6, 44, 52, 30], held: [30, 40, 32, 32], shoes: [10, 66, 44, 14] };
+export const CROP = { head: [6, 0, 52, 50], upper: [0, 0, 64, 62], body: [6, 44, 52, 30], held: [30, 40, 32, 32], shoes: [10, 66, 44, 14] };
 
 /** Draws one still frame: the whole avatar, or `only` one item, optionally as a flat silhouette. */
 export function drawStill(canvas, look, opts = {}) {
-  const grid = build(look, toFrame({ ...(opts.face || {}) }, { still: false }), opts.only || null);
+  // Stills show an effect at its second frame, where every effect is in full swing.
+  const grid = build(look, toFrame({ ...(opts.face || {}) }, { still: false }), opts.only || null, { fxFrame: opts.fxFrame ?? 1 });
   let s = opts.scale || 3;
   let crop = opts.crop || [0, 0, W, H];
   if (opts.fit) {
@@ -717,7 +700,7 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
   // 32 x 43 units; `u` is one of those units in device pixels.
   function paint() {
     const fr = frame();
-    const fx = reduceMotion() ? 0 : Math.floor(me.tick / 3) % 4;
+    const fx = fxFrame(me.tick, { calm, reduced: reduceMotion() });
     const cells = build(me.look, fr, null, { fxFrame: fx, room: true });
     const u = OFF * d;
     g.clearRect(0, 0, canvas.width, canvas.height);
