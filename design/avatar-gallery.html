@@ -1,0 +1,147 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avatar gallery</title>
+<style>
+  :root{--bg:#0b0b0b;--card:#161616;--ink:#f2f2f2;--muted:#9a9a9a;--line:#262626;--mint:#7EE0C0}
+  body.light{--bg:#EEF2F8;--card:#fff;--ink:#0B1526;--muted:#55606f;--line:#D5DDE9;--mint:#0B6E55}
+  body{margin:0;background:#0b0b0b;background:var(--bg);color:#f2f2f2;color:var(--ink);font:14px/1.45 system-ui,-apple-system,sans-serif}
+  header{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:17px;margin:0 auto 0 0}
+  button{font:600 13px system-ui;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+  button[aria-pressed="true"]{border-color:var(--mint);color:var(--mint)}
+  main{padding:8px 16px 40px;max-width:1100px;margin:0 auto}
+  h2{font-size:15px;margin:26px 0 4px}
+  p.note{color:var(--muted);margin:0 0 12px;max-width:720px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .card canvas{image-rendering:pixelated}
+  .num{font:700 11px system-ui;color:var(--mint);align-self:flex-start}
+  .name{font-weight:700}
+  .when{font-size:12px;color:var(--muted)}
+</style>
+<header>
+  <h1>Avatar gallery</h1>
+  <button id="theme" type="button">Light background</button>
+  <button id="size" type="button">Bigger</button>
+</header>
+<main id="out"></main>
+<script type="module">
+import {
+  createAvatar, drawStill, normaliseLook, HAIRS, GLASSES, TOPS, ITEMS, CROP,
+} from '../js/avatar.js';
+
+// Every card is numbered, so notes can say "#12 looks slow".
+let n = 0;
+let cell = 4;
+const base = normaliseLook(null);
+const out = document.getElementById('out');
+const loops = [];
+
+const section = (title, note) => {
+  const h = document.createElement('h2'); h.textContent = title;
+  const p = document.createElement('p'); p.className = 'note'; p.textContent = note;
+  const grid = document.createElement('div'); grid.className = 'grid';
+  out.append(h, p, grid);
+  return grid;
+};
+const card = (grid, canvas, name, when) => {
+  const c = document.createElement('div'); c.className = 'card';
+  const num = document.createElement('div'); num.className = 'num'; num.textContent = `#${++n}`;
+  const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = name;
+  const w = document.createElement('div'); w.className = 'when'; w.textContent = when;
+  c.append(num, canvas, nm, w);
+  grid.append(c);
+};
+
+// A live avatar that replays an animation every few seconds.
+function animated(grid, name, when, { look = base, mood = 'Fresh', every = 3200 } = {}) {
+  const av = createAvatar({ cell, look, label: name });
+  av.setMood(mood);
+  av.start();
+  card(grid, av.canvas, name, when);
+  const go = () => av.play(name);
+  setTimeout(go, 300 + Math.random() * 600);
+  loops.push(setInterval(go, every));
+  return av;
+}
+
+function idle(grid, mood, when, look = base) {
+  const av = createAvatar({ cell, look, label: mood });
+  av.setMood(mood);
+  av.start();
+  card(grid, av.canvas, mood, when);
+}
+
+function still(grid, look, name, when, opts = {}) {
+  const c = document.createElement('canvas');
+  drawStill(c, look, { scale: Math.max(2, cell - 1), ...opts });
+  card(grid, c, name, when);
+}
+
+function render() {
+  loops.forEach(clearInterval); loops.length = 0;
+  out.replaceChildren(); n = 0;
+
+  const r = section('Reactions', 'Each plays when you do the thing named under it. They loop here every few seconds so you can watch them.');
+  [
+    ['start', 'Starting an adventure'],
+    ['drink', 'Logging a drink'],
+    ['water', 'Hydrate'],
+    ['food', 'Food or Snack'],
+    ['checkin', 'Check in, Saw a set, or switching mode'],
+    ['cheer', 'Finishing a challenge'],
+    ['nudge', 'The water reminder appearing'],
+    ['badge', 'Catching a badge on the recap'],
+    ['end', 'The recap after ending'],
+    ['hello', 'The splash hand-off and first launch'],
+    ['poke', 'Tapping the avatar'],
+    ['tickle', 'Tapping it five times quickly'],
+  ].forEach(([name, when]) => animated(r, name, when));
+
+  const m = section('Moods', 'How the avatar idles between reactions. It picks a little move from its mood every few seconds; watch for a while.');
+  idle(m, 'Fresh', 'Most of the time');
+  idle(m, 'Thirsty', 'Behind on water');
+  idle(m, 'Sleepy', 'After 1am');
+  idle(m, 'Buzzing', 'Busy with stops, food and challenges (never drinks)');
+  idle(m, 'Morning', 'The morning-after screen', { ...base, top: 'pyjamas', messy: true, held: 'mug', hat: 'nightcap', colors: { ...base.colors, top: '#3D6FB0' } });
+
+  const s = section('Idle moves', 'The small moves the moods are made of.');
+  [['weight', 'Shifting weight'], ['look', 'Looking around'], ['tap', 'Tapping a foot'], ['hum', 'Humming'], ['fan', 'Fanning (thirsty)'], ['yawn', 'Yawning (sleepy)'], ['dance', 'Dancing (buzzing)'], ['sip', 'Sipping (morning)'], ['slowblink', 'Slow blink (morning)'], ['morningwave', 'Morning wave']]
+    .forEach(([name, when]) => animated(s, name, when, { every: 3600 }));
+
+  const f = section('Faces', 'Tap the avatar in Customise to cycle these.');
+  [['Resting', { eyes: 'open', mouth: 'smile' }], ['Happy', { eyes: 'happy', mouth: 'cat', blush: 2 }], ['Hearts', { eyes: 'heart', mouth: 'open', blush: 2 }],
+    ['Stars', { eyes: 'star', mouth: 'wide' }], ['Wink', { eyes: 'wink', mouth: 'smile' }], ['Surprised', { eyes: 'wide', mouth: 'ooh' }],
+    ['Puppy', { eyes: 'puppy', mouth: 'small' }], ['Content', { eyes: 'content', mouth: 'smile', blush: 2 }]]
+    .forEach(([name, face]) => still(f, base, name, 'Face', { face, crop: CROP.head }));
+
+  const md = section('Mode touches', 'Worn over the look on each kind of adventure. Night out adds nothing.');
+  [['day', 'Day out: camera'], ['walk', 'Walk: backpack'], ['festival', 'Festival: wristband and glitter']]
+    .forEach(([touch, name]) => animated(md, 'hello', name, { look: { ...base, touch }, every: 4000 }));
+
+  const h = section('Hair', 'Free to choose.');
+  HAIRS.forEach(([k, name]) => still(h, { ...base, hair: k, glasses: 'none' }, name, 'Hair', { crop: CROP.head }));
+  const g = section('Glasses', 'Sunglasses unlock with First Dare.');
+  GLASSES.forEach(([k, name]) => still(g, { ...base, glasses: k }, name, 'Glasses', { crop: CROP.head }));
+  const t = section('Tops', 'Free to choose.');
+  TOPS.forEach(([k, name]) => still(t, { ...base, top: k }, name, 'Top'));
+  const it = section('Items', 'Unlocked by badges, worn one per slot.');
+  ITEMS.filter((i) => i.id).forEach((i) => {
+    const worn = { ...base, glasses: 'none', [i.slot === 'shoes' ? 'shoes' : i.slot]: i.id };
+    still(it, worn, i.name, i.badge ? `Unlocks with a badge` : 'Free');
+  });
+}
+
+render();
+document.getElementById('theme').onclick = (e) => {
+  const on = document.body.classList.toggle('light');
+  e.target.setAttribute('aria-pressed', on ? 'true' : 'false');
+};
+document.getElementById('size').onclick = (e) => {
+  cell = cell === 4 ? 6 : 4;
+  e.target.setAttribute('aria-pressed', cell === 6 ? 'true' : 'false');
+  e.target.textContent = cell === 6 ? 'Smaller' : 'Bigger';
+  render();
+};
+</script>
