@@ -358,7 +358,7 @@ function doneTiles(s) {
   const stops = tile('Stops', sum.stops);
   const food = tile('Food', (s.meals || []).length);
   const dares = tile('Challenges', (s.challenges || []).length);
-  if (S.onlyMode(s, 'walk')) return firstFour([steps, dist, route ? paceTile(S.walkPace(s)) : null, stops, water, food, dares]);
+  if (S.onlyMode(s, 'walk')) return firstFour([steps, dist, route ? paceTile(S.walkPace(s), true) : null, stops, water, food, dares]);
   const drinks = tile('Drinks', sum.drinks, { tone: 'drinks' });
   if (S.hasMode(s, 'festival')) return firstFour([drinks, water, tile('Sets', (s.sets || []).length), steps || dist, food, dares]);
   return firstFour([drinks, water, steps || dist, stops, food, dares]);
@@ -366,8 +366,9 @@ function doneTiles(s) {
 
 // Pace over the walk so far, stops included: it's how long the walk is
 // taking, not a running split. Only the walk part counts.
-function paceTile(p) {
-  const node = p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', 'Not yet');
+function paceTile(p, done = false) {
+  // While walking it's "Not yet"; on a finished walk there's nothing to wait for.
+  const node = p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', done ? 'Too short' : 'Not yet');
   node.dataset.pace = '';
   return node;
 }

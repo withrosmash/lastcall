@@ -226,12 +226,15 @@ async function fixBattery() {
 // Change of plan: same adventure, new mode or company from this moment.
 function switchMode(choice) {
   const s = ctx.state.active;
+  const was = s && S.currentPart(s);
   if (!s || !S.switchPart(s, choice)) return;
   save();
   render();
   react('checkin');
   keepalive.showQuickLog(quickLogLabel());
-  toast(`Now a ${MODES[choice.mode].label.toLowerCase()}.`);
+  // Say what actually changed: the mode, or only who's with you.
+  toast(was.mode !== choice.mode ? `Now a ${MODES[choice.mode].label.toLowerCase()}.`
+    : choice.company === 'solo' ? 'Now on your own.' : 'Now with friends.');
 }
 
 async function endNight() {
@@ -365,7 +368,7 @@ function logMeal() {
   render();
   buzz();
   react('food');
-  toast('Food logged. Tap to undo.', 4000, () => {
+  toast(`${MODES[S.currentPart(s).mode].labels?.food || 'Food'} logged. Tap to undo.`, 4000, () => {
     s.meals.pop();
     save();
     render();

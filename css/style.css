@@ -436,7 +436,7 @@ canvas.avatar{
 .badge-row{display:flex;flex-wrap:wrap;gap:10px}
 
 /* The wordmark in place of the eyebrow: its own height, no label tracking. */
-.brandmark{display:flex;line-height:0;margin-top:15px}
+.brandmark{display:flex;line-height:0;margin-top:15px;margin-bottom:5px}
 .brandmark svg{display:block}
 
 /* ---------- audit fixes (M6) ---------- */

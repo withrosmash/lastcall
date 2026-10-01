@@ -99,6 +99,8 @@ export function historyScreen(ctx) {
   ];
 }
 
+const dayCount = (n) => `${n} day${n === 1 ? '' : 's'}`;
+
 // Festival reviews, newest first, and the way to make one once there are two
 // festival days to bring together.
 function festivalRows(ctx) {
@@ -109,7 +111,7 @@ function festivalRows(ctx) {
     el('div', { class: 'stack', style: 'gap:6px' },
       reviews.map((f) => el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('festival', f) },
         el('span', { class: 'listrow__d', text: f.name }),
-        el('span', { class: 'listrow__m' }, el('span', { text: `${f.sessionIds.filter((id) => ctx.state.sessions.some((s) => s.id === id)).length} days` })))),
+        el('span', { class: 'listrow__m' }, el('span', { text: dayCount(f.sessionIds.filter((id) => ctx.state.sessions.some((s) => s.id === id)).length) })))),
       canMakeFestival(ctx)
         ? el('button', { class: 'listrow press', type: 'button', onclick: () => { ctx.festivalPick = null; ctx.go('festivalPick'); } },
           el('span', { class: 'listrow__d', text: 'Make a festival' }),
@@ -138,7 +140,7 @@ export function numbersScreen(ctx) {
       tile(t('{Ns}'), st.adventures),
       tile('Last 30 days', st.last30),
       tile('Weeks out', st.weeks),
-      tile('Average', st.adventures ? hm(st.avgMs) : '0m'),
+      tile('Average', hm(st.avgMs)),
     ),
     el('div', { class: 'stack', style: 'gap:6px' },
       ...MODE_KEYS.map((k) => row(MODES[k].label, st.byMode[k])),
@@ -148,7 +150,7 @@ export function numbersScreen(ctx) {
       tile('Challenges', st.challenges),
       tile('Badges', `${st.badges} of ${BADGES.length}`),
       tile('Cards', st.cards),
-      tile('Festivals', st.festivals),
+      tile('Festivals made', st.festivals),
     ),
     since || cardsSince ? el('p', { class: 'cap', style: 'margin:0', text: [since, cardsSince].filter(Boolean).join(' ') }) : null,
     spacer(),
@@ -309,7 +311,7 @@ export function detailScreen(ctx, session) {
     (() => {
       const entries = [
         ...s.pins.map((p) => ({ t: p.t, pin: true, label: p.note ? `${p.name} · ${p.note}` : p.name })),
-        ...(s.meals || []).map((m) => ({ t: m.t, pin: false, label: 'Food' })),
+        ...(s.meals || []).map((m) => ({ t: m.t, pin: false, label: MODES[S.partAt(s, m.t).mode]?.labels?.food || 'Food' })),
         ...(s.sets || []).map((x) => ({ t: x.t, pin: false, set: true, label: `Set: ${x.name}` })),
         ...(s.challenges || []).map((c) => ({ t: c.t, pin: false, label: `Challenge: ${c.text}` })),
         ...s.waters.map((w) => ({ t: w.t, pin: false, label: 'Water' })),
@@ -415,11 +417,14 @@ function toGpx(s) {
   const name = `Leit, ${shortDate(s.startedAt)}`;
   const points = s.trail.map((p) =>
     `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
+  const sets = (s.sets || []).filter((x) => x.lat != null).map((x) =>
+    `<wpt lat="${x.lat}" lon="${x.lng}"><name>${escapeXml(x.name)}</name><type>set</type><time>${new Date(x.t).toISOString()}</time></wpt>`).join('\n');
   const stops = s.pins.filter((p) => p.lat != null).map((p) =>
     `<wpt lat="${p.lat}" lon="${p.lng}"><name>${escapeXml(p.name)}</name><time>${new Date(p.t).toISOString()}</time></wpt>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Leit" xmlns="http://www.topografix.com/GPX/1/1">
 ${stops}
+${sets}
 <trk><name>${escapeXml(name)}</name><trkseg>
 ${points}
 </trkseg></trk>

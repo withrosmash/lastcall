@@ -3,6 +3,7 @@ import * as S from './state.js';
 import * as geo from './geo.js';
 import { drawMini } from './avatar.js';
 import { t } from './words.js';
+import { MODES } from './modes.js';
 
 // Dark basemap: the standard OSM raster is light, which fights a true-black
 // night app and leaves the stats strip unreadable. CARTO's dark_all used to be
@@ -52,6 +53,8 @@ export function mapScreen(ctx) {
       el('div', { class: 'tile__k', text: k }),
       el('div', { class: `tile__v${tone ? ' tile__v--' + tone : ''}`, text: v }));
 
+  // Festival days log sets, not stops, so there's no pin to drop.
+  const checkins = MODES[S.currentPart(s).mode].buttons.includes('checkin');
   return [
     head({ title: 'Your route', back: () => ctx.back() }),
 
@@ -63,7 +66,7 @@ export function mapScreen(ctx) {
           host,
           // Chrome over the map sits on a protection gradient, not a capsule.
           el('div', { class: 'map-foot' },
-            stat('Stops', String(s.pins.length)),
+            checkins ? stat('Stops', String(s.pins.length)) : stat('Sets', String((s.sets || []).length)),
             stat('Drinks', String(s.drinks.length), 'drinks'),
             stat('Distance', `${km(s.distanceM)} km`),
           )),
@@ -72,7 +75,7 @@ export function mapScreen(ctx) {
 
     denied ? spacer() : null,
     foot(
-      denied
+      denied || !checkins
         ? btn(t('Back to the {n}'), 'btn--sec', () => ctx.back())
         : btn('Drop pin', 'btn--pri', () => dropPin(ctx, s), { iconName: 'map-pin', lg: true }),
     ),

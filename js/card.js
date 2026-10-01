@@ -764,7 +764,8 @@ function drawRouteCard(g, w, h, want) {
     if (!want(r.id)) return;
     r.cells.forEach(([l, v, pink], j) => cell(M + j * r.step, i + 3 - rows.length, l, v, pink));
   });
-  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 64, { size: 30, weight: 400, color: T.date });
+  // A cap height (30px) of clear space between the date and the wordmark.
+  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 79, { size: 30, weight: 400, color: T.date });
   // The wordmark's foot sits where the typed name's baseline did.
   if (want('wordmark')) drawWordmark(g, M, h - M - 19, 30, { color: T.mark });
   if (want('avatar') && ui.face !== 'none' && ui.look) {
