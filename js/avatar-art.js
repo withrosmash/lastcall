@@ -990,7 +990,7 @@ const A = (function () {
     mini(look, f).forEach((p, i) => { if (!p) return; const x = i % MW, y = (i / MW) | 0; const c = colourOf(p, colors); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect((opts.flip ? MW - 1 - x : x) * s, y * s, s, s); });
   }
 
-  return { normalize, colourOf, HOOK, ARMDEF: ARMS, SHOULDER, K, OX, W, H, MW, MH, HAIRS, TOPS, GLASSES, EYES: EYE_LIST, BROWS: Object.keys(BROWS), MOUTHS: Object.keys(MOUTHS), ARMS: Object.keys(ARMS), POSES: Object.keys(POSES), PRESETS: Object.keys(PRESETS), LAYERS: ORDER, DEFAULT, TONE, SLOTS, build, compose, render, anchors, draw, drawMini, mini };
+  return { normalize, colourOf, HOOK, ARMDEF: ARMS, SHOULDER, K, OX, W, H, MW, MH, HAIRS, TOPS, GLASSES, EYES: EYE_LIST, BROWS: Object.keys(BROWS), MOUTHS: Object.keys(MOUTHS), ARMS: Object.keys(ARMS), POSES: Object.keys(POSES), PRESETS: Object.keys(PRESETS), LAYERS: ORDER, DEFAULT, TONE, SLOTS, build, compose, render, anchors, draw, drawMini, mini, outlineFixed, LAYER_Z };
 })();
 
 // Leit avatar, Style B: items. Hats, hoods, held items, badge, reaction props, mode touches, walker variants.
@@ -1651,9 +1651,9 @@ const A = (function () {
 })(A);
 
 export const {
-  W, H, MW, MH, K, OX, HAIRS, TOPS, GLASSES, EYES, BROWS, MOUTHS, ARMS, POSES, PRESETS, LAYERS, TONE, SLOTS,
+  W, H, MW, MH, K, OX, LAYER_Z, HAIRS, TOPS, GLASSES, EYES, BROWS, MOUTHS, ARMS, POSES, PRESETS, LAYERS, TONE, SLOTS,
   HATS, HOODS, COSTUMES, EFFECTS, MODES, HELD, PROPS, PROPS2,
-  normalize: normalizeArt, colourOf, build, compose, anchors, mini,
+  normalize: normalizeArt, colourOf, build, compose, outlineFixed, anchors, mini,
 } = A;
 export const DEFAULT_COLORS = A.DEFAULT;
 export const HELD_ITEMS = [...A.HELD, ...A.PROPS, ...A.PROPS2, 'wand', 'spoon'];
