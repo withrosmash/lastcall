@@ -36,3 +36,13 @@ Clear the app's data first (Settings › Apps › Leit › Storage › Clear sto
 
 ## TalkBack (optional)
 21. With TalkBack on, the live timer reads its time, sheets read their title first, and closing a sheet goes back to the button that opened it.
+
+## Style B avatar and the new icon (M6c)
+22. The launcher icon is the white LEIT wordmark on forest green, crisp on the home screen, and in a circle if your launcher uses round icons.
+23. Your avatar looks the same as before in its new style: same colours, same glasses. If you had the Quiff, it's now Short; a bucket hat is now the sun hat.
+24. On the live screen, log a drink, a water, food and a check in. Each reaction plays smoothly, with no stutter on the first one. The drink is a soft drink with a straw, and water is a glass of water.
+25. Customise has tabs for Hats, Costumes, Hold, Extras and Effects. Locked items show as grey shapes with the badge that unlocks them.
+26. Wear a costume and an effect. Both show on the live screen and on a share card.
+27. Turn on Calmer avatar: the effect stops moving.
+28. End an adventure that earns a badge with an item. The unlock sheet shows it, and Wear it puts it on.
+29. The history map walker matches your look, and walks the route.
