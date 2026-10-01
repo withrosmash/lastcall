@@ -139,14 +139,7 @@ const WALK_CHECKS = {
 };
 
 const DAY_MS = 24 * 3600e3;
-// Monday of the week, as local midnight: weeks count by date, not by number,
-// so a run across New Year still counts.
-function weekStart(t) {
-  const d = new Date(t);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d.getTime();
-}
+const { weekStart } = S;
 
 function weeksRunning(done, n) {
   const weeks = [...new Set(done.map((s) => weekStart(s.startedAt)))].sort((a, b) => a - b);

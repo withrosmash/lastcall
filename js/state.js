@@ -104,6 +104,14 @@ export function walkPace(s, now = Date.now()) {
 
 export const onlyMode = (s, mode) => partsOf(s).every((p) => p.mode === mode);
 
+/** Monday of the week as local midnight: weeks count by date, so a run across New Year works. */
+export function weekStart(t) {
+  const d = new Date(t);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getTime();
+}
+
 export const hasMode = (s, mode) => partsOf(s).some((p) => p.mode === mode);
 
 /** The session as seen from one mode: only what was logged while in it. */

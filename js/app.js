@@ -261,7 +261,11 @@ function syncBadges() {
 
 // The card export badge can only be earned outside endNight.
 window.addEventListener('lc:card-exported', () => {
-  ctx.state.flags.cardExported = true;
+  const f = ctx.state.flags;
+  // Counted for testers' numbers; a card saved before counting began is one.
+  if (f.cardsShared == null) { f.cardsShared = f.cardExported ? 1 : 0; f.cardsSince = Date.now(); }
+  f.cardsShared += 1;
+  f.cardExported = true;
   const fresh = syncBadges();
   if (fresh.length) {
     const meta = badges.BADGES.find((b) => b.slug === fresh[0].slug);
