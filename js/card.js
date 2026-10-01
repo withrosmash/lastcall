@@ -8,6 +8,7 @@ import { paintAvatar } from './avatar.js';
 import { avatarLook, dressedFor } from './wardrobe.js';
 import { MODES } from './modes.js';
 import { NIGHT_GLOW, cardBloom, photoBloom } from './glow.js';
+import { drawWordmark } from './wordmark.js';
 
 const RATIOS = { feed: [1080, 1350], story: [1080, 1920] };
 const PAD = 64;
@@ -666,7 +667,7 @@ function draw({ forExport = false, only = null, target = null } = {}) {
   }
   drawFree(g, w, h, forExport || !!only || !live, want, live);
   // The wordmark is the one fixed element on a photo card: mint, bottom right.
-  if (want('wordmark')) drawText(g, 'Leit', w - PAD, h - PAD - 40, { size: 40, weight: 700, color: C.mint, align: 'right' });
+  if (want('wordmark')) drawWordmark(g, w - PAD, h - PAD - 36, 30, { color: C.mint, align: 'right', shadow: theme().shadow });
 }
 
 // The card glows in the colour of the mode the adventure ended in.
@@ -757,7 +758,8 @@ function drawRouteCard(g, w, h, want) {
   }
   if (want('time') && on.time.on) cell(M, 2, 'Time out', hm(ui.sum.ms));
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 64, { size: 30, weight: 400, color: T.date });
-  if (want('wordmark')) drawText(g, 'Leit', M, h - M - 22, { size: 40, weight: 700, color: T.mark });
+  // The wordmark's foot sits where the typed name's baseline did.
+  if (want('wordmark')) drawWordmark(g, M, h - M - 19, 30, { color: T.mark });
   if (want('avatar') && ui.face !== 'none' && ui.look) paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
 }
 
