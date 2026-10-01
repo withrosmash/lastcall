@@ -24,14 +24,14 @@ When friends go out together, each can share their avatar with the others for th
 - **The domain:** links must be `https` to be tappable in WhatsApp. Android App Links need `/.well-known/assetlinks.json` on that domain; iOS Universal Links (later) need the same.
 - **The final Android app ID:** decided at the Google Play step, because App Links verify the app's package and signing key.
 
-## Open questions (settle before the plan)
+## Answered (2026-10-01)
 
-1. Can a friend be added after the adventure ends, for example the next morning when the card gets made? (Likely yes, until the card is made.)
-2. Where do crew avatars show during the adventure: next to yours on the live screen, a crew row, or only at the end?
-3. Who draws the group poses: Claude Design (a small brief) or the avatar engine, as with the mode touches?
-4. Can a crew member be removed from an adventure? (Likely yes.)
-5. Does the invite page have its own design pass (it's the first thing a non-user sees)?
-6. Is there a badge for going out as a crew? (It would unlock no items.)
+1. **Adding friends after the adventure:** yes, until the card is made and beyond. Friends can be added the next morning.
+2. **During the adventure:** the crew roves around the live screen near your avatar, somewhere that makes sense in the layout. The exact placement comes from the first build.
+3. **Group poses:** Claude draws a first set in the avatar engine, then we iterate with the user.
+4. **Removing someone without accidents:** removal happens only from a Crew sheet (tap the crew), where each friend has a small Remove. A toast then offers Undo for five seconds. There's no swipe or long-press removal on the live screen. (Proposed; confirm when building.)
+5. **The invite page** gets its own design pass.
+6. **Crew badges:** one for each crew size from 2 to 6, so five badges. Names and art to be agreed: proposed Double Act (2), Three's Company (3), Fab Four (4), High Five (5), Full House (6). They unlock no items.
 
 ## Privacy
 
