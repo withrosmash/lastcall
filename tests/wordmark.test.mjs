@@ -81,3 +81,33 @@ test('every rectangle sits on the letters, not in the gaps between them', () => 
     for (const [px, py] of pts) assert.ok(polys.some((p) => inside(p, px, py)), `(${px.toFixed(2)}, ${py.toFixed(2)}) is off the letters`);
   }
 });
+
+// Reads one of our own PNGs (scripts/icons.mjs writes every row with filter 0).
+async function readPng(path) {
+  const { inflateSync } = await import('node:zlib');
+  const buf = readFileSync(new URL(path, import.meta.url));
+  const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20), type = buf[25];
+  const bpp = type === 6 ? 4 : 3;
+  const idat = [];
+  for (let o = 8; o < buf.length;) {
+    const len = buf.readUInt32BE(o), tag = buf.toString('ascii', o + 4, o + 8);
+    if (tag === 'IDAT') idat.push(buf.subarray(o + 8, o + 8 + len));
+    o += 12 + len;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  const px = (x, y) => { const o = y * (w * bpp + 1) + 1 + x * bpp; return [raw[o], raw[o + 1], raw[o + 2]]; };
+  return { w, h, px };
+}
+
+test('the app icon is the white wordmark on forest', async () => {
+  const { w, h, px } = await readPng('../design/round4/icon-1024.png');
+  assert.equal(w, 1024);
+  assert.equal(h, 1024);
+  assert.deepEqual(px(0, 0), [0x21, 0x76, 0x4f]);
+  const row = Math.round(h / 2) - 10;
+  const white = [];
+  for (let x = 0; x < w; x++) if (px(x, row).every((v) => v > 245)) white.push(x);
+  assert.ok(white.length > 0, 'white ink across the middle');
+  const span = (white.at(-1) - white[0] + 1) / w;
+  assert.ok(span >= 0.5 && span <= 0.64, `wordmark spans ${span.toFixed(3)} of the icon`);
+});

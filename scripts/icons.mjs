@@ -1,50 +1,30 @@
-// Draws every icon and splash image the app ships, from the avatar engine
-// itself, with a tiny self-contained PNG encoder. No ImageMagick, no rsvg, no
-// npm image deps.
+// Draws every icon and splash image the app ships, with a tiny
+// self-contained PNG encoder. No ImageMagick, no rsvg, no npm image deps.
 //
-// Round 2, direction A (design/round2/designs/Extras, 8d): the default
-// avatar's face, happy, on the forest bloom. The launcher and the system
-// splash can't show the user's own avatar (Android reads them from fixed files
-// before any app code runs), so they use this default face and the app's
-// first frame hands over to the user's own avatar (js/app.js, handoff).
+// The owner's choice (2026-10-01): the white Leit wordmark on forest green
+// (#21764F, the round 2 forest). The wordmark is all right angles, so it
+// fills as rectangles, supersampled at the edges. The status bar icon stays
+// the avatar's mono face: a wordmark is unreadable at 24dp.
 //
-//   node scripts/icons.mjs    (rerun if the avatar's default look changes)
+//   node scripts/icons.mjs    (rerun if the wordmark or the colour changes)
 
 import { deflateSync } from 'node:zlib';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { build, toFrame, normaliseLook, DEFAULT_LOOK } from '../js/avatar.js';
-import { rects as wordmarkRects, wordmarkWidth } from '../js/wordmark.js';
+import { rects as wordmarkRects, wordmarkWidth, WORDMARK } from '../js/wordmark.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RES = resolve(root, 'android/app/src/main/res');
-
-/* ---------- the face ---------- */
-
-const LOOK = normaliseLook({ ...DEFAULT_LOOK, glasses: 'none' });
-const FACE = build(LOOK, toFrame({ eyes: 'happy', mouth: 'cat', blush: 2 }, { still: false }));
-// The head. The design's crop ran one row lower, which caught the top of the
-// shoulders as stray blocks under the chin.
-const CROP = [2, 3, 28, 26];
-const cellAt = (x, y) => FACE[y * 32 + x];
 
 /* ---------- colour ---------- */
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const FOREST = hex('#21764F');
+const WHITE = [255, 255, 255];
 const STOPS = [[0, hex('#35A26F')], [0.45, hex('#17553B')], [1, hex('#061710')]];
-
-// The forest bloom: a radial glow from near the top, as in the design.
-function bloom(P, x, y) {
-  const d = Math.hypot(x + 0.5 - P / 2, y + 0.5 - P * 0.15) / (P * 0.95);
-  const t = Math.min(1, d);
-  for (let i = 1; i < STOPS.length; i++) {
-    if (t <= STOPS[i][0]) return lerp(STOPS[i - 1][1], STOPS[i][1], (t - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0]));
-  }
-  return STOPS[STOPS.length - 1][1];
-}
 
 // Coverage of a mask at a pixel, 4 x 4 supersampled so curved edges are smooth.
 function coverage(mask, P, x, y) {
@@ -61,39 +41,45 @@ function coverage(mask, P, x, y) {
   return n / 16;
 }
 
-/**
- * One square image. `face` places the head at whole-pixel scale `s`, centred;
- * `bg` paints the bloom; `mask` clips it (none, circle, round).
- */
-function iconPixels(P, { bg = true, face = true, mask = 'none', s = null } = {}) {
-  const out = Buffer.alloc(P * P * 4);
-  const scale = s ?? Math.max(1, Math.floor((P * 0.66) / CROP[2]));
-  const ox = Math.round((P - CROP[2] * scale) / 2), oy = Math.round((P - CROP[3] * scale) / 2);
-  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
-    let c = null, a = 0;
-    if (bg) { c = bloom(P, x, y); a = 1; }
-    if (face) {
-      const gx = Math.floor((x - ox) / scale), gy = Math.floor((y - oy) / scale);
-      if (x >= ox && y >= oy && gx < CROP[2] && gy < CROP[3]) {
-        const p = cellAt(gx + CROP[0], gy + CROP[1]);
-        if (p) { c = p.c; a = 1; }
-      }
+/** The wordmark's coverage over a W x H area, `width` px wide, centred. */
+function markCoverage(W, H, width) {
+  const cov = new Float32Array(W * H);
+  const height = (width * WORDMARK.h) / WORDMARK.w;
+  const x0 = (W - width) / 2, y0 = (H - height) / 2;
+  for (const r of wordmarkRects(height)) {
+    const ax = x0 + r.x, ay = y0 + r.y, bx = ax + r.w, by = ay + r.h;
+    for (let y = Math.floor(ay); y < Math.ceil(by); y++) for (let x = Math.floor(ax); x < Math.ceil(bx); x++) {
+      const c = Math.max(0, Math.min(x + 1, bx) - Math.max(x, ax)) * Math.max(0, Math.min(y + 1, by) - Math.max(y, ay));
+      cov[y * W + x] = Math.min(1, cov[y * W + x] + c);
     }
-    const k = (y * P + x) * 4;
-    if (!c) continue;
-    const cov = coverage(mask, P, x, y);
+  }
+  return cov;
+}
+
+/**
+ * One square icon: the wordmark `width` of the way across, white, on forest
+ * (`bg`), clipped by `mask` (none, circle, round). Without bg it's the
+ * adaptive foreground: white on transparent.
+ */
+function iconPixels(P, { bg = true, mark = true, mask = 'none', width = 0.6 } = {}) {
+  const out = Buffer.alloc(P * P * 4);
+  const cov = mark ? markCoverage(P, P, P * width) : new Float32Array(P * P);
+  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
+    const k = (y * P + x) * 4, m = cov[y * P + x], clip = coverage(mask, P, x, y);
+    const c = bg ? lerp(FOREST, WHITE, m) : WHITE;
+    const a = bg ? clip : m * clip;
     out[k] = Math.round(c[0]); out[k + 1] = Math.round(c[1]); out[k + 2] = Math.round(c[2]);
-    out[k + 3] = Math.round(255 * a * cov);
+    out[k + 3] = Math.round(255 * a);
   }
   return out;
 }
 
-// Splash: black ground, the icon as a disc in the middle, 160dp across.
+// Splash: black ground, the icon as a disc in the middle.
 function splashPixels(w, h) {
   const out = Buffer.alloc(w * h * 4);
-  const D = Math.min(w, h) / 2;
-  const disc = iconPixels(Math.round(D), { mask: 'circle' });
-  const P = Math.round(D), x0 = Math.round((w - P) / 2), y0 = Math.round((h - P) / 2);
+  const P = Math.round(Math.min(w, h) / 2);
+  const disc = iconPixels(P, { mask: 'circle', width: 0.56 });
+  const x0 = Math.round((w - P) / 2), y0 = Math.round((h - P) / 2);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const k = (y * w + x) * 4;
     out[k + 3] = 255;
@@ -159,49 +145,30 @@ const square = (path, P, opts) => png(path, P, P, iconPixels(P, opts));
 
 await square(resolve(root, 'icons/icon-192.png'), 192, {});
 await square(resolve(root, 'icons/icon-512.png'), 512, {});
-// Maskable icons can be cropped to a circle 80% across, so the face sits further in.
-await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { s: Math.floor((512 * 0.5) / 28) });
+// Maskable icons can be cropped to a circle 80% across, so the wordmark sits further in.
+await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { width: 0.5 });
 await square(resolve(root, 'icons/apple-touch-icon.png'), 180, {});
-// For the Play listing later.
-await square(resolve(root, 'design/round2/icon-1024.png'), 1024, {});
+// For the Play listing.
+await png(resolve(root, 'design/round4/icon-1024.png'), 1024, 1024, iconPixels(1024, {}), { opaque: true });
 
 /* ---------- store images ----------
-   The Leit wordmark beside the icon. The wordmark is all right angles, so it
-   fills as rectangles, supersampled at the edges. */
+   With the wordmark as the icon, the lockup is the wordmark on its own. */
 
-function paintWordmark(out, W, x0, y0, height, rgb) {
-  for (const r of wordmarkRects(height)) {
-    const ax = x0 + r.x, ay = y0 + r.y, bx = ax + r.w, by = ay + r.h;
-    for (let y = Math.floor(ay); y < Math.ceil(by); y++) for (let x = Math.floor(ax); x < Math.ceil(bx); x++) {
-      const cov = Math.max(0, Math.min(x + 1, bx) - Math.max(x, ax)) * Math.max(0, Math.min(y + 1, by) - Math.max(y, ay));
-      const k = (y * W + x) * 4;
-      for (let i = 0; i < 3; i++) out[k + i] = Math.round(out[k + i] * (1 - cov) + rgb[i] * cov);
-    }
-  }
+function paintMark(out, W, H, width) {
+  const cov = markCoverage(W, H, width);
+  for (let i = 0; i < W * H; i++) for (let c = 0; c < 3; c++) out[i * 4 + c] = Math.round(out[i * 4 + c] * (1 - cov[i]) + 255 * cov[i]);
 }
 
-function paintIcon(out, W, x0, y0, P) {
-  const icon = iconPixels(P, { mask: 'round' });
-  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
-    const j = (y * P + x) * 4, a = icon[j + 3] / 255, k = ((y0 + y) * W + x0 + x) * 4;
-    for (let i = 0; i < 3; i++) out[k + i] = Math.round(out[k + i] * (1 - a) + icon[j + i] * a);
-  }
-}
-
-// Lockup: icon and wordmark on black, one cap height of clear space between.
+// Lockup: the white wordmark on black.
 function lockup(W, H) {
   const out = Buffer.alloc(W * H * 4);
   for (let k = 3; k < out.length; k += 4) out[k] = 255;
-  const P = Math.round(H * 0.72), cap = Math.round(P * 0.42);
-  const total = P + cap + wordmarkWidth(cap);
-  const x0 = Math.round((W - total) / 2), y0 = Math.round((H - P) / 2);
-  paintIcon(out, W, x0, y0, P);
-  paintWordmark(out, W, x0 + P + cap, Math.round((H - cap) / 2), cap, [255, 255, 255]);
+  paintMark(out, W, H, wordmarkWidth(H * 0.4));
   return out;
 }
 
 // Google Play's feature graphic: the forest bloom from the top, then the
-// lockup. No tagline: there's no font renderer here, and Play lays its own
+// wordmark. No tagline: there's no font renderer here, and Play lays its own
 // text over the listing anyway.
 function featureGraphic(W, H) {
   const out = Buffer.alloc(W * H * 4);
@@ -213,11 +180,7 @@ function featureGraphic(W, H) {
     const k = (y * W + x) * 4;
     out[k] = Math.round(c[0]); out[k + 1] = Math.round(c[1]); out[k + 2] = Math.round(c[2]); out[k + 3] = 255;
   }
-  const P = 220, cap = 92;
-  const total = P + cap + wordmarkWidth(cap);
-  const x0 = Math.round((W - total) / 2), y0 = Math.round((H - P) / 2);
-  paintIcon(out, W, x0, y0, P);
-  paintWordmark(out, W, x0 + P + cap, Math.round((H - cap) / 2), cap, [255, 255, 255]);
+  paintMark(out, W, H, wordmarkWidth(H * 0.28));
   return out;
 }
 
@@ -229,12 +192,12 @@ await png(resolve(root, 'design/round3/feature-graphic.png'), 1024, 500, feature
 const LAUNCHER = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
 for (const [density, size] of Object.entries(LAUNCHER)) {
   await square(`${RES}/mipmap-${density}/ic_launcher.png`, size, { mask: 'round' });
-  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle' });
-  // Adaptive layers are 108dp; the launcher shows the middle 72dp, so the
-  // face is sized to that.
+  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle', width: 0.56 });
+  // Adaptive layers are 108dp and launchers may crop to a 66dp circle, so
+  // the wordmark is 56% of the layer: its corners stay inside that circle.
   const A = Math.round(size * 2.25);
-  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, s: Math.max(1, Math.floor((A * 0.62) / 28)) });
-  await square(`${RES}/mipmap-${density}/ic_launcher_background.png`, A, { face: false });
+  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, width: 0.56 });
+  await square(`${RES}/mipmap-${density}/ic_launcher_background.png`, A, { mark: false });
 }
 
 /* ---------- splash ---------- */
@@ -276,12 +239,13 @@ for (const density of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
 
 /* ---------- themed icon ----------
    Android 13 can tint launcher icons to the wallpaper; it uses this one-colour
-   layer. The same 12 x 12 face, 4dp to a pixel, centred in the 108dp canvas. */
+   layer: the wordmark, 56% across the 108dp canvas like the foreground. */
 
-let m = '';
-MONO.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'H') m += `M${30 + x * 4},${28 + y * 4}h4v4h-4z`; }));
+const mw = 108 * 0.56, mh = (mw * WORDMARK.h) / WORDMARK.w;
+const f2 = (v) => +v.toFixed(2);
+const m = wordmarkRects(mh).map((r) => `M${f2((108 - mw) / 2 + r.x)},${f2((108 - mh) / 2 + r.y)}h${f2(r.w)}v${f2(r.h)}h${f2(-r.w)}z`).join('');
 await writeFile(`${RES}/drawable/ic_launcher_monochrome.xml`, `<?xml version="1.0" encoding="utf-8"?>
-<!-- Generated by scripts/icons.mjs: the themed-icon layer. -->
+<!-- Generated by scripts/icons.mjs: the themed-icon layer, the Leit wordmark. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
