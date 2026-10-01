@@ -9,6 +9,8 @@ import { saveTextFile } from './keepalive.js';
 import { BADGES } from './badges-data.js';
 import { t } from './words.js';
 import { canMakeFestival } from './festival.js';
+import { testerStats } from './stats.js';
+import { MODES, MODE_KEYS } from './modes.js';
 
 /* ---------- 11 history ---------- */
 
@@ -111,6 +113,43 @@ function festivalRows(ctx) {
   ];
 }
 
+/* ---------- your numbers ----------
+   One screen a tester can screenshot and send back. Everything here is read
+   from the phone's own data; nothing is sent anywhere. */
+
+export function numbersScreen(ctx) {
+  const st = testerStats(ctx.state);
+  const row = (label, value) => el('div', { class: 'listrow' },
+    el('span', { class: 'listrow__d', text: label }),
+    el('span', { class: 'num', style: 'font:700 15px/1 var(--font-sans);color:var(--text)', text: String(value) }));
+  const since = st.since ? `Counting from your first ${t('{n}')}, ${shortDate(st.since)}.` : null;
+  const cardsSince = st.cardsSince && (!st.since || st.cardsSince > st.since)
+    ? `Cards counted from ${shortDate(st.cardsSince)}.` : null;
+
+  return [
+    head({ eyebrow: 'Settings', title: 'Your numbers', back: () => ctx.back() }),
+    el('p', { class: 'body', style: 'margin:0', text: 'Testing Leit? Screenshot this and send it over. Nothing leaves your phone unless you send it.' }),
+    tiles(
+      tile(t('{Ns}'), st.adventures),
+      tile('Last 30 days', st.last30),
+      tile('Weeks out', st.weeks),
+      tile('Average', st.adventures ? hm(st.avgMs) : '0m'),
+    ),
+    el('div', { class: 'stack', style: 'gap:6px' },
+      ...MODE_KEYS.map((k) => row(MODES[k].label, st.byMode[k])),
+      row('Switched mode', st.switched),
+      row('On your own', st.solo)),
+    tiles(
+      tile('Challenges', st.challenges),
+      tile('Badges', `${st.badges} of ${BADGES.length}`),
+      tile('Cards', st.cards),
+      tile('Festivals', st.festivals),
+    ),
+    since || cardsSince ? el('p', { class: 'cap', style: 'margin:0', text: [since, cardsSince].filter(Boolean).join(' ') }) : null,
+    spacer(),
+  ];
+}
+
 /* ---------- settings ---------- */
 
 const THRESHOLDS = [3, 4, 5, 6, 8];
@@ -181,6 +220,9 @@ export function settingsScreen(ctx) {
     el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('appearance') },
       el('span', { class: 'listrow__d', text: 'Appearance' }),
       el('span', { class: 'listrow__m' }, el('span', { text: p.theme === 'light' ? 'Light' : 'Dark' }))),
+    el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('numbers') },
+      el('span', { class: 'listrow__d', text: 'Your numbers' }),
+      el('span', { class: 'listrow__m' }, el('span', { text: 'For testers' }))),
 
     el('div', { class: 'eb', text: 'Remind me to drink water after' }),
     row,

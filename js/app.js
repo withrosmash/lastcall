@@ -9,7 +9,7 @@ import { MODES, recentFor, rememberFor } from './modes.js';
 import { bloomCss } from './glow.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
-import { historyScreen, detailScreen, settingsScreen, appearanceScreen } from './history.js';
+import { historyScreen, detailScreen, settingsScreen, appearanceScreen, numbersScreen } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as badges from './badges.js';
 import { atlasScreen } from './map.js';
@@ -55,6 +55,7 @@ const SCREENS = {
   festival: { build: (c) => festivalScreen(c, c.arg), bloom: 'hero', glow: () => 'festival' },
   avatar: { build: avatarScreen, bloom: 'hero' },
   appearance: { build: appearanceScreen, bloom: 'hero' },
+  numbers: { build: numbersScreen, bloom: 'hero' },
   morning: { build: (c) => morningScreen(c, c.arg), bloom: 'hero' },
   onboarding: { build: onboardingScreen, bloom: 'hero' },
 };
