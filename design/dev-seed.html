@@ -1,0 +1,92 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dev seed</title>
+<style>
+  :root{--bg:#000;--ink:#eee;--mint:#7EE0C0}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui}
+  button{font:600 15px system-ui;padding:12px 16px;border-radius:10px;border:1px solid var(--mint);background:transparent;color:var(--mint);margin:0 8px 8px 0}
+</style>
+<!-- Dev only, never shipped: fills this browser's Leit storage with sample
+     adventures in every mode (routes, stops, sets, a festival review), so
+     screens can be checked in the browser. The app saves its own state when
+     a page closes, so seed from here, then open the app. -->
+<h1>Leit dev seed</h1>
+<p id="out">Seeds this browser’s storage for http://localhost:8010.</p>
+<button id="seed" type="button">Seed sample data</button>
+<button id="fresh" type="button">Fresh install</button>
+<p><a href="/" style="color:var(--mint)">Open the app</a></p>
+<script type="module">
+import * as S from '../js/state.js';
+import { defaultPrefs } from '../js/storage.js';
+
+const H = 3600e3, D = 24 * H;
+const day0 = new Date(); day0.setHours(0, 0, 0, 0);
+const at = (daysAgo, hour) => day0.getTime() - daysAgo * D + hour * H;
+
+// A wandering route from (lat, lng): n fixes, a minute apart.
+function walkFrom(s, lat, lng, n, t) {
+  for (let i = 0; i < n; i++) {
+    lat += 0.0006 * Math.cos(i / 4); lng += 0.0008 * Math.sin(i / 5 + 1);
+    S.addFix(s, { lat, lng, t: t + i * 60e3 });
+  }
+  return [lat, lng];
+}
+
+function adventure(daysAgo, hour, hours, mode, company = 'group', fill = () => {}) {
+  const t0 = at(daysAgo, hour);
+  const s = S.newSession(t0, { mode, company });
+  fill(s, t0);
+  s.endedAt = t0 + hours * H;
+  return s;
+}
+
+function seed() {
+  const sessions = [
+    adventure(12, 19, 5, 'night', 'group', (s, t) => {
+      walkFrom(s, 51.515, -0.13, 40, t);
+      S.addPin(s, { lat: 51.516, lng: -0.129, name: 'The Crown' }, t + 20 * 60e3);
+      S.addPin(s, { lat: 51.518, lng: -0.127, name: 'Bar Nine' }, t + 2 * H);
+      ['Pint', 'Pint', 'Cocktail'].forEach((k, i) => S.addDrink(s, k, t + (i + 1) * H));
+      s.waters.push({ t: t + 1.5 * H }, { t: t + 3 * H });
+      s.steps = 8400;
+    }),
+    adventure(9, 11, 6, 'day', 'group', (s, t) => {
+      walkFrom(s, 51.505, -0.09, 50, t);
+      ['Borough Market', 'Tate Modern', 'Flat White Co'].forEach((n, i) => S.addPin(s, { lat: 51.505 + i * 0.002, lng: -0.09, name: n }, t + (i + 1) * H));
+      s.meals.push({ t: t + 1 * H });
+      s.steps = 12100;
+    }),
+    adventure(6, 8, 2, 'walk', 'solo', (s, t) => {
+      walkFrom(s, 51.53, -0.15, 60, t);
+      s.waters.push({ t: t + 40 * 60e3 });
+      s.steps = 9800;
+    }),
+    adventure(3, 13, 9, 'festival', 'group', (s, t) => {
+      walkFrom(s, 51.47, -0.2, 30, t);
+      S.addSet(s, { name: 'The Midnight Band', lat: 51.471, lng: -0.199 }, t + 2 * H);
+      S.addSet(s, { name: 'Located Act', lat: 51.472, lng: -0.198 }, t + 5 * H);
+      S.addDrink(s, 'Cocktail can', t + 3 * H);
+      s.waters.push({ t: t + 4 * H });
+    }),
+    adventure(2, 12, 8, 'festival', 'group', (s, t) => {
+      S.addSet(s, { name: 'Dawn Chorus' }, t + 3 * H);
+      s.waters.push({ t: t + 2 * H });
+    }),
+    adventure(1, 20, 4, 'night', 'group', (s, t) => { S.addDrink(s, 'Pint', t + H); }),
+  ];
+  const fest = sessions.filter((s) => S.hasMode(s, 'festival'));
+  const state = {
+    // The app keeps adventures newest first.
+    v: 1, active: null, sessions: sessions.slice().reverse(), badges: [], flags: { onboarded: true },
+    prefs: { ...defaultPrefs() },
+    festivals: [{ id: 'fvseed', name: 'Field Day', sessionIds: fest.map((s) => s.id), createdAt: Date.now() }],
+  };
+  localStorage.setItem('lastcall_v1', JSON.stringify(state));
+  return `${sessions.length} adventures and one festival review.`;
+}
+
+const out = document.getElementById('out');
+document.getElementById('seed').onclick = () => { out.textContent = `Seeded: ${seed()}`; };
+document.getElementById('fresh').onclick = () => { localStorage.removeItem('lastcall_v1'); out.textContent = 'Cleared: the app will open as a fresh install.'; };
+</script>
