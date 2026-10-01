@@ -1,4 +1,4 @@
-import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon,
+import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon, switchRow,
          hms, hm, clockTime, shortDate, km } from './ui.js';
 import * as S from './state.js';
 import * as store from './storage.js';
@@ -24,7 +24,12 @@ export function historyScreen(ctx) {
       spacer(),
       el('p', { class: 'body center', text: t('No {ns} yet. Your first one shows up here.') }),
       spacer(),
-      foot(btn('Import history', 'btn--sec', () => importData(ctx))),
+      foot(
+        el('div', { class: 'btn-pair' },
+          btn('Badges', 'btn--sec', () => ctx.go('badges')),
+          btn('Settings', 'btn--sec', () => ctx.go('settings'))),
+        btn('Import history', 'btn--sec', () => importData(ctx)),
+      ),
     ];
   }
 
@@ -215,7 +220,7 @@ export function settingsScreen(ctx) {
   );
 
   return [
-    head({ eyebrow: 'Settings', title: 'Reminders', back: () => ctx.back() }),
+    head({ title: 'Settings', back: () => ctx.back() }),
 
     el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('appearance') },
       el('span', { class: 'listrow__d', text: 'Appearance' }),
@@ -224,12 +229,26 @@ export function settingsScreen(ctx) {
       el('span', { class: 'listrow__d', text: 'Your numbers' }),
       el('span', { class: 'listrow__m' }, el('span', { text: 'For testers' }))),
 
-    el('div', { class: 'eb', text: 'Remind me to drink water after' }),
+    el('h2', { class: 'eb', style: 'margin:0', text: 'Remind me to drink water after' }),
     row,
     el('p', { class: 'body', style: 'margin:0' },
       p.hydrationEvery
-        ? `The nudge shows on the session screen once you’re ${p.hydrationEvery} drinks past your last water.`
+        ? `The nudge shows on the live screen once you’re ${p.hydrationEvery} drinks past your last water.`
         : 'No water reminders. Everything else is tracked the same.'),
+
+    el('h2', { class: 'eb', style: 'margin:0', text: 'Accessibility' }),
+    switchRow({
+      label: 'Bigger text',
+      hint: 'Makes the text larger, on top of your phone’s own text size.',
+      on: p.biggerText,
+      onChange: (on) => { p.biggerText = on; ctx.save(); ctx.applyAccessibility(); },
+    }),
+    switchRow({
+      label: 'Calmer avatar',
+      hint: 'Fewer idle moves. It still reacts when you log something.',
+      on: p.calmAvatar,
+      onChange: (on) => { p.calmAvatar = on; ctx.save(); ctx.applyAccessibility(); },
+    }),
 
     permissionRows(ctx),
 

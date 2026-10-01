@@ -449,3 +449,6 @@ canvas.avatar{
 .listrow--tall{padding-block:10px}
 .listrow__m .on{color:var(--mint);font-weight:var(--fw-bold)}
 [tabindex="-1"]:focus{outline:none}
+.head__actions{display:flex;gap:6px;align-self:flex-start}
+.iconbtn{width:var(--tap);height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-chip);border:var(--hairline) solid var(--line);color:var(--text);background:transparent}
+.topbar{display:flex;justify-content:flex-end;gap:6px}

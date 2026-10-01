@@ -66,6 +66,12 @@ export async function setSystemBars(light) {
   try { await LastCallNative.setSystemBars({ light: !!light }); } catch { /* older build */ }
 }
 
+/** The phone's text size, times `scale` (1, or 1.15 for Bigger text). */
+export async function setTextScale(scale) {
+  if (!isNative()) return;
+  try { await LastCallNative.setTextZoom({ scale }); } catch { /* older build */ }
+}
+
 /* ---------- hardware back button ---------- */
 
 // Android's back button otherwise closes the app from any screen. Routing it

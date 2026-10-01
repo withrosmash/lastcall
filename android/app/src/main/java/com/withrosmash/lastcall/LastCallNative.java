@@ -420,6 +420,21 @@ public class LastCallNative extends Plugin implements SensorEventListener {
         });
     }
 
+    // Text follows the phone's own font size, times the app's Bigger text
+    // setting. Set absolutely, so it never compounds.
+    @PluginMethod
+    public void setTextZoom(PluginCall call) {
+        final double scale = call.getDouble("scale", 1.0);
+        getActivity().runOnUiThread(() -> {
+            float system = getContext().getResources().getConfiguration().fontScale;
+            int zoom = (int) Math.round(system * scale * 100);
+            getBridge().getWebView().getSettings().setTextZoom(Math.max(80, Math.min(200, zoom)));
+            JSObject ret = new JSObject();
+            ret.put("zoom", zoom);
+            call.resolve(ret);
+        });
+    }
+
     @PluginMethod
     public void saveToGallery(PluginCall call) {
         String data = call.getString("data");

@@ -1,4 +1,4 @@
-import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast, icon,
+import { el, btn, tile, tiles, glass, spacer, foot, head, navPair, sheet, toast, icon, iconBtn,
          hms, hm, longDuration, clockTime, shortDate, upperDate, km, words } from './ui.js';
 import * as S from './state.js';
 import { pickDrink } from './drinks.js';
@@ -52,6 +52,7 @@ export function startScreen(ctx) {
   const av = createAvatar({ cell: 4, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' });
   queueMicrotask(() => av.start());
   return [
+    el('div', { class: 'topbar' }, iconBtn('settings', 'Settings', () => ctx.go('settings'))),
     spacer(),
     el('div', { class: 'avatar-home' },
       av.canvas,
@@ -260,7 +261,10 @@ export function liveScreen(ctx) {
     : null;
 
   return [
-    head({ eyebrow: t('On the {n}') }),
+    head({ eyebrow: t('On the {n}'), actions: [
+      iconBtn('award', 'Badges', () => ctx.go('badges')),
+      iconBtn('settings', 'Settings', () => ctx.go('settings')),
+    ] }),
     modeChip(ctx),
     el('div', { class: 'live-top' },
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),

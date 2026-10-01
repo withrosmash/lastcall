@@ -57,7 +57,7 @@ export const foot = (...kids) => el('div', { class: 'foot' }, kids.flat().filter
 
 // The screen's heading is a real h1: the title, or the eyebrow when there's
 // no title, so screen readers can find it and jump between screens.
-export function head({ eyebrow, title, back }) {
+export function head({ eyebrow, title, back, actions = null }) {
   return el('div', { class: 'head' },
     el('div', {},
       eyebrow ? el(title ? 'div' : 'h1', { class: 'eb', text: eyebrow }) : null,
@@ -65,8 +65,13 @@ export function head({ eyebrow, title, back }) {
     ),
     back ? el('button', { class: 'back press', type: 'button', onclick: back },
       icon('chevron-left', { size: 15 }), el('span', { text: 'Back' })) : null,
+    actions ? el('div', { class: 'head__actions' }, actions) : null,
   );
 }
+
+/** A 44px icon-only button with a spoken name. */
+export const iconBtn = (name, label, onclick) =>
+  el('button', { class: 'iconbtn press', type: 'button', 'aria-label': label, title: label, onclick }, icon(name, { size: 20 }));
 
 /* ---------- theme ---------- */
 

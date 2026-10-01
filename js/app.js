@@ -2,7 +2,7 @@ import * as store from './storage.js';
 import * as S from './state.js';
 import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme, el } from './ui.js';
 import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScreen, morningNight, onboardingScreen, needsOnboarding } from './session.js';
-import { createAvatar } from './avatar.js';
+import { createAvatar, setAvatarCalm } from './avatar.js';
 import { avatarLook } from './wardrobe.js';
 import { avatarScreen } from './avatarscreen.js';
 import { MODES, recentFor, rememberFor } from './modes.js';
@@ -35,7 +35,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, back, render, save, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, makeFestival, deleteFestival, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
+  go, back, render, save, applyAccessibility, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, makeFestival, deleteFestival, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
   setTheme,
 };
@@ -519,6 +519,13 @@ document.addEventListener('visibilitychange', () => {
 
 // Takes effect at once: the whole UI reads colour from tokens, and maps pick
 // their tiles when they are next opened.
+// Bigger text and Calmer avatar (Settings, Accessibility).
+function applyAccessibility() {
+  const p = ctx.state.prefs;
+  setAvatarCalm(p.calmAvatar);
+  keepalive.setTextScale(p.biggerText ? 1.15 : 1);
+}
+
 function setTheme(theme) {
   ctx.state.prefs.theme = theme === 'light' ? 'light' : 'dark';
   save();
@@ -548,6 +555,7 @@ function handoff() {
 function boot() {
   store.installFlushHooks();
   keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
+  applyAccessibility();
   handoff();
 
   const active = ctx.state.active;

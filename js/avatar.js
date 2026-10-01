@@ -983,6 +983,12 @@ export const __ANIM = ANIM;
 
 /* ================= an avatar on screen ================= */
 
+// Calmer avatar (Settings, Accessibility): idle moves come a third as often
+// and skip the bouncier ones. Reactions to what you log still play.
+let calm = false;
+export const setAvatarCalm = (on) => { calm = !!on; };
+const LIVELY = new Set(['dance', 'hello', 'tap']);
+
 export function createAvatar({ cell = 3, look = DEFAULT_LOOK, onTap = null, label = 'Your avatar' } = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'avatar';
@@ -1060,12 +1066,13 @@ export function createAvatar({ cell = 3, look = DEFAULT_LOOK, onTap = null, labe
       }
     } else if (--me.idleIn <= 0) {
       const m = MOODS[me.mood];
-      if (!reduceMotion()) {
-        const name = m.idle[Math.floor(Math.random() * m.idle.length)];
+      const pool = calm ? m.idle.filter((k) => !LIVELY.has(k)) : m.idle;
+      if (!reduceMotion() && pool.length) {
+        const name = pool[Math.floor(Math.random() * pool.length)];
         me.cur = { frames: ANIM[name], i: 0, left: ANIM[name][0][0], idle: true };
         enter();
       }
-      me.idleIn = m.every[0] + Math.random() * (m.every[1] - m.every[0]);
+      me.idleIn = (m.every[0] + Math.random() * (m.every[1] - m.every[0])) * (calm ? 3 : 1);
     }
     me.lid = 0;
     if (me.blinkStep > 0) { me.lid = [0, 0.5, 1, 0.5][me.blinkStep]; me.blinkStep = (me.blinkStep + 1) % 4; }

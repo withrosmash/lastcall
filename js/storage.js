@@ -9,7 +9,7 @@ export function defaultPrefs() {
     hydrationEvery: 5, batterySaver: false, units: 'km',
     recentDrinks: [], locationPrimed: false, historyRange: '8w',
     theme: 'dark',
-    lastMode: 'night', lastCompany: 'group', recentByMode: {}, modeTouches: true,
+    lastMode: 'night', lastCompany: 'group', recentByMode: {}, modeTouches: true, biggerText: false, calmAvatar: false,
   };
 }
 
