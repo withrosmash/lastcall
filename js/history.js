@@ -413,14 +413,16 @@ function rewind(ctx, s) {
 const escapeXml = (str) => String(str).replace(/[<>&'"]/g, (c) =>
   ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 
-function toGpx(s) {
+// Children in the order GPX 1.1 requires (time, name, type), or strict
+// importers reject the file.
+export function toGpx(s) {
   const name = `Leit, ${shortDate(s.startedAt)}`;
   const points = s.trail.map((p) =>
     `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
   const sets = (s.sets || []).filter((x) => x.lat != null).map((x) =>
-    `<wpt lat="${x.lat}" lon="${x.lng}"><name>${escapeXml(x.name)}</name><type>set</type><time>${new Date(x.t).toISOString()}</time></wpt>`).join('\n');
+    `<wpt lat="${x.lat}" lon="${x.lng}"><time>${new Date(x.t).toISOString()}</time><name>${escapeXml(x.name)}</name><type>set</type></wpt>`).join('\n');
   const stops = s.pins.filter((p) => p.lat != null).map((p) =>
-    `<wpt lat="${p.lat}" lon="${p.lng}"><name>${escapeXml(p.name)}</name><time>${new Date(p.t).toISOString()}</time></wpt>`).join('\n');
+    `<wpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time><name>${escapeXml(p.name)}</name></wpt>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Leit" xmlns="http://www.topografix.com/GPX/1/1">
 ${stops}

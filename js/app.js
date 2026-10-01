@@ -380,8 +380,7 @@ function logMeal() {
 
 function makeFestival({ name, sessionIds }) {
   // Days in date order, whatever order they were ticked in.
-  const at = (id) => ctx.state.sessions.find((s) => s.id === id)?.startedAt ?? 0;
-  const ordered = [...sessionIds].sort((a, b) => at(a) - at(b));
+  const ordered = S.daysInOrder(sessionIds, ctx.state.sessions).map((s) => s.id);
   const f = { id: 'fv' + Date.now().toString(36), name, sessionIds: ordered, createdAt: Date.now() };
   ctx.state.festivals = [f, ...(ctx.state.festivals || [])];
   const fresh = syncBadges();

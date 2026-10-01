@@ -151,6 +151,11 @@ export function addSet(s, { name, lat = null, lng = null }, now = Date.now()) {
 const actKey = (name) => name.trim().toLowerCase();
 
 /** Every act seen across these adventures, once each, first spelling kept. */
+/** A festival's days, oldest first, skipping any that were deleted. */
+export function daysInOrder(ids, sessions) {
+  return ids.map((id) => sessions.find((s) => s.id === id)).filter(Boolean).sort((a, b) => a.startedAt - b.startedAt);
+}
+
 export function festivalActs(sessions) {
   const seen = new Map();
   for (const x of [...sessions].sort((a, b) => a.startedAt - b.startedAt)) {

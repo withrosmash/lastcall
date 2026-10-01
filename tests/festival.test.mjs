@@ -85,3 +85,17 @@ test('a festival day that starts after midnight still gets a morning after', () 
   const day = { ...newSession(at('2026-06-27T12:00'), { mode: 'festival' }), endedAt: at('2026-06-27T20:00') };
   assert.equal(hasMorning(day), false);
 });
+
+test('a festival lists its days in date order, even one saved in tap order', async () => {
+  const { daysInOrder } = await import('../js/state.js');
+  const sat = newSession(at('2026-07-04T12:00')), sun = newSession(at('2026-07-05T12:00')), fri = newSession(at('2026-07-03T12:00'));
+  const sessions = [sat, fri, sun];
+  assert.deepEqual(daysInOrder([sun.id, 'gone', fri.id, sat.id], sessions).map((s) => s.id), [fri.id, sat.id, sun.id]);
+});
+
+test('the default festival name uses the earliest day, whatever order they were picked', async () => {
+  const { defaultFestivalName } = await import('../js/festival.js');
+  const { shortDate } = await import('../js/ui.js');
+  const sat = newSession(at('2026-07-04T12:00')), fri = newSession(at('2026-07-03T12:00'));
+  assert.equal(defaultFestivalName([sat, fri]), `Festival, ${shortDate(fri.startedAt)}`);
+});

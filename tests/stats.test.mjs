@@ -112,3 +112,10 @@ test('a finished mixed adventure uses the night layout; any festival part brings
   assert.deepEqual(doneTileKeys(adv('2026-09-20T12:00', [['walk', 0], ['night', 2]], { steps: 9000 })), ['drinks', 'water', 'steps', 'stops']);
   assert.deepEqual(doneTileKeys(adv('2026-09-20T12:00', [['festival', 0], ['night', 6]])), ['drinks', 'water', 'sets', 'food']);
 });
+
+test('pace reads "Not yet" while walking, "Too short" once finished, and always has its unit', async () => {
+  const { paceLabel } = await import('../js/stats.js');
+  assert.deepEqual(paceLabel(null), { value: 'Not yet', unit: null });
+  assert.deepEqual(paceLabel(null, true), { value: 'Too short', unit: null });
+  assert.deepEqual(paceLabel('12:30'), { value: '12:30', unit: '/km' });
+});

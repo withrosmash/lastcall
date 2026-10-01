@@ -68,3 +68,9 @@ export function doneTileKeys(s) {
   if (S.hasMode(s, 'festival')) return firstFour(['drinks', 'water', 'sets', either(st, dist), 'food', 'challenges']);
   return firstFour(['drinks', 'water', either(st, dist), 'stops', 'food', 'challenges']);
 }
+
+/** The pace tile's words: "Not yet" while walking, "Too short" on a finished walk. */
+export function paceLabel(p, done = false) {
+  if (p) return { value: p, unit: '/km' };
+  return { value: done ? 'Too short' : 'Not yet', unit: null };
+}

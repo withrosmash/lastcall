@@ -12,7 +12,7 @@ import * as geo from './geo.js';
 import { requestActivityPermission } from './keepalive.js';
 import * as notify from './notify.js';
 import { createAvatar } from './avatar.js';
-import { liveTileKeys, doneTileKeys } from './stats.js';
+import { liveTileKeys, doneTileKeys, paceLabel } from './stats.js';
 import { avatarLook, openUnlocks, itemsForBadges, dressedFor } from './wardrobe.js';
 import { t, phrase } from './words.js';
 
@@ -276,9 +276,10 @@ export function liveScreen(ctx) {
   av.setMood(moodFor(s, ctx.state.prefs));
   ctx.tick = () => {
     clock.textContent = hms(S.elapsedMs(s));
-    // Pace changes with the clock even when no new position arrives.
-    const paceV = document.querySelector('[data-pace] .tile__v');
-    if (paceV) { const p = S.walkPace(s); if (p) paceV.firstChild.textContent = p; }
+    // Pace changes with the clock even when no new position arrives. The whole
+    // tile is swapped, so "Not yet" turning into a pace gains its /km.
+    const paceOld = document.querySelector('[data-pace]');
+    if (paceOld) { const fresh = paceTile(S.walkPace(s)); if (fresh.textContent !== paceOld.textContent) paceOld.replaceWith(fresh); }
     // Moods drift with the clock too: sleepy after 1am, busy spells fade.
     av.setMood(moodFor(s, ctx.state.prefs));
   };
@@ -397,8 +398,8 @@ function doneTiles(s) {
 // Pace over the walk so far, stops included: it's how long the walk is
 // taking, not a running split. Only the walk part counts.
 function paceTile(p, done = false) {
-  // While walking it's "Not yet"; on a finished walk there's nothing to wait for.
-  const node = p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', done ? 'Too short' : 'Not yet');
+  const { value, unit } = paceLabel(p, done);
+  const node = unit ? tile('Pace', value, { unit }) : tile('Pace', value);
   node.dataset.pace = '';
   return node;
 }

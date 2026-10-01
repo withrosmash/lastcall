@@ -19,6 +19,12 @@ function viewOf(f, days) {
 
 export const canMakeFestival = (ctx) => festivalDays(ctx).length >= 2;
 
+/** Named after the first day, whatever order the days were ticked in. */
+export function defaultFestivalName(days) {
+  const first = days.reduce((a, b) => (a.startedAt < b.startedAt ? a : b));
+  return `Festival, ${shortDate(first.startedAt)}`;
+}
+
 /** Pick the days, name it, make it. */
 export function festivalPickScreen(ctx) {
   const days = festivalDays(ctx);
@@ -26,11 +32,9 @@ export function festivalPickScreen(ctx) {
   ctx.festivalPick ||= { chosen: new Set(), typed: '' };
   const { chosen } = ctx.festivalPick;
   const list = el('div', { class: 'stack', style: 'gap:6px' });
-  // Named after the first day, whatever order the days were ticked in.
   const defaultName = () => {
     const picked = days.filter((d) => chosen.has(d.id));
-    const first = (picked.length ? picked : days).reduce((a, b) => (a.startedAt < b.startedAt ? a : b));
-    return `Festival, ${shortDate(first.startedAt)}`;
+    return defaultFestivalName(picked.length ? picked : days);
   };
 
   const input = el('input', {
@@ -72,7 +76,8 @@ export function festivalPickScreen(ctx) {
 /** The review: days, totals, every act seen, badges from those days, a card. */
 export function festivalScreen(ctx, f) {
   if (!f) { ctx.go('history'); return []; }
-  const days = f.sessionIds.map((id) => ctx.state.sessions.find((s) => s.id === id)).filter(Boolean);
+  // Date order on screen too, for festivals saved before days were sorted.
+  const days = S.daysInOrder(f.sessionIds, ctx.state.sessions);
   const back = () => ctx.back();
   if (!days.length) {
     return [
