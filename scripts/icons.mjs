@@ -16,6 +16,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build, toFrame, normaliseLook, DEFAULT_LOOK } from '../js/avatar.js';
+import { rects as wordmarkRects, wordmarkWidth } from '../js/wordmark.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RES = resolve(root, 'android/app/src/main/res');
@@ -157,6 +158,65 @@ await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { s: Math.floor(
 await square(resolve(root, 'icons/apple-touch-icon.png'), 180, {});
 // For the Play listing later.
 await square(resolve(root, 'design/round2/icon-1024.png'), 1024, {});
+
+/* ---------- store images ----------
+   The Leit wordmark beside the icon. The wordmark is all right angles, so it
+   fills as rectangles, supersampled at the edges. */
+
+function paintWordmark(out, W, x0, y0, height, rgb) {
+  for (const r of wordmarkRects(height)) {
+    const ax = x0 + r.x, ay = y0 + r.y, bx = ax + r.w, by = ay + r.h;
+    for (let y = Math.floor(ay); y < Math.ceil(by); y++) for (let x = Math.floor(ax); x < Math.ceil(bx); x++) {
+      const cov = Math.max(0, Math.min(x + 1, bx) - Math.max(x, ax)) * Math.max(0, Math.min(y + 1, by) - Math.max(y, ay));
+      const k = (y * W + x) * 4;
+      for (let i = 0; i < 3; i++) out[k + i] = Math.round(out[k + i] * (1 - cov) + rgb[i] * cov);
+    }
+  }
+}
+
+function paintIcon(out, W, x0, y0, P) {
+  const icon = iconPixels(P, { mask: 'round' });
+  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
+    const j = (y * P + x) * 4, a = icon[j + 3] / 255, k = ((y0 + y) * W + x0 + x) * 4;
+    for (let i = 0; i < 3; i++) out[k + i] = Math.round(out[k + i] * (1 - a) + icon[j + i] * a);
+  }
+}
+
+// Lockup: icon and wordmark on black, one cap height of clear space between.
+function lockup(W, H) {
+  const out = Buffer.alloc(W * H * 4);
+  for (let k = 3; k < out.length; k += 4) out[k] = 255;
+  const P = Math.round(H * 0.72), cap = Math.round(P * 0.42);
+  const total = P + cap + wordmarkWidth(cap);
+  const x0 = Math.round((W - total) / 2), y0 = Math.round((H - P) / 2);
+  paintIcon(out, W, x0, y0, P);
+  paintWordmark(out, W, x0 + P + cap, Math.round((H - cap) / 2), cap, [255, 255, 255]);
+  return out;
+}
+
+// Google Play's feature graphic: the forest bloom from the top, then the
+// lockup. No tagline: there's no font renderer here, and Play lays its own
+// text over the listing anyway.
+function featureGraphic(W, H) {
+  const out = Buffer.alloc(W * H * 4);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const d = Math.hypot((x + 0.5 - W / 2) / W, (y + 0.5) / H * 0.9) / 0.95;
+    const t = Math.min(1, d);
+    let c = STOPS[STOPS.length - 1][1];
+    for (let i = 1; i < STOPS.length; i++) if (t <= STOPS[i][0]) { c = lerp(STOPS[i - 1][1], STOPS[i][1], (t - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0])); break; }
+    const k = (y * W + x) * 4;
+    out[k] = Math.round(c[0]); out[k + 1] = Math.round(c[1]); out[k + 2] = Math.round(c[2]); out[k + 3] = 255;
+  }
+  const P = 220, cap = 92;
+  const total = P + cap + wordmarkWidth(cap);
+  const x0 = Math.round((W - total) / 2), y0 = Math.round((H - P) / 2);
+  paintIcon(out, W, x0, y0, P);
+  paintWordmark(out, W, x0 + P + cap, Math.round((H - cap) / 2), cap, [255, 255, 255]);
+  return out;
+}
+
+await png(resolve(root, 'design/round3/store-lockup.png'), 1024, 300, lockup(1024, 300));
+await png(resolve(root, 'design/round3/feature-graphic.png'), 1024, 500, featureGraphic(1024, 500));
 
 /* ---------- Android launcher ---------- */
 
