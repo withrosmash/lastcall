@@ -111,7 +111,7 @@ function festivalRows(ctx) {
         el('span', { class: 'listrow__d', text: f.name }),
         el('span', { class: 'listrow__m' }, el('span', { text: `${f.sessionIds.filter((id) => ctx.state.sessions.some((s) => s.id === id)).length} days` })))),
       canMakeFestival(ctx)
-        ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('festivalPick') },
+        ? el('button', { class: 'listrow press', type: 'button', onclick: () => { ctx.festivalPick = null; ctx.go('festivalPick'); } },
           el('span', { class: 'listrow__d', text: 'Make a festival' }),
           el('span', { class: 'listrow__m' }, icon('plus', { size: 14 })))
         : null),

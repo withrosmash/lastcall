@@ -192,3 +192,9 @@ test('a stop saved with location off stays off the map', async () => {
   placePending(s, { lat: 1, lng: 1, t: 200 });
   assert.equal(s.pins[0].lat, null);
 });
+
+test('pace waits two minutes before it shows', async () => {
+  const { pace } = await import('../js/state.js');
+  assert.equal(pace(60e3, 400), null);
+  assert.equal(pace(5 * 60e3, 400), '12:30');
+});

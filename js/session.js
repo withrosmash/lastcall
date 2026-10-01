@@ -246,6 +246,9 @@ export function liveScreen(ctx) {
   av.setMood(moodFor(s, ctx.state.prefs));
   ctx.tick = () => {
     clock.textContent = hms(S.elapsedMs(s));
+    // Pace changes with the clock even when no new position arrives.
+    const paceV = document.querySelector('[data-pace] .tile__v');
+    if (paceV) { const p = S.walkPace(s); if (p) paceV.firstChild.textContent = p; }
     // Moods drift with the clock too: sleepy after 1am, busy spells fade.
     av.setMood(moodFor(s, ctx.state.prefs));
   };
@@ -364,7 +367,9 @@ function doneTiles(s) {
 // Pace over the walk so far, stops included: it's how long the walk is
 // taking, not a running split. Only the walk part counts.
 function paceTile(p) {
-  return p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', 'Not yet');
+  const node = p ? tile('Pace', p, { unit: '/km' }) : tile('Pace', 'Not yet');
+  node.dataset.pace = '';
+  return node;
 }
 
 // Saw a set: type the act, or tap one already logged at this festival (any
@@ -378,7 +383,7 @@ function setSheet(ctx) {
   sheet((close) => {
     const go = btn('Log set', 'btn--pri', () => { close(); ctx.logSet(name); }, { lg: true, disabled: true, iconName: 'music' });
     const input = el('input', {
-      type: 'text', placeholder: 'Act name', 'aria-label': 'Act name', autocapitalize: 'words', enterkeyhint: 'done',
+      type: 'text', placeholder: 'Act name', 'aria-label': 'Act name', maxlength: 60, autocapitalize: 'words', enterkeyhint: 'done',
       oninput: (e) => { name = e.target.value; go.disabled = !name.trim(); },
       onkeydown: (e) => { if (e.key === 'Enter' && !go.disabled) go.click(); },
     });

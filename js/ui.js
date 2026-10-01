@@ -130,6 +130,7 @@ let closeSheet = null;
 export function sheet(build, { onClose } = {}) {
   dismissSheet();
   const opener = document.activeElement;
+  const openerKey = opener && `${opener.tagName}|${opener.getAttribute?.('aria-label') || ''}|${opener.textContent?.trim() || ''}`;
   const root = document.getElementById('sheet-root');
   const frame = document.querySelector('.frame');
   const panel = el('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
@@ -142,7 +143,10 @@ export function sheet(build, { onClose } = {}) {
   closeSheet = () => {
     root.replaceChildren();
     if (frame) frame.inert = false;
-    if (opener && opener.isConnected) opener.focus?.({ preventScroll: true });
+    // If the screen re-rendered while the sheet was open, find the same control.
+    const back = opener?.isConnected ? opener
+      : [...document.querySelectorAll(`#app ${opener?.tagName || 'button'}`)].find((n) => `${n.tagName}|${n.getAttribute('aria-label') || ''}|${n.textContent.trim()}` === openerKey);
+    back?.focus?.({ preventScroll: true });
     document.removeEventListener('keydown', onKey);
     closeSheet = null;
     onClose?.();

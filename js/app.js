@@ -376,7 +376,10 @@ function logMeal() {
 /* ---------- festival reviews ---------- */
 
 function makeFestival({ name, sessionIds }) {
-  const f = { id: 'fv' + Date.now().toString(36), name, sessionIds, createdAt: Date.now() };
+  // Days in date order, whatever order they were ticked in.
+  const at = (id) => ctx.state.sessions.find((s) => s.id === id)?.startedAt ?? 0;
+  const ordered = [...sessionIds].sort((a, b) => at(a) - at(b));
+  const f = { id: 'fv' + Date.now().toString(36), name, sessionIds: ordered, createdAt: Date.now() };
   ctx.state.festivals = [f, ...(ctx.state.festivals || [])];
   const fresh = syncBadges();
   save();
@@ -388,7 +391,7 @@ function makeFestival({ name, sessionIds }) {
 function deleteFestival(id) {
   ctx.state.festivals = (ctx.state.festivals || []).filter((f) => f.id !== id);
   save();
-  go('history', null, { replace: true });
+  back();
 }
 
 function logSet(name) {

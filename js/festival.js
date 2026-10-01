@@ -22,19 +22,24 @@ export const canMakeFestival = (ctx) => festivalDays(ctx).length >= 2;
 /** Pick the days, name it, make it. */
 export function festivalPickScreen(ctx) {
   const days = festivalDays(ctx);
-  const chosen = new Set();
+  // Kept on ctx, so a background re-render doesn't lose the picks.
+  ctx.festivalPick ||= { chosen: new Set(), typed: '' };
+  const { chosen } = ctx.festivalPick;
   const list = el('div', { class: 'stack', style: 'gap:6px' });
+  // Named after the first day, whatever order the days were ticked in.
   const defaultName = () => {
-    const first = days.filter((d) => chosen.has(d.id)).at(-1) || days.at(-1);
+    const picked = days.filter((d) => chosen.has(d.id));
+    const first = (picked.length ? picked : days).reduce((a, b) => (a.startedAt < b.startedAt ? a : b));
     return `Festival, ${shortDate(first.startedAt)}`;
   };
-  let typed = '';
+
   const input = el('input', {
     type: 'text', placeholder: defaultName(), 'aria-label': 'Festival name', maxlength: 40, autocapitalize: 'words',
-    oninput: (e) => { typed = e.target.value; },
+    value: ctx.festivalPick.typed, oninput: (e) => { ctx.festivalPick.typed = e.target.value; },
   });
   const make = btn('Make festival', 'btn--pri', () => {
-    ctx.makeFestival({ name: typed.trim() || defaultName(), sessionIds: [...chosen] });
+    ctx.makeFestival({ name: ctx.festivalPick.typed.trim() || defaultName(), sessionIds: [...chosen] });
+    ctx.festivalPick = null;
   }, { lg: true, disabled: true });
 
   const paint = () => {

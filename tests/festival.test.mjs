@@ -78,3 +78,10 @@ test('a festival’s time out adds up the days, not the nights between', async (
   const d2 = { ...newSession(at('2026-06-27T12:00'), { mode: 'festival' }), endedAt: at('2026-06-27T12:00') + 11 * H };
   assert.equal(summarise(mergeSessions([d1, d2])).ms, 21 * H);
 });
+
+test('a festival day that starts after midnight still gets a morning after', () => {
+  const late = { ...newSession(at('2026-06-27T00:30'), { mode: 'festival' }), endedAt: at('2026-06-27T03:00') };
+  assert.equal(hasMorning(late), true);
+  const day = { ...newSession(at('2026-06-27T12:00'), { mode: 'festival' }), endedAt: at('2026-06-27T20:00') };
+  assert.equal(hasMorning(day), false);
+});

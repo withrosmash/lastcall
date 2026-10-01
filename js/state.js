@@ -64,14 +64,16 @@ export function modeLine(s) {
 export function hasMorning(s) {
   const rule = MODES[currentPart(s).mode]?.morning;
   if (rule !== 'late') return !!rule;
-  // Only a day that ran past midnight gets a morning after.
+  // Only a day that ran past midnight gets a morning after, including one
+  // that only started after midnight.
   if (!s.endedAt) return false;
-  return new Date(s.endedAt).toDateString() !== new Date(s.startedAt).toDateString();
+  return new Date(s.endedAt).toDateString() !== new Date(s.startedAt).toDateString()
+    || new Date(s.endedAt).getHours() < 6;
 }
 
-/** Minutes per kilometre as "m:ss", or null until there's 200 m to go on. */
+/** Minutes per kilometre as "m:ss", or null until there's 200 m and two minutes to go on. */
 export function pace(ms, m) {
-  if (!(m >= 200) || !(ms > 0)) return null;
+  if (!(m >= 200) || !(ms >= 2 * 60e3)) return null;
   const secPerKm = Math.round(ms / 1000 / (m / 1000));
   return `${Math.floor(secPerKm / 60)}:${String(secPerKm % 60).padStart(2, '0')}`;
 }

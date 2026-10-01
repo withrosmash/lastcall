@@ -39,7 +39,7 @@ export function migrate(data) {
     prefs: { ...defaultPrefs(), ...(data.prefs || {}) },
     badges: Array.isArray(data.badges) ? data.badges : [],
     flags: data.flags && typeof data.flags === 'object' ? data.flags : {},
-    festivals: Array.isArray(data.festivals) ? data.festivals : [],
+    festivals: Array.isArray(data.festivals) ? data.festivals.filter((f) => f && f.id && Array.isArray(f.sessionIds)) : [],
   };
   return out;
 }

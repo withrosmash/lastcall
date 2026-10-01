@@ -113,9 +113,15 @@ const AGGREGATE_CHECKS = {
 // Day out badges see only the Day out part of an adventure. Day Into Night
 // looks at the whole adventure's parts; Explorer needs every earlier one.
 const DAY_CHECKS = {
+  // A real day out first: half an hour or more, so a quick correction at the
+  // start doesn't count.
   'day-into-night': (s) => {
     const parts = S.partsOf(s);
-    return parts.some((p, i) => p.mode === 'day' && parts.slice(i + 1).some((q) => q.mode === 'night'));
+    return parts.some((p, i) => {
+      if (p.mode !== 'day') return false;
+      const end = parts[i + 1] ? parts[i + 1].t : s.endedAt;
+      return end - p.t >= 30 * 60e3 && parts.slice(i + 1).some((q) => q.mode === 'night');
+    });
   },
   'tourist': (d) => d.pins.length >= 6,
   'brunch-club': (d) => d.meals.some((m) => { const h = new Date(m.t).getHours(); return h >= 6 && h < 12; }),
@@ -219,7 +225,7 @@ export function evaluate({ sessions, prefs, flags = {}, festivals = [] }) {
   }
   const alone = walks.find((s) => S.partsOf(s).some((p) => p.mode === 'walk' && p.company === 'solo'));
   if (alone) out.push({ slug: 'head-space', sessionId: alone.id });
-  if (weeksRunning(walks, 4)) out.push({ slug: 'weekly-walker', sessionId: null });
+  if (weeksRunning(walks.map((s) => S.sliceTo(s, 'walk')), 4)) out.push({ slug: 'weekly-walker', sessionId: null });
   if (walks.length >= 10) out.push({ slug: 'out-and-about', sessionId: walks[9].id });
 
   const fests = done.filter((s) => S.hasMode(s, 'festival'));
@@ -229,7 +235,7 @@ export function evaluate({ sessions, prefs, flags = {}, festivals = [] }) {
   }
   // Reviews only count the days that still exist.
   // They link to the festival itself, so its screen and card can show them.
-  const reviews = festivals.map((f) => ({ f, days: f.sessionIds.map((id) => done.find((s) => s.id === id)).filter(Boolean) }));
+  const reviews = festivals.filter((f) => f && Array.isArray(f.sessionIds)).map((f) => ({ f, days: f.sessionIds.map((id) => done.find((s) => s.id === id)).filter(Boolean) }));
   const discovered = reviews.find(({ days }) => S.festivalActs(days).length >= 10);
   if (discovered) out.push({ slug: 'discovery', sessionId: discovered.f.id });
   const weekend = reviews.find(({ days }) => days.length >= 3);

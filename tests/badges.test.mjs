@@ -204,3 +204,21 @@ test('a festival review’s own badges link to the review', () => {
   const out = evaluate({ sessions: days, prefs: { hydrationEvery: 5 }, festivals: [{ id: 'fv1', name: 'X', sessionIds: days.map((d) => d.id), createdAt: 0 }] });
   assert.equal(out.find((b) => b.slug === 'full-weekend')?.sessionId, 'fv1');
 });
+
+test('Day Into Night needs a real day out first, not a quick correction', () => {
+  assert.ok(!earned([adv('2026-09-26T19:00', [['day', 0], ['night', 0.05]])]).has('day-into-night'));
+  assert.ok(earned([adv('2026-09-26T12:00', [['day', 0], ['night', 1]])]).has('day-into-night'));
+});
+
+test('Weekly Walker counts the week the walk was in', () => {
+  // Mondays 7, 21 and 28 Sept, plus a Sunday 13 Sept night out that becomes a
+  // walk after midnight: that walk is in Monday 14's week, so four in a row.
+  const walks = [adv('2026-09-07T10:00', [['walk', 0]]), adv('2026-09-13T22:00', [['night', 0], ['walk', 3]]),
+    adv('2026-09-21T10:00', [['walk', 0]]), adv('2026-09-28T10:00', [['walk', 0]])];
+  assert.ok(earned(walks).has('weekly-walker'));
+});
+
+test('a malformed festival entry never breaks badges', () => {
+  const s = fest('2026-06-26T12:00');
+  assert.doesNotThrow(() => evaluate({ sessions: [s], prefs: {}, festivals: [{}, null, { id: 'x', sessionIds: 'nope' }] }));
+});
