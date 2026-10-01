@@ -80,7 +80,8 @@ export function avatarScreen(ctx) {
   const base = () => ({ ...draft, costume: null });
   const tileCanvas = (look, opts) => drawStill(document.createElement('canvas'), look, opts);
   const tile = ({ name, canvas, selected, locked, sub, onclick }) =>
-    el('button', { class: 'wtile press', type: 'button', 'aria-pressed': selected ? 'true' : 'false', onclick },
+    el('button', { class: 'wtile press', type: 'button', 'aria-pressed': selected ? 'true' : 'false', onclick,
+      'aria-label': locked ? `${name}, locked${sub ? `, comes with ${sub}` : ''}` : name },
       el('div', { class: 'wtile__art' }, canvas),
       el('span', { class: `wtile__name${locked ? ' is-locked' : ''}`, text: name }),
       sub ? el('span', { class: 'wtile__sub' }, locked ? icon('lock', { size: 11 }) : null, el('span', { text: sub })) : null);

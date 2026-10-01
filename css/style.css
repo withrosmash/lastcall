@@ -452,3 +452,9 @@ canvas.avatar{
 .head__actions{display:flex;gap:6px;align-self:flex-start}
 .iconbtn{width:var(--tap);height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-chip);border:var(--hairline) solid var(--line);color:var(--text);background:transparent}
 .topbar{display:flex;justify-content:flex-end;gap:6px}
+/* Map labels: token colours, a halo for any tile, long names cut short (the
+   full name is in the timeline). */
+.map-label{font:600 11px/1.2 var(--font-sans);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-shadow:0 0 3px var(--map-ground),0 0 3px var(--map-ground),0 0 6px var(--map-ground)}
+.map-label--stop{color:var(--pink)}
+.map-label--set{color:var(--amber)}

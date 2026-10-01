@@ -241,7 +241,7 @@ export function liveScreen(ctx) {
   if (!s) { ctx.go('start'); return []; }
 
   // role=timer is quiet to screen readers until asked, unlike the old live region.
-  const clock = el('div', { class: 'timer', role: 'timer', 'aria-label': 'Time out', text: hms(S.elapsedMs(s)) });
+  const clock = el('div', { class: 'timer', role: 'timer', text: hms(S.elapsedMs(s)) });
   const av = liveAvatar(ctx);
   av.setMood(moodFor(s, ctx.state.prefs));
   ctx.tick = () => {
@@ -339,10 +339,11 @@ function liveTiles(ctx, s) {
   const drinks = tile('Drinks', s.drinks.length, { tone: 'drinks' });
   const stops = tile('Stops', s.pins.length);
   const food = tile(MODES[S.currentPart(s).mode].labels?.food || 'Food', (s.meals || []).length);
+  const dares = tile('Challenges', (s.challenges || []).length);
   const head = MODES[S.currentPart(s).mode].headline;
-  if (head === 'walk') return firstFour([steps, dist, gps ? paceTile(S.walkPace(s)) : null, waterTile(ctx, s), stops, food]);
-  if (head === 'festival') return firstFour([drinks, waterTile(ctx, s), tile('Sets', (s.sets || []).length), steps || dist, food]);
-  return firstFour([drinks, waterTile(ctx, s), steps || dist, steps && dist ? dist : stops, food]);
+  if (head === 'walk') return firstFour([steps, dist, gps ? paceTile(S.walkPace(s)) : null, waterTile(ctx, s), stops, food, dares]);
+  if (head === 'festival') return firstFour([drinks, waterTile(ctx, s), tile('Sets', (s.sets || []).length), steps || dist, food, dares]);
+  return firstFour([drinks, waterTile(ctx, s), steps || dist, steps && dist ? dist : stops, food, dares]);
 }
 
 function doneTiles(s) {
@@ -353,10 +354,11 @@ function doneTiles(s) {
   const water = tile('Water', sum.waters);
   const stops = tile('Stops', sum.stops);
   const food = tile('Food', (s.meals || []).length);
-  if (S.onlyMode(s, 'walk')) return firstFour([steps, dist, route ? paceTile(S.walkPace(s)) : null, stops, water, food]);
+  const dares = tile('Challenges', (s.challenges || []).length);
+  if (S.onlyMode(s, 'walk')) return firstFour([steps, dist, route ? paceTile(S.walkPace(s)) : null, stops, water, food, dares]);
   const drinks = tile('Drinks', sum.drinks, { tone: 'drinks' });
-  if (S.hasMode(s, 'festival')) return firstFour([drinks, water, tile('Sets', (s.sets || []).length), steps || dist, food]);
-  return firstFour([drinks, water, steps || dist, stops, food]);
+  if (S.hasMode(s, 'festival')) return firstFour([drinks, water, tile('Sets', (s.sets || []).length), steps || dist, food, dares]);
+  return firstFour([drinks, water, steps || dist, stops, food, dares]);
 }
 
 // Pace over the walk so far, stops included: it's how long the walk is

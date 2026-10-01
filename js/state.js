@@ -201,14 +201,19 @@ export function addChallenge(s, challenge, now = Date.now()) {
   return s;
 }
 
-export function addPin(s, { lat, lng, name, note }, now = Date.now()) {
-  s.pins.push({ t: now, lat, lng, name: name || 'Stop', note: note || '' });
+export function addPin(s, { lat, lng, name, note, pending = false }, now = Date.now()) {
+  s.pins.push({ t: now, lat, lng, name: name || 'Stop', note: note || '', ...(pending ? { pending: true } : {}) });
   return s;
 }
 
-/** A stop named before the GPS had a position takes the first one that arrives. */
+/**
+ * A stop named while the GPS was still finding you takes the first position
+ * that arrives. One named with location off stays off the map, as promised.
+ */
 export function placePending(s, fix) {
-  for (const p of s.pins) if (p.lat == null && fix && p.t <= fix.t) { p.lat = fix.lat; p.lng = fix.lng; }
+  for (const p of s.pins) {
+    if (p.pending && p.lat == null && fix && p.t <= fix.t) { p.lat = fix.lat; p.lng = fix.lng; delete p.pending; }
+  }
   return s;
 }
 

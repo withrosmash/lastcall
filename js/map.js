@@ -154,7 +154,7 @@ function addPinMarker(pin) {
       className: '',
       html: `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
                <div class="dot-stop"></div>
-               <span style="font:600 11px system-ui;color:#F06C9B">${label}</span>
+               <span class="map-label map-label--stop">${label}</span>
              </div>`,
       iconSize: [11, 11],
       iconAnchor: [5, 5],
@@ -171,7 +171,7 @@ function addSetMarker(set) {
       className: '',
       html: `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
                <div class="dot-set"></div>
-               <span style="font:600 11px system-ui;color:var(--amber)">${escapeHtml(set.name)}</span>
+               <span class="map-label map-label--set">${escapeHtml(set.name)}</span>
              </div>`,
       iconSize: [11, 11],
       iconAnchor: [5, 5],
@@ -263,7 +263,7 @@ function dropPin(ctx, s) {
       foot(btn('Drop pin', 'btn--pri', () => {
         close();
         // Empty name falls back rather than blocking the save.
-        const pin = { lat: here?.lat ?? null, lng: here?.lng ?? null, name: name.trim() || 'Unnamed stop', note: note.trim() };
+        const pin = { lat: here?.lat ?? null, lng: here?.lng ?? null, name: name.trim() || 'Unnamed stop', note: note.trim(), pending: !here && !gpsOff };
         ctx.addPin(pin);
         if (map) addPinMarker({ ...pin, t: Date.now() });
         ctx.render();

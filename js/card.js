@@ -242,7 +242,7 @@ function makeState(s, allBadges = []) {
     // Photo-card positions. The route card lays itself out.
     elements: {
       map: { on: s.trail.length > 1 },
-      route: { on: true, x: PAD, y: 300, scale: 1 },
+      route: { on: s.trail.length > 1, x: PAD, y: 300, scale: 1 },
       title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
       avatar: { on: true, x: 1080 - PAD - 300, y: 1350 - PAD - 520, scale: 1 },
       time: { on: true, x: PAD, y: 1350 - PAD - 300, scale: 1 },
@@ -748,25 +748,32 @@ function drawRouteCard(g, w, h, want) {
     drawText(g, label, x, rowTop(r), { size: 28, weight: 600, color: T.label });
     drawText(g, value, x, rowTop(r) + 36, { size: 76, weight: 700, color: pink ? T.pink : T.text, spacing: -2 });
   };
-  if (want('stats') && on.stats.on) {
-    // Only what was measured: no route means no distance, no counter no steps.
-    const top = noRoute ? [] : [['Distance', `${km(ui.sum.distanceM)} km`]];
-    if (ui.sum.steps) top.push(['Steps', abbrev(ui.sum.steps)]);
-    top.forEach(([l, v], i) => cell(M + i * 300, 0, l, v));
-    const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks), true]];
-    if (on.water.on) second.push(['Water', String(ui.sum.waters)]);
-    if (on.food.on) second.push(['Food', String((ui.session.meals || []).length)]);
-    second.forEach(([l, v, pink], i) => cell(M + i * 150, 1, l, v, pink));
-  }
-  if (want('time') && on.time.on) cell(M, 2, 'Time out', hm(ui.sum.ms));
+  // Only what was measured: no route means no distance, no counter no steps.
+  // The rows sit on the foot, so an empty one closes up rather than leaving
+  // a gap (the layout is the same for every video layer).
+  const top = noRoute ? [] : [['Distance', `${km(ui.sum.distanceM)} km`]];
+  if (ui.sum.steps) top.push(['Steps', abbrev(ui.sum.steps)]);
+  const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks), true]];
+  if (on.water.on) second.push(['Water', String(ui.sum.waters)]);
+  if (on.food.on) second.push(['Food', String((ui.session.meals || []).length)]);
+  const rows = [];
+  if (on.stats.on && top.length) rows.push({ id: 'stats', cells: top, step: 300 });
+  if (on.stats.on) rows.push({ id: 'stats', cells: second, step: 150 });
+  if (on.time.on) rows.push({ id: 'time', cells: [['Time out', hm(ui.sum.ms)]], step: 0 });
+  rows.forEach((r, i) => {
+    if (!want(r.id)) return;
+    r.cells.forEach(([l, v, pink], j) => cell(M + j * r.step, i + 3 - rows.length, l, v, pink));
+  });
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 64, { size: 30, weight: 400, color: T.date });
   // The wordmark's foot sits where the typed name's baseline did.
   if (want('wordmark')) drawWordmark(g, M, h - M - 19, 30, { color: T.mark });
   if (want('avatar') && ui.face !== 'none' && ui.look) {
     // With no route the avatar takes the map's place, big, so the card has
     // no empty half; otherwise it stands beside the stats.
-    if (noRoute) {
-      const s = Math.max(6, Math.min(18, Math.floor((region.h * 0.9) / 43)));
+    // Only when there's room for it at a readable size; otherwise it stands
+    // beside the stats as usual, clear of the title.
+    if (noRoute && region.h >= 43 * 6) {
+      const s = Math.min(18, Math.floor((region.h * 0.9) / 43));
       paintAvatar(g, ui.look, Math.round(w / 2 - 16 * s), Math.round(region.y + (region.h - 43 * s) / 2), s, FACE_STATE[ui.face]);
     } else paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
   }

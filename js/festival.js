@@ -92,6 +92,7 @@ export function festivalScreen(ctx, f) {
       merged.steps ? tile('Steps', merged.steps.toLocaleString()) : null,
       merged.trail.length > 1 ? tile('Distance', km(merged.distanceM), { unit: 'km' }) : null,
       tile('Sets', merged.sets.length),
+      tile('Challenges', merged.challenges.length),
     ].filter(Boolean).slice(0, 4)),
     acts.length ? el('div', { class: 'eb', text: 'Who you saw' }) : null,
     acts.length ? el('div', { class: 'chips' }, acts.map((a) => el('span', { class: 'chip chip--static', text: a }))) : null,

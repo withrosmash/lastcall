@@ -60,7 +60,7 @@ export const foot = (...kids) => el('div', { class: 'foot' }, kids.flat().filter
 export function head({ eyebrow, title, back, actions = null }) {
   return el('div', { class: 'head' },
     el('div', {},
-      eyebrow ? el(title ? 'div' : 'h1', { class: 'eb', text: eyebrow }) : null,
+      eyebrow ? el(title ? 'div' : 'h1', { class: 'eb', style: 'margin:0', text: eyebrow }) : null,
       title ? el('h1', { class: 'title head__title', text: title }) : null,
     ),
     back ? el('button', { class: 'back press', type: 'button', onclick: back },
