@@ -4,6 +4,7 @@
    Loaded after the design system's colors.css. */
 :root{
   --faint:#A3A3A3; /* labels: quiet headings and tile keys (was #4D4D4D) */
+  --placeholder:#808080; /* 4.8:1 on sheets (was #3A3A3A, audit 2026-10-01) */
   --mint-fill:var(--mint); /* primary button fill. Same as --mint in dark */
 
   --glass-3:rgba(6,23,16,.58);

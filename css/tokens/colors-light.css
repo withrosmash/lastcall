@@ -11,8 +11,8 @@
   --text:#0B1526;
   --muted:#4A576B;
   --muted-up:#4A576B;
-  --faint:#626E81;
-  --placeholder:#8E99AA;
+  --faint:#4A576B; /* was #626E81; 4.5:1 over the brightest glow (audit 2026-10-01) */
+  --placeholder:#66728A;
 
   /* Mint splits: fill keeps the brand mint, text and lines go deep teal */
   --mint-fill:#7EE0C0;
@@ -23,6 +23,7 @@
   --pink-ink:#FFFFFF;
   --amber:#A35F00;
   --amber-ink:#FFFFFF;
+  --warn-ink:#7E4800; /* amber warning headings on the pale ground */
 
   /* Cobalt replaces forest as the depth colour */
   --cobalt-900:#062A66;

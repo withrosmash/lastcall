@@ -6,7 +6,7 @@
 // Colours use range inputs rather than <input type="color">, which Android's
 // WebView doesn't reliably give a picker for.
 
-import { el, btn, sheet, icon, currentTheme } from './ui.js';
+import { el, btn, sheet, icon, currentTheme, switchRow } from './ui.js';
 import {
   createAvatar, drawStill, HAIRS, GLASSES, TOPS, ITEMS, SLOTS, SWATCHES, CROP,
   SUNGLASSES_BADGE, toHsl, fromHsl, shuffleLook,
@@ -187,20 +187,12 @@ export function avatarScreen(ctx) {
   paintPanel();
 
   // One switch for the small extras each kind of adventure adds.
-  const touches = el('button', {
-    class: 'listrow press', type: 'button', role: 'switch',
-    'aria-checked': ctx.state.prefs.modeTouches === false ? 'false' : 'true',
-    onclick: () => {
-      ctx.state.prefs.modeTouches = ctx.state.prefs.modeTouches === false;
-      ctx.save();
-      touches.setAttribute('aria-checked', ctx.state.prefs.modeTouches ? 'true' : 'false');
-      touches.querySelector('.listrow__m span').textContent = ctx.state.prefs.modeTouches ? 'On' : 'Off';
-    },
-  },
-  el('span', { class: 'stack', style: 'gap:2px' },
-    el('span', { class: 'listrow__d', text: 'Dress for the mode' }),
-    el('span', { class: 'cap', text: 'A camera on a day out, a backpack on a walk, glitter at a festival.' })),
-  el('span', { class: 'listrow__m' }, el('span', { text: ctx.state.prefs.modeTouches === false ? 'Off' : 'On' })));
+  const touches = switchRow({
+    label: 'Dress for the mode',
+    hint: 'A camera on a day out, a backpack on a walk, glitter at a festival.',
+    on: ctx.state.prefs.modeTouches !== false,
+    onChange: (on) => { ctx.state.prefs.modeTouches = on; ctx.save(); },
+  });
 
   return [
     el('div', { class: 'eb', text: 'Customise' }),

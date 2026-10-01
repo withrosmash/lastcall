@@ -114,6 +114,8 @@ function render() {
 function applyGlow(mode) {
   const node = document.getElementById('bloom');
   const glow = mode && mode !== 'night' ? MODES[mode]?.glow : null;
+  if (glow) document.documentElement.dataset.glow = mode;
+  else delete document.documentElement.dataset.glow;
   if (!glow) {
     node.style.removeProperty('--bloom-hero');
     node.style.removeProperty('--bloom-foot');

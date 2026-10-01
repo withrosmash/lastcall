@@ -160,10 +160,36 @@ function attachDragDown(panel) {
 
 export function dismissSheet() { closeSheet?.(); }
 
+/* ---------- switch row ----------
+   A setting that's on or off: the whole row is the switch, it says its state
+   in words, and screen readers hear it as a switch. */
+
+export function switchRow({ label, hint = null, on, onChange }) {
+  let state = !!on;
+  const value = el('span', { class: state ? 'on' : '', text: state ? 'On' : 'Off' });
+  const row = el('button', {
+    class: 'listrow listrow--tall press', type: 'button', role: 'switch', 'aria-checked': state ? 'true' : 'false',
+    onclick: () => {
+      state = !state;
+      row.setAttribute('aria-checked', state ? 'true' : 'false');
+      value.textContent = state ? 'On' : 'Off';
+      value.className = state ? 'on' : '';
+      onChange(state);
+    },
+  },
+  el('span', { class: 'stack', style: 'gap:2px' },
+    el('span', { class: 'listrow__d', text: label }),
+    hint ? el('span', { class: 'cap', text: hint }) : null),
+  el('span', { class: 'listrow__m' }, value));
+  return row;
+}
+
 /* ---------- toast ---------- */
 
 let toastTimer = null;
 export function toast(msg, ms = 2600, onTap = null) {
+  // An undo needs time to read and reach.
+  if (onTap) ms = Math.max(ms, 6000);
   clearTimeout(toastTimer);
   document.querySelector('.toast')?.remove();
   const node = el('div', {
