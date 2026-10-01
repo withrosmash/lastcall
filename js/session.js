@@ -201,12 +201,7 @@ export function morningScreen(ctx, night) {
     el('div', { class: 'morning__stage' }, av.canvas),
     el('p', { class: 'body', style: 'margin:0',
       text: `You were out ${longDuration(sum.ms)} and home by ${clockTime(s.endedAt)}.` }),
-    tiles(
-      tile('Drinks', sum.drinks, { tone: 'drinks' }),
-      tile('Water', sum.waters),
-      sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
-      tile('Stops', sum.stops),
-    ),
+    doneTiles(s),
     spacer(),
     foot(
       btn('Make a card', 'btn--pri', () => { seen(); ctx.go('card', s); }, { lg: true }),
@@ -271,28 +266,7 @@ export function liveScreen(ctx) {
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
       av.canvas),
 
-    MODES[S.currentPart(s).mode].headline === 'festival'
-      ? tiles(
-        tile('Drinks', s.drinks.length, { tone: 'drinks' }),
-        waterTile(ctx, s),
-        tile('Sets', (s.sets || []).length),
-        ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : tile('Distance', km(s.distanceM), { unit: 'km' }),
-      )
-      : MODES[S.currentPart(s).mode].headline === 'walk'
-      ? tiles(
-        ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : tile('Stops', s.pins.length),
-        tile('Distance', km(s.distanceM), { unit: 'km' }),
-        paceTile(S.walkPace(s)),
-        waterTile(ctx, s),
-      )
-      : tiles(
-        tile('Drinks', s.drinks.length, { tone: 'drinks' }),
-        waterTile(ctx, s),
-        ctx.stepsAvailable
-          ? tile('Steps', s.steps.toLocaleString())
-          : tile('Stops', s.pins.length),
-        tile('Distance', km(s.distanceM), { unit: 'km' }),
-      ),
+    liveTiles(ctx, s),
 
     behind ? el('div', { class: 'warn' },
       el('div', { class: 'warn__h', text: `${words(since)} drinks since your last water.` }),
@@ -345,6 +319,40 @@ function liveButtons(ctx, s) {
   const rows = [];
   for (let i = 0; i < rest.length; i += 2) rows.push(el('div', { class: 'btn-pair' }, rest.slice(i, i + 2)));
   return [top, ...rows];
+}
+
+/* ---------- stat tiles ----------
+   Four tiles, chosen in the mode's order of interest from what was actually
+   measured: with location off there's no distance or pace, without a step
+   counter no steps, so those never show as zeros. */
+
+const firstFour = (list) => tiles(list.filter(Boolean).slice(0, 4));
+
+function liveTiles(ctx, s) {
+  const gps = !(ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported');
+  const steps = ctx.stepsAvailable ? tile('Steps', s.steps.toLocaleString()) : null;
+  const dist = gps ? tile('Distance', km(s.distanceM), { unit: 'km' }) : null;
+  const drinks = tile('Drinks', s.drinks.length, { tone: 'drinks' });
+  const stops = tile('Stops', s.pins.length);
+  const food = tile(MODES[S.currentPart(s).mode].labels?.food || 'Food', (s.meals || []).length);
+  const head = MODES[S.currentPart(s).mode].headline;
+  if (head === 'walk') return firstFour([steps, dist, gps ? paceTile(S.walkPace(s)) : null, waterTile(ctx, s), stops, food]);
+  if (head === 'festival') return firstFour([drinks, waterTile(ctx, s), tile('Sets', (s.sets || []).length), steps || dist, food]);
+  return firstFour([drinks, waterTile(ctx, s), steps || dist, steps && dist ? dist : stops, food]);
+}
+
+function doneTiles(s) {
+  const sum = S.summarise(s);
+  const route = s.trail.length > 1;
+  const steps = sum.steps ? tile('Steps', sum.steps.toLocaleString()) : null;
+  const dist = route ? tile('Distance', km(sum.distanceM), { unit: 'km' }) : null;
+  const water = tile('Water', sum.waters);
+  const stops = tile('Stops', sum.stops);
+  const food = tile('Food', (s.meals || []).length);
+  if (S.onlyMode(s, 'walk')) return firstFour([steps, dist, route ? paceTile(S.walkPace(s)) : null, stops, water, food]);
+  const drinks = tile('Drinks', sum.drinks, { tone: 'drinks' });
+  if (S.hasMode(s, 'festival')) return firstFour([drinks, water, tile('Sets', (s.sets || []).length), steps || dist, food]);
+  return firstFour([drinks, water, steps || dist, stops, food]);
 }
 
 // Pace over the walk so far, stops included: it's how long the walk is
@@ -525,26 +533,7 @@ export function recapScreen(ctx, session) {
 
     // Walk tiles only for a walk from start to finish; a night out with a
     // walk home keeps its drinks.
-    S.hasMode(s, 'festival')
-      ? tiles(
-        tile('Drinks', sum.drinks, { tone: 'drinks' }),
-        tile('Water', sum.waters),
-        tile('Sets', (s.sets || []).length),
-        sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
-      )
-      : S.onlyMode(s, 'walk')
-      ? tiles(
-        sum.steps ? tile('Steps', sum.steps.toLocaleString()) : tile('Water', sum.waters),
-        tile('Distance', km(sum.distanceM), { unit: 'km' }),
-        paceTile(S.walkPace(s)),
-        tile('Stops', sum.stops),
-      )
-      : tiles(
-        tile('Drinks', sum.drinks, { tone: 'drinks' }),
-        tile('Water', sum.waters),
-        ctx.stepsAvailable ? tile('Steps', sum.steps.toLocaleString()) : tile('Distance', km(sum.distanceM), { unit: 'km' }),
-        tile('Stops', sum.stops),
-      ),
+    doneTiles(s),
 
     gapNote(s),
 

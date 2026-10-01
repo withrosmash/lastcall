@@ -86,12 +86,13 @@ export function festivalScreen(ctx, f) {
 
   return [
     head({ eyebrow: `${shortDate(first.startedAt)} to ${shortDate(last.startedAt)}`, title: f.name, back }),
-    tiles(
+    tiles([
       tile('Days', days.length),
-      tile('Sets', acts.length),
-      tile('Steps', merged.steps.toLocaleString()),
-      tile('Distance', km(merged.distanceM), { unit: 'km' }),
-    ),
+      tile('Acts', acts.length),
+      merged.steps ? tile('Steps', merged.steps.toLocaleString()) : null,
+      merged.trail.length > 1 ? tile('Distance', km(merged.distanceM), { unit: 'km' }) : null,
+      tile('Sets', merged.sets.length),
+    ].filter(Boolean).slice(0, 4)),
     acts.length ? el('div', { class: 'eb', text: 'Who you saw' }) : null,
     acts.length ? el('div', { class: 'chips' }, acts.map((a) => el('span', { class: 'chip chip--static', text: a }))) : null,
     earned.length ? el('div', { class: 'eb', text: 'Badges' }) : null,

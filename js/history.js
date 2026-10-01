@@ -284,10 +284,7 @@ export function detailScreen(ctx, session) {
 
     ...rewind(ctx, s),
 
-    tiles(
-      tile('Drinks', sum.drinks, { tone: 'drinks' }),
-      tile('Distance', km(sum.distanceM), { unit: 'km' }),
-    ),
+    detailTiles(s, sum),
 
     el('div', { class: 'eb', text: 'Timeline' }),
     (() => {
@@ -315,6 +312,20 @@ export function detailScreen(ctx, session) {
       btn(t('Delete {n}'), 'btn--sec', () => confirmDelete(ctx, s)),
     ),
   ];
+}
+
+// Two tiles that suit the adventure: a walk leads with distance and pace, a
+// festival with sets, everything else with drinks. Nothing unmeasured shows.
+function detailTiles(s, sum) {
+  const route = s.trail.length > 1;
+  const dist = route ? tile('Distance', km(sum.distanceM), { unit: 'km' }) : null;
+  const pace = route ? S.walkPace(s) : null;
+  const list = S.onlyMode(s, 'walk')
+    ? [dist, pace ? tile('Pace', pace, { unit: '/km' }) : null, sum.steps ? tile('Steps', sum.steps.toLocaleString()) : null, tile('Stops', sum.stops)]
+    : S.hasMode(s, 'festival')
+      ? [tile('Sets', (s.sets || []).length), dist, tile('Drinks', sum.drinks, { tone: 'drinks' })]
+      : [tile('Drinks', sum.drinks, { tone: 'drinks' }), dist, tile('Stops', sum.stops)];
+  return tiles(list.filter(Boolean).slice(0, 2));
 }
 
 /* ---------- rewind ----------

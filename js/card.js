@@ -272,7 +272,7 @@ function elementToggles() {
   return TYPES.filter((t) =>
     (t.key !== 'badges' || ui.badgeImgs.length)
     && (!t.presetOnly || ui.mode === 'preset')
-    && (t.key !== 'map' || ui.session.trail.length > 1)).map((t) =>
+    && (!['map', 'route'].includes(t.key) || ui.session.trail.length > 1)).map((t) =>
     el('button', {
       class: 'chip press', type: 'button',
       'aria-pressed': ui.elements[t.key].on ? 'true' : 'false',
@@ -732,7 +732,8 @@ function drawRouteCard(g, w, h, want) {
   }
 
   if (want('title') && title) drawText(g, title, M, M + 6, { size: 64, weight: 700, color: T.text, spacing: -1 });
-  if (want('route') && on.route.on) {
+  const noRoute = trail.length < 2;
+  if (want('route') && on.route.on && !noRoute) {
     if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.map((p) => SM.toCard(frame, p.lat, p.lng)), T);
     else outlineRoute(g, region, T);
   }
@@ -748,7 +749,8 @@ function drawRouteCard(g, w, h, want) {
     drawText(g, value, x, rowTop(r) + 36, { size: 76, weight: 700, color: pink ? T.pink : T.text, spacing: -2 });
   };
   if (want('stats') && on.stats.on) {
-    const top = [['Distance', `${km(ui.sum.distanceM)} km`]];
+    // Only what was measured: no route means no distance, no counter no steps.
+    const top = noRoute ? [] : [['Distance', `${km(ui.sum.distanceM)} km`]];
     if (ui.sum.steps) top.push(['Steps', abbrev(ui.sum.steps)]);
     top.forEach(([l, v], i) => cell(M + i * 300, 0, l, v));
     const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks), true]];
@@ -760,7 +762,14 @@ function drawRouteCard(g, w, h, want) {
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 64, { size: 30, weight: 400, color: T.date });
   // The wordmark's foot sits where the typed name's baseline did.
   if (want('wordmark')) drawWordmark(g, M, h - M - 19, 30, { color: T.mark });
-  if (want('avatar') && ui.face !== 'none' && ui.look) paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
+  if (want('avatar') && ui.face !== 'none' && ui.look) {
+    // With no route the avatar takes the map's place, big, so the card has
+    // no empty half; otherwise it stands beside the stats.
+    if (noRoute) {
+      const s = Math.max(6, Math.min(18, Math.floor((region.h * 0.9) / 43)));
+      paintAvatar(g, ui.look, Math.round(w / 2 - 16 * s), Math.round(region.y + (region.h - 43 * s) / 2), s, FACE_STATE[ui.face]);
+    } else paintAvatar(g, ui.look, w - M - 290, h - M - 470, 10, FACE_STATE[ui.face]);
+  }
 }
 
 /* Map tiles for the top of the card, fading into the ground. Returns false
@@ -918,9 +927,9 @@ function drawStats(g, x, y) {
   const cells = [
     ['Drinks', String(ui.sum.drinks), C.pink],
     ['Stops', String(ui.sum.stops), null],
-    ['Steps', abbrev(ui.sum.steps), null],
-    ['Km', km(ui.sum.distanceM), null],
-  ];
+    ui.sum.steps ? ['Steps', abbrev(ui.sum.steps), null] : null,
+    ui.session.trail.length > 1 ? ['Km', km(ui.sum.distanceM), null] : null,
+  ].filter(Boolean);
   let cx = x;
   for (const [k, v, color] of cells) {
     drawText(g, k, cx, y, { size: 26, weight: 600, color: labelInk() });
@@ -1083,13 +1092,16 @@ function layerIds() {
       if (id === 'avatar') return hasAvatar;
       if (id === 'badges') return on.badges.on && ui.badgeImgs.length;
       if (id === 'stops') return on.stops.on && ui.session.pins.length;
-      if (id === 'map' || id === 'wordmark') return true;
+      if (id === 'route') return on.route.on && ui.session.trail.length > 1;
+      if (id === 'wordmark') return true;
+      if (id === 'map') return true;
       return on[id]?.on;
     });
   }
   return [...DRAW_ORDER.filter((id) => {
     if (id === 'title') return hasTitle && on.title.on;
     if (id === 'avatar') return hasAvatar && on.avatar.on;
+    if (id === 'route') return on.route.on && ui.session.trail.length > 1;
     return on[id]?.on;
   }), 'wordmark'];
 }
