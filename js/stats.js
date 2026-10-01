@@ -28,3 +28,17 @@ export function testerStats({ sessions, badges = [], flags = {}, festivals = [] 
     festivals: festivals.length,
   };
 }
+
+/**
+ * One more card saved or shared. Counting began in M4: a tester who had
+ * already saved a card starts at one, and only they get a "counted from" date.
+ */
+export function countCard(flags, now = Date.now()) {
+  if (flags.cardsShared == null) {
+    flags.cardsShared = flags.cardExported ? 1 : 0;
+    if (flags.cardExported) flags.cardsSince = now;
+  }
+  flags.cardsShared += 1;
+  flags.cardExported = true;
+  return flags;
+}

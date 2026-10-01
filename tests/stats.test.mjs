@@ -56,3 +56,20 @@ test('challenges add up, and cards fall back to the old flag', () => {
   assert.equal(testerStats({ sessions: [], badges: [], flags: { cardExported: true }, festivals: [] }, NOW).cards, 1);
   assert.equal(testerStats({ sessions: [], badges: [], flags: { cardExported: true, cardsShared: 4 }, festivals: [] }, NOW).cards, 4);
 });
+
+test('counting a card: fresh, already-shared before counting, and ongoing', async () => {
+  const { countCard } = await import('../js/stats.js');
+  const fresh = countCard({}, 100);
+  assert.equal(fresh.cardsShared, 1);
+  assert.equal(fresh.cardsSince, undefined);
+  const before = countCard({ cardExported: true }, 100);
+  assert.equal(before.cardsShared, 2);
+  assert.equal(before.cardsSince, 100);
+  assert.equal(countCard({ cardExported: true, cardsShared: 3, cardsSince: 5 }, 100).cardsShared, 4);
+});
+
+test('the 30-day window includes exactly 30 days and no more', () => {
+  const edge = { ...newSession(NOW - 30 * D), endedAt: NOW - 30 * D + H };
+  const past = { ...newSession(NOW - 30 * D - 60e3), endedAt: NOW - 30 * D + H };
+  assert.equal(testerStats({ sessions: [edge, past], badges: [], flags: {}, festivals: [] }, NOW).last30, 1);
+});

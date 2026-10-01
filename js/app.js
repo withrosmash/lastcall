@@ -7,6 +7,7 @@ import { avatarLook } from './wardrobe.js';
 import { avatarScreen } from './avatarscreen.js';
 import { MODES, recentFor, rememberFor } from './modes.js';
 import { bloomCss } from './glow.js';
+import { countCard } from './stats.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen, appearanceScreen, numbersScreen } from './history.js';
@@ -262,11 +263,8 @@ function syncBadges() {
 
 // The card export badge can only be earned outside endNight.
 window.addEventListener('lc:card-exported', () => {
-  const f = ctx.state.flags;
-  // Counted for testers' numbers; a card saved before counting began is one.
-  if (f.cardsShared == null) { f.cardsShared = f.cardExported ? 1 : 0; f.cardsSince = Date.now(); }
-  f.cardsShared += 1;
-  f.cardExported = true;
+  countCard(ctx.state.flags);
+  save();
   const fresh = syncBadges();
   if (fresh.length) {
     const meta = badges.BADGES.find((b) => b.slug === fresh[0].slug);

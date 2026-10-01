@@ -128,7 +128,7 @@ export function numbersScreen(ctx) {
 
   return [
     head({ eyebrow: 'Settings', title: 'Your numbers', back: () => ctx.back() }),
-    el('p', { class: 'body', style: 'margin:0', text: 'Testing Leit? Screenshot this and send it over. Nothing leaves your phone unless you send it.' }),
+    el('p', { class: 'body', style: 'margin:0', text: 'Testing Leit? Screenshot this and send it over. These numbers stay on your phone until you send them.' }),
     tiles(
       tile(t('{Ns}'), st.adventures),
       tile('Last 30 days', st.last30),
