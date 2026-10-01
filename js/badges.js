@@ -36,7 +36,8 @@ export function badgeChip(slug, { size = 64, earned = true } = {}) {
   const wrap = el('span', { style: `display:inline-flex;width:${size}px;height:${size}px` });
   const img = el('img', {
     src: badgeSrc(slug),
-    alt: meta ? meta.name : slug,
+    // Hidden badges stay secret to screen readers too; locked ones say so.
+    alt: !meta ? slug : earned ? meta.name : meta.hidden ? 'Hidden badge, locked' : `${meta.name}, locked`,
     width: size, height: size,
     class: earned ? '' : 'badge--locked',
     style: `width:${size}px;height:${size}px;border-radius:50%`,
@@ -54,14 +55,14 @@ export function badgesScreen(ctx) {
     head({ eyebrow: 'Badges', title: `${earned.size} of ${BADGES.length}`, back: () => ctx.back() }),
 
     ...cats.flatMap((cat) => [
-      el('div', { class: 'eb', style: 'margin-top:7px', text: cat }),
+      el('h2', { class: 'eb', style: 'margin:7px 0 0', text: cat }),
       el('div', { style: 'display:grid;grid-template-columns:repeat(3,1fr);gap:9px' },
         BADGES.filter((b) => b.cat === cat).map((b) => {
           const got = earned.has(b.slug);
           const secret = b.hidden && !got;
           return el('div', { class: 'center', style: 'display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 2px' },
             badgeChip(b.slug, { size: 64, earned: got }),
-            el('div', { style: `font-size:12px;font-weight:700;letter-spacing:-.01em;color:${got ? 'var(--text)' : 'var(--muted)'}`, text: secret ? '???' : b.name }),
+            el('div', { style: `font-size:12px;font-weight:700;letter-spacing:-.01em;color:${got ? 'var(--text)' : 'var(--muted-up)'}`, text: secret ? '???' : b.name, 'aria-hidden': 'true' }),
             el('div', { class: 'cap', style: 'font-size:11.5px;line-height:1.35', text: secret ? 'Keep going.' : t(b.criteria) }),
           );
         })),

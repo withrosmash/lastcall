@@ -244,7 +244,8 @@ export function liveScreen(ctx) {
   const s = ctx.state.active;
   if (!s) { ctx.go('start'); return []; }
 
-  const clock = el('div', { class: 'timer', text: hms(S.elapsedMs(s)) });
+  // role=timer is quiet to screen readers until asked, unlike the old live region.
+  const clock = el('div', { class: 'timer', role: 'timer', 'aria-label': 'Time out', text: hms(S.elapsedMs(s)) });
   const av = liveAvatar(ctx);
   av.setMood(moodFor(s, ctx.state.prefs));
   ctx.tick = () => {

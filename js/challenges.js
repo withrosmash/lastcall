@@ -35,7 +35,7 @@ export function openChallenge(ctx, session) {
     };
 
     return [
-      el('div', { class: 'eb eb--mint', text: count ? `Challenge · ${count} done so far` : 'Challenge' }),
+      el('h2', { class: 'eb eb--mint', style: 'margin:0', text: count ? `Challenge · ${count} done so far` : 'Challenge' }),
       body,
       el('div', { class: 'foot' },
         btn('Done', 'btn--pri', () => { close(); ctx.logChallenge(current); }),

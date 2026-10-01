@@ -1132,6 +1132,12 @@ export function createAvatar({ cell = 3, look = DEFAULT_LOOK, onTap = null, labe
     requestAnimationFrame(loop);
   }
 
+  // Tappable avatars are buttons, so they can be reached and pressed without touch.
+  if (onTap) {
+    canvas.setAttribute('role', 'button');
+    canvas.tabIndex = 0;
+    canvas.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap(); } });
+  }
   canvas.addEventListener('click', () => {
     if (onTap) { onTap(); return; }
     const now = Date.now();

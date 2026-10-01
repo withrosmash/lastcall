@@ -448,3 +448,4 @@ canvas.avatar{
 .btn--sm{min-height:var(--tap);padding:0 14px;font-size:12px}
 .listrow--tall{padding-block:10px}
 .listrow__m .on{color:var(--mint);font-weight:var(--fw-bold)}
+[tabindex="-1"]:focus{outline:none}

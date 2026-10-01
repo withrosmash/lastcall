@@ -98,13 +98,18 @@ function back() {
   keepalive.minimize();
 }
 
+let lastMounted = null;
+
 function render() {
   ctx.tick = null;
   const def = SCREENS[ctx.screen] || SCREENS.start;
   const tracking = def.tracking && !!ctx.state.active;
+  const fresh = ctx.screen !== lastMounted;
+  lastMounted = ctx.screen;
   mount(def.build(ctx), {
     bloom: def.bloom,
     chrome: tracking ? serviceNotice() : null,
+    focus: fresh,
   });
   applyGlow(def.glow?.(ctx));
 }

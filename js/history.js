@@ -72,7 +72,7 @@ export function historyScreen(ctx) {
 
     ...festivalRows(ctx),
 
-    el('div', { class: 'eb', text: t('{Ns}') }),
+    el('h2', { class: 'eb', style: 'margin:0', text: t('{Ns}') }),
     el('div', { class: 'stack', style: 'gap:6px' },
       shown.slice(0, 40).map((s) => {
         const sum = S.summarise(s);
@@ -100,7 +100,7 @@ function festivalRows(ctx) {
   const reviews = ctx.state.festivals || [];
   if (!reviews.length && !canMakeFestival(ctx)) return [];
   return [
-    el('div', { class: 'eb', text: 'Festivals' }),
+    el('h2', { class: 'eb', style: 'margin:0', text: 'Festivals' }),
     el('div', { class: 'stack', style: 'gap:6px' },
       reviews.map((f) => el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('festival', f) },
         el('span', { class: 'listrow__d', text: f.name }),
@@ -339,6 +339,7 @@ function rewind(ctx, s) {
     const near = s.pins.find((p) => Math.abs(p.t - t) / span <= 0.025);
     clock.textContent = clockTime(t);
     where.textContent = near ? near.name : 'Between stops';
+    slider?.setAttribute('aria-valuetext', `${clockTime(t)}, ${near ? `at ${near.name}` : 'between stops'}`);
     where.classList.toggle('is-stop', !!near);
     ctl.setTime(t, { walking });
   };

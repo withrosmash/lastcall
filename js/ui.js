@@ -55,10 +55,12 @@ export const glass = (...kids) => el('div', { class: 'glass' }, kids.flat().filt
 export const spacer = () => el('div', { class: 'spacer' });
 export const foot = (...kids) => el('div', { class: 'foot' }, kids.flat().filter(Boolean));
 
+// The screen's heading is a real h1: the title, or the eyebrow when there's
+// no title, so screen readers can find it and jump between screens.
 export function head({ eyebrow, title, back }) {
   return el('div', { class: 'head' },
     el('div', {},
-      eyebrow ? el('div', { class: 'eb', text: eyebrow }) : null,
+      eyebrow ? el(title ? 'div' : 'h1', { class: 'eb', text: eyebrow }) : null,
       title ? el('h1', { class: 'title head__title', text: title }) : null,
     ),
     back ? el('button', { class: 'back press', type: 'button', onclick: back },
@@ -86,14 +88,27 @@ export function applyTheme(theme) {
 
 const app = () => document.getElementById('app');
 
-export function mount(nodes, { flush = false, bloom = 'hero', chrome = null } = {}) {
+export function mount(nodes, { flush = false, bloom = 'hero', chrome = null, focus = false } = {}) {
   document.getElementById('bloom').dataset.bloom = bloom;
   const chromeRoot = document.getElementById('chrome');
   chromeRoot.replaceChildren(...(chrome ? [chrome] : []));
   const root = app();
   root.classList.toggle('flush', flush);
+  // A re-render replaces every node; keep a screen reader's place by finding
+  // the same control in the new screen (same role and words) and focusing it.
+  const was = !focus && root.contains(document.activeElement) ? document.activeElement : null;
+  const key = was && `${was.tagName}|${was.getAttribute('aria-label') || ''}|${was.textContent.trim()}`;
   root.replaceChildren(...[nodes].flat().filter(Boolean));
   root.scrollTop = 0;
+  if (key) {
+    const again = [...root.querySelectorAll(was.tagName)].find((n) => `${n.tagName}|${n.getAttribute('aria-label') || ''}|${n.textContent.trim()}` === key);
+    again?.focus({ preventScroll: true });
+  }
+  // On a new screen (not a re-render), a screen reader starts at its heading.
+  if (focus) {
+    const h = root.querySelector('h1, h2, .title');
+    if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
+  }
 }
 
 // Android draws the real notification while the foreground service runs; this
@@ -109,7 +124,9 @@ let closeSheet = null;
 
 export function sheet(build, { onClose } = {}) {
   dismissSheet();
+  const opener = document.activeElement;
   const root = document.getElementById('sheet-root');
+  const frame = document.querySelector('.frame');
   const panel = el('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
     el('div', { class: 'sheet__grip' }));
   const scrim = el('div', {
@@ -119,6 +136,8 @@ export function sheet(build, { onClose } = {}) {
 
   closeSheet = () => {
     root.replaceChildren();
+    if (frame) frame.inert = false;
+    if (opener && opener.isConnected) opener.focus?.({ preventScroll: true });
     document.removeEventListener('keydown', onKey);
     closeSheet = null;
     onClose?.();
@@ -129,6 +148,16 @@ export function sheet(build, { onClose } = {}) {
   attachDragDown(panel);
   panel.append(...[build(dismissSheet)].flat().filter(Boolean));
   root.replaceChildren(scrim);
+  // Named by its heading, focused there, and the screen behind put out of
+  // reach until it closes, so a screen reader stays inside the sheet.
+  const title = panel.querySelector('h1, h2, .title');
+  if (title) {
+    title.id = title.id || `sheet-title-${Date.now().toString(36)}`;
+    panel.setAttribute('aria-labelledby', title.id);
+    title.tabIndex = -1;
+    title.focus({ preventScroll: true });
+  }
+  if (frame) frame.inert = true;
   return dismissSheet;
 }
 

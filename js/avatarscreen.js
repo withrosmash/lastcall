@@ -24,6 +24,17 @@ const FACES = [
   { n: 'Puppy', eyes: 'puppy', mouth: 'small' },
   { n: 'Content', eyes: 'content', mouth: 'smile', blush: 2 },
 ];
+// What a screen reader says for a colour: "dark brown", not "#3B2416".
+function colourName(hex) {
+  const [h, s, l] = toHsl(hex);
+  if (s < 12) return l < 12 ? 'black' : l < 35 ? 'dark grey' : l < 70 ? 'grey' : l < 92 ? 'light grey' : 'white';
+  if (h >= 15 && h < 45 && l < 45) return l < 25 ? 'dark brown' : 'brown';
+  if (h >= 15 && h < 45 && s < 65 && l > 65) return 'peach';
+  const hue = h < 15 || h >= 340 ? 'red' : h < 45 ? 'orange' : h < 65 ? 'yellow' : h < 160 ? 'green'
+    : h < 195 ? 'teal' : h < 250 ? 'blue' : h < 290 ? 'purple' : 'pink';
+  return l < 30 ? `dark ${hue}` : l > 75 ? `light ${hue}` : hue;
+}
+
 const TABS = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['items', 'Items'], ['colours', 'Colours']];
 
 export function avatarScreen(ctx) {
@@ -159,6 +170,7 @@ export function avatarScreen(ctx) {
       // so the slider under your thumb isn't rebuilt mid-drag.
       input.addEventListener('input', () => {
         out.textContent = `${input.value}${unit}`;
+        input.setAttribute('aria-valuetext', `${input.value}${unit}, ${colourName(draft.colors[slot])}`);
         draft = { ...draft, colors: { ...draft.colors, [slot]: onInput(+input.value) } };
         commit();
       });
@@ -174,7 +186,7 @@ export function avatarScreen(ctx) {
           onclick: () => { slot = k; paintColours(); } },
         el('span', { class: 'dot', style: `background:${draft.colors[k]}` }), label))),
       el('div', { class: 'wswatches' }, pool.map((c) =>
-        el('button', { class: 'wswatch press', type: 'button', 'aria-label': c,
+        el('button', { class: 'wswatch press', type: 'button', 'aria-label': colourName(c),
           'aria-pressed': c.toUpperCase() === cur.toUpperCase() ? 'true' : 'false', onclick: () => setColour(c) },
         el('span', { style: `background:${c}` })))),
       el('div', { class: 'stack', style: 'gap:4px' },
@@ -195,7 +207,7 @@ export function avatarScreen(ctx) {
   });
 
   return [
-    el('div', { class: 'eb', text: 'Customise' }),
+    el('h1', { class: 'eb', style: 'margin:0', text: 'Customise' }),
     el('div', { class: 'wpreview' }, av.canvas, caption),
     tabRow,
     panel,
