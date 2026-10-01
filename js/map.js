@@ -79,8 +79,25 @@ export function mapScreen(ctx) {
   ];
 }
 
+// Leaflet (about 150KB) loads the first time a map is opened rather than at
+// start-up, so the app opens faster on older phones. The service worker still
+// caches it, so it works offline.
+let leaflet = null;
+export function loadLeaflet() {
+  if (globalThis.L) return Promise.resolve();
+  leaflet ||= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = './vendor/leaflet.js';
+    s.onload = () => resolve();
+    s.onerror = () => { leaflet = null; reject(new Error('map library failed to load')); };
+    document.head.append(s);
+  });
+  return leaflet;
+}
+
 function initMap(host, s) {
-  if (!globalThis.L || !host.isConnected) return;
+  if (!globalThis.L) { loadLeaflet().then(() => initMap(host, s), () => {}); return; }
+  if (!host.isConnected) return;
   teardownMap();
 
   map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
@@ -314,7 +331,8 @@ export function atlasScreen(ctx) {
 }
 
 function initAtlas(host, done) {
-  if (!globalThis.L || !host.isConnected) return;
+  if (!globalThis.L) { loadLeaflet().then(() => initAtlas(host, done), () => {}); return; }
+  if (!host.isConnected) return;
   teardownMap();
 
   map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
@@ -386,8 +404,10 @@ export function positionAt(trail, t) {
 // once you let go.
 export function nightMap(host, s, look = null) {
   const controller = { setTime: () => {}, stand: () => {} };
-  queueMicrotask(() => {
-    if (!globalThis.L || !host.isConnected || s.trail.length < 2) return;
+  queueMicrotask(async () => {
+    if (s.trail.length < 2) return;
+    try { await loadLeaflet(); } catch { return; }
+    if (!host.isConnected) return;
     teardownMap();
 
     map = L.map(host, { zoomControl: false, attributionControl: true, preferCanvas: true });
