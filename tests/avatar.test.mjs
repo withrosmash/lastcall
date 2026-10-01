@@ -170,3 +170,38 @@ test('the live avatar has headroom, so a jump keeps the whole head', () => {
   assert.equal(top(jump), top(rest) - 12, 'the party hat rises the full jump');
   assert.ok(top(jump) > 0, 'and never reaches the edge');
 });
+
+test('a blink never changes the mouth', () => {
+  const look = normaliseLook(null);
+  for (const lid of [0.5, 1]) assert.equal(artLook(look, toFrame({ eyes: 'open', mouth: 'smile' }, { lid, still: false })).mouth, 'smile');
+});
+
+test('sunglasses go up on the head for the big reaction faces', () => {
+  const look = { ...normaliseLook(null), glasses: 'sun' };
+  const glassesTop = (st) => {
+    const a = build(look, still(st)), b = build({ ...look, glasses: 'none' }, still(st));
+    const diff = a.map((p, i) => (p && (!b[i] || p.c.join() !== b[i].c.join()) ? (i / W) | 0 : Infinity));
+    return Math.min(...diff);
+  };
+  assert.ok(glassesTop({ eyes: 'star' }) < glassesTop({ eyes: 'open' }) - 6, 'pushed well up for star eyes');
+  for (const eyes of ['heart', 'star', 'wide', 'puppy']) assert.ok(artLook(look, still({ eyes })).glassesUp, eyes);
+  assert.ok(!artLook({ ...look, glasses: 'round' }, still({ eyes: 'star' })).glassesUp, 'clear lenses stay put');
+  assert.ok(artLook({ ...normaliseLook(null), costume: 'elvis' }, still({ eyes: 'heart' })).glassesUp, 'Elvis’s aviators too');
+});
+
+test('at rest a costume poses the arms for its own prop', () => {
+  const a = artLook({ ...normaliseLook(null), costume: 'wizard' }, still());
+  assert.equal(a.armR, undefined);
+  assert.equal('held' in a, false);
+});
+
+test('reactions build nothing new once warmed, even with an effect on', async () => {
+  const { warmPoses } = await import('../js/avatar.js');
+  const look = { ...normaliseLook(null), hair: 'braids', effect: 'confetti' };
+  warmPoses(look, 'Fresh', ['drink', 'water']);
+  const before = __stats.builds;
+  for (const name of ['drink', 'water']) for (const [, st] of __ANIM[name]) {
+    for (let fx = 0; fx < 4; fx++) build(look, toFrame({ ...__MOODS.Fresh.base, ...st }, { still: false }), null, { fxFrame: fx, room: true });
+  }
+  assert.equal(__stats.builds - before, 0);
+});

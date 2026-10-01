@@ -53,15 +53,31 @@ const PHRASE = {
   bubbles: 'bubbles', thought: 'thought bubble', aura: 'golden aura',
 };
 
-// Badges without a line of their own read their criteria as a sentence.
+const HIDDEN_LINE = 'Comes with a badge that stays hidden until you earn it.';
+
+// Badges without a line of their own read their criteria as a sentence,
+// except hidden ones, which keep their secret until they're earned.
 export const requirement = (slug) => {
-  const criteria = BADGES.find((b) => b.slug === slug)?.criteria;
-  return t(REQ[slug] || (criteria ? `${criteria}.` : ''));
+  const b = BADGES.find((x) => x.slug === slug);
+  if (REQ[slug]) return t(REQ[slug]);
+  if (b?.hidden) return HIDDEN_LINE;
+  return t(b?.criteria ? `${b.criteria}.` : '');
 };
 
-/** The look with one item on. Scarf and backpack are switches, not slots. */
+/** What a badge asked for, once it's earned: hidden ones can say now. */
+const revealed = (slug) => {
+  const b = BADGES.find((x) => x.slug === slug);
+  return b?.hidden ? t(`${b.criteria}.`) : requirement(slug);
+};
+
+/**
+ * The look with one item on. Scarf and backpack are switches, not slots. A
+ * costume comes with its own hat and prop, so it takes off the ones worn;
+ * a hat or prop chosen afterwards still goes on over it.
+ */
 export function wear(look, item) {
   if (item.slot === 'shoes') return { ...look, shoes: item.id };
+  if (item.slot === 'costume') return { ...look, costume: item.id, hat: null, held: null };
   if (item.slot === 'extra') return { ...look, [item.id]: true };
   return { ...look, [item.slot]: item.id };
 }
@@ -154,7 +170,7 @@ export function openUnlocks(ctx, slugs, { onClose } = {}) {
       dots.replaceChildren(...items.map((_, k) => el('span', { class: k === i ? 'on' : '' })));
       dots.hidden = items.length < 2;
       name.textContent = badge?.name || 'New badge';
-      body.textContent = `${requirement(item.badge).replace('Comes with a badge that stays hidden until you earn it.', '100 challenges, all time.')} Comes with the ${PHRASE[item.id]}.`;
+      body.textContent = `${revealed(item.badge)} Comes with the ${PHRASE[item.id]}.`;
       next.querySelector('span').textContent = i === items.length - 1 ? 'Done' : 'Next badge';
       if (first) {
         // Looks up as it falls, catches it, holds it up, then wears it.

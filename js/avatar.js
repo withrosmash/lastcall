@@ -129,6 +129,8 @@ const LOOK = {
 /* ================= from a frame to the art ================= */
 
 const ARM = { wave: 'wave1' };
+// Dark lenses hide the eyes, so for the big reaction faces they go up on the head.
+const BIG_EYES = new Set(['heart', 'star', 'wide', 'puppy']);
 // The animations' drink is a glass and their water a cup; in the art, the
 // cup is the soft drink with a straw and the glass is water.
 const PROP = { glass: 'cup', cup: 'glass' };
@@ -162,12 +164,15 @@ export function artLook(look, fr, { fxFrame = 0 } = {}) {
   const armL = ARM[fr.armL] || fr.armL || 'down', armR = ARM[fr.armR] || fr.armR || 'down';
   const prop = fr.prop && fr.prop[1] === 'hand' ? PROP[fr.prop[0]] || fr.prop[0] : null;
   const resting = armL === 'down' && armR === 'down' && !fr.armSwing && fr.badge !== 'held';
+  // At rest the art poses the arms for whatever is held, a costume's own prop included.
   if (prop) Object.assign(a, { held: prop, armL, armR });
-  else if (resting && look.held) a.held = look.held;
+  else if (resting) { if (look.held) a.held = look.held; }
   else Object.assign(a, { held: null, armL, armR });
 
-  // Never drunk: sleepy eyes never come with a grin.
-  if (SLEEPY.has(a.eyes) && GRINS.has(a.mouth)) a.mouth = 'small';
+  if (f.glassesUp && (look.glasses === 'sun' || look.costume === 'elvis')) a.glassesUp = true;
+  // Never drunk: sleepy eyes never come with a grin. A blink passes through
+  // half-closed eyes for a frame and leaves the mouth alone.
+  if (!f.blink && SLEEPY.has(a.eyes) && GRINS.has(a.mouth)) a.mouth = 'small';
   return a;
 }
 
@@ -204,7 +209,7 @@ function layersFor(a) {
   }
   b = { look: { colors: built.look.colors }, layers };
   LAYERS.set(key, b);
-  if (LAYERS.size > 96) LAYERS.delete(LAYERS.keys().next().value);
+  if (LAYERS.size > 160) LAYERS.delete(LAYERS.keys().next().value);
   return b;
 }
 
@@ -212,7 +217,7 @@ function layersFor(a) {
 const GROUP = {
   footL: 'footL', footR: 'footR',
   packBack: 'body', body: 'body', mode: 'body', armL: 'body', armR: 'body', held: 'body', grip: 'body',
-  head: 'head', blush: 'head', mouth: 'head', eyes: 'head', glitter: 'head', brows: 'head', glasses: 'head', hat: 'head',
+  head: 'head', blush: 'head', mouth: 'head', eyes: 'head', glitter: 'head', brows: 'head', glasses: 'glasses', hat: 'head',
   hairBack: 'hair', hairFront: 'hair',
   fxBack: 'root', fx: 'root',
 };
@@ -316,6 +321,7 @@ export function build(look0, fr = NEUTRAL, only = null, { fxFrame = 0, room = fa
   const head = [body[0] + (fr.headDX || 0) * OFF, body[1] + (fr.headDY || 0) * OFF];
   const off = {
     root, body, head, hair: [head[0], head[1] + (fr.hairLag || 0) * OFF],
+    glasses: a.glassesUp ? [head[0], head[1] - 9] : head,
     footL: root, footR: [root[0], root[1] + (fr.walk == null && fr.footR ? fr.footR[1] * OFF : 0)],
   };
   const pin = fr.prop && fr.prop[0] === 'pin' && fr.prop[1] !== 'hand' ? fr.prop : null;
@@ -574,7 +580,7 @@ export function toFrame(st, { tick = 0, lid = 0, hairPrev = null, still = true }
   let e = lookup.e;
   if (lid && (e === 'open' || e === 'lookL' || e === 'lookR' || e === 'puppy')) e = lid >= 1 ? 'shut' : 'heavy';
   const brows = st.brows ? (st.brows === 'normal' ? 'soft' : st.brows) : (lookup.b || 'soft');
-  const face = { eyes: e, mouth: st.mouth || 'smile', brows, blush: (st.blush ?? 1) > 1 };
+  const face = { eyes: e, mouth: st.mouth || 'smile', brows, blush: (st.blush ?? 1) > 1, blink: lid > 0, glassesUp: BIG_EYES.has(eyesName) };
 
   return {
     rootDX: st.rootDX || 0, rootDY: st.rootDY || 0, bodyDY, headDX: st.headDX || 0, headDY, hairLag, headY,
@@ -587,6 +593,20 @@ export function toFrame(st, { tick = 0, lid = 0, hairPrev = null, still = true }
 }
 
 // Exposed for verification: every keyframe of every animation.
+// Every art pose the named reactions use, each effect frame included.
+function posesFor(look, mood, names) {
+  const fxs = look.effect ? [0, 1, 2, 3] : [0];
+  return names.flatMap((name) => ANIM[name].flatMap(([, st]) => {
+    const fr = toFrame({ ...MOODS[mood].base, ...st }, { still: false });
+    return fxs.map((fxFrame) => artLook(look, fr, { fxFrame }));
+  }));
+}
+
+/** Builds the reactions' poses now (the live avatar does this in idle time). */
+export function warmPoses(look, mood, names) {
+  posesFor(normaliseLook(look), mood, names).forEach(layersFor);
+}
+
 export const __ANIM = ANIM;
 export const __MOODS = MOODS;
 
@@ -752,10 +772,10 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
   // The reactions to logging build their poses ahead of time, a few per idle
   // moment, so the first drink of the night doesn't stutter on a slow phone.
   function warm() {
-    const todo = WARM.flatMap((name) => ANIM[name].map(([, st]) => st));
+    const todo = posesFor(me.look, me.mood, WARM);
     const later = globalThis.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 150));
     const go = (dl) => {
-      while (todo.length && dl.timeRemaining() > 4) build(me.look, toFrame({ ...MOODS[me.mood].base, ...todo.shift() }, { still: false }));
+      while (todo.length && dl.timeRemaining() > 4) layersFor(todo.shift());
       if (todo.length && canvas.isConnected) later(go);
     };
     later(go);

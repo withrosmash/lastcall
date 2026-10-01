@@ -152,7 +152,7 @@ export function avatarScreen(ctx) {
             if (locked) { lockedSheet(it); return; }
             if (it.slot === 'shoes') draft = { ...draft, shoes: on ? 'plain' : it.id };
             else if (it.slot === 'extra') draft = { ...draft, [it.id]: !on };
-            else draft = { ...draft, [it.slot]: on ? null : it.id };
+            else draft = on ? { ...draft, [it.slot]: null } : wear(draft, it);
             changed();
           },
         });

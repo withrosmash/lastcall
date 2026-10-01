@@ -45,3 +45,17 @@ test('effects move every three ticks, and hold still when calm or reduced', () =
   assert.equal(fxFrame(7, { calm: true }), 0);
   assert.equal(fxFrame(7, { reduced: true }), 0);
 });
+
+test('a hidden badge keeps its secret on a locked item', async () => {
+  const { requirement } = await import('../js/wardrobe.js');
+  for (const b of BADGES.filter((x) => x.hidden)) assert.ok(!requirement(b.slug).includes(b.criteria.slice(0, 12)), b.slug);
+  assert.equal(requirement('sunrise-service'), 'Comes with a badge that stays hidden until you earn it.');
+});
+
+test('putting on a costume takes off a hat and a held item, so the costume’s own show', async () => {
+  const { wear } = await import('../js/wardrobe.js');
+  const look = wear({ hat: 'cap', held: 'mug', costume: null }, { id: 'wizard', slot: 'costume' });
+  assert.deepEqual([look.costume, look.hat, look.held], ['wizard', null, null]);
+  const capped = wear(look, { id: 'crown', slot: 'hat' });
+  assert.deepEqual([capped.costume, capped.hat], ['wizard', 'crown'], 'a hat chosen after still goes on');
+});
