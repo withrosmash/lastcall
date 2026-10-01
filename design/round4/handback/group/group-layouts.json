@@ -1,0 +1,1454 @@
+{
+  "2": {
+    "scale": 8,
+    "poses": {
+      "side": {
+        "label": "Side by side",
+        "members": [
+          {
+            "slot": 0,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "neutral"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "highfive": {
+        "label": "High five",
+        "members": [
+          {
+            "slot": 0,
+            "x": -22.5,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armR": "wave1",
+            "preset": "excited"
+          },
+          {
+            "slot": 1,
+            "x": 22.5,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "wave1",
+            "preset": "happy"
+          }
+        ],
+        "links": [],
+        "extras": [
+          {
+            "type": "burst",
+            "x": 0,
+            "y": 40
+          }
+        ]
+      },
+      "backtoback": {
+        "label": "Back to back",
+        "members": [
+          {
+            "slot": 0,
+            "x": 14,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armL": "cross",
+            "armR": "cross",
+            "eyes": "lookR",
+            "brows": "raised",
+            "mouth": "cat"
+          },
+          {
+            "slot": 1,
+            "x": -14,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "cross",
+            "armR": "cross",
+            "eyes": "lookL",
+            "brows": "raised",
+            "mouth": "cat"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "sitting": {
+        "label": "Sitting together",
+        "members": [
+          {
+            "slot": 0,
+            "x": -18,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": 18,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "happy",
+            "mouth": "smile",
+            "held": "mug"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "cheering": {
+        "label": "Cheering",
+        "members": [
+          {
+            "slot": 0,
+            "x": -20,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "confetti"
+          },
+          {
+            "slot": 1,
+            "x": 20,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "sharing": {
+        "label": "Sharing a moment",
+        "members": [
+          {
+            "slot": 0,
+            "x": -16,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "happy",
+            "held": "mug"
+          },
+          {
+            "slot": 1,
+            "x": 16,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "proud",
+            "held": "mug",
+            "effect": "hearts"
+          }
+        ],
+        "links": [],
+        "extras": []
+      }
+    }
+  },
+  "3": {
+    "scale": 7,
+    "poses": {
+      "thinking": {
+        "label": "The thinking squad",
+        "members": [
+          {
+            "slot": 0,
+            "x": -42,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armR": "chin",
+            "preset": "thoughtful"
+          },
+          {
+            "slot": 1,
+            "x": 0,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "armR": "chin",
+            "eyes": "lookUp",
+            "brows": "raised",
+            "mouth": "thoughtful"
+          },
+          {
+            "slot": 2,
+            "x": 42,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armR": "chin",
+            "preset": "thoughtful"
+          }
+        ],
+        "links": [],
+        "extras": [
+          {
+            "type": "question",
+            "x": 15,
+            "y": 12
+          }
+        ]
+      },
+      "lined": {
+        "label": "Lined up",
+        "members": [
+          {
+            "slot": 0,
+            "x": -42,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": 0,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "neutral"
+          },
+          {
+            "slot": 2,
+            "x": 42,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "proud"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "selfie": {
+        "label": "Group selfie",
+        "members": [
+          {
+            "slot": 0,
+            "x": -36.4,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armR": "up",
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": 36.4,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "wave1",
+            "preset": "happy"
+          },
+          {
+            "slot": 2,
+            "x": 0,
+            "y": 2,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "excited"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "hug": {
+        "label": "Hug",
+        "members": [
+          {
+            "slot": 0,
+            "x": -32.199999999999996,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile"
+          },
+          {
+            "slot": 1,
+            "x": 32.199999999999996,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [
+              "armL"
+            ],
+            "eyes": "happy",
+            "mouth": "smile"
+          },
+          {
+            "slot": 2,
+            "x": 0,
+            "y": 1,
+            "drawOrder": 2,
+            "hideArm": [
+              "armL",
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "open",
+            "effect": "hearts"
+          }
+        ],
+        "links": [
+          {
+            "from": 0,
+            "to": 2,
+            "note": "link arm from member 0 shoulder to member 2 near shoulder"
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "note": "link arm from member 1 shoulder to member 2 near shoulder"
+          },
+          {
+            "from": 2,
+            "to": 0,
+            "note": "link arm from member 2 shoulder to member 0 near shoulder"
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "note": "link arm from member 2 shoulder to member 1 near shoulder"
+          }
+        ],
+        "extras": []
+      },
+      "adventure": {
+        "label": "On an adventure",
+        "members": [
+          {
+            "slot": 0,
+            "x": -39.199999999999996,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "held": "binoculars",
+            "hat": "beanie",
+            "mode": "walk"
+          },
+          {
+            "slot": 1,
+            "x": 39.199999999999996,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "held": "bottle",
+            "hat": "cap",
+            "mode": "walk"
+          },
+          {
+            "slot": 2,
+            "x": 0,
+            "y": 1,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "happy",
+            "held": "map",
+            "hat": "sunhat",
+            "mode": "walk"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "celebrating": {
+        "label": "Celebrating",
+        "members": [
+          {
+            "slot": 0,
+            "x": -42,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "sparkles"
+          },
+          {
+            "slot": 1,
+            "x": 42,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "happy",
+            "effect": "sparkles"
+          },
+          {
+            "slot": 2,
+            "x": 0,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "confetti"
+          }
+        ],
+        "links": [],
+        "extras": []
+      }
+    }
+  },
+  "4": {
+    "scale": 6,
+    "poses": {
+      "team": {
+        "label": "Team photo",
+        "members": [
+          {
+            "slot": 0,
+            "x": -21,
+            "y": -42,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": 21,
+            "y": -42,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "proud"
+          },
+          {
+            "slot": 2,
+            "x": -40,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "excited"
+          },
+          {
+            "slot": 3,
+            "x": 40,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "stacked": {
+        "label": "Stacked",
+        "members": [
+          {
+            "slot": 0,
+            "x": -19,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armL": "wave1",
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": 19,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "excited"
+          },
+          {
+            "slot": 2,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy"
+          },
+          {
+            "slot": 3,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "proud"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "outdoor": {
+        "label": "Outdoor hang",
+        "members": [
+          {
+            "slot": 0,
+            "x": -57,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "content",
+            "mouth": "smile",
+            "held": "coffee"
+          },
+          {
+            "slot": 1,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy"
+          },
+          {
+            "slot": 2,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "content",
+            "mouth": "smile",
+            "held": "book"
+          },
+          {
+            "slot": 3,
+            "x": 57,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy",
+            "held": "guitar"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "celebration": {
+        "label": "Celebration",
+        "members": [
+          {
+            "slot": 0,
+            "x": -57,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [],
+            "pose": "stand",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          },
+          {
+            "slot": 1,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "confetti"
+          },
+          {
+            "slot": 2,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "stand",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          },
+          {
+            "slot": 3,
+            "x": 57,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "confetti"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "cosy": {
+        "label": "Cosy & close",
+        "members": [
+          {
+            "slot": 0,
+            "x": -45,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          },
+          {
+            "slot": 1,
+            "x": -15,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1,
+            "effect": "hearts"
+          },
+          {
+            "slot": 2,
+            "x": 15,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          },
+          {
+            "slot": 3,
+            "x": 45,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          }
+        ],
+        "links": [
+          {
+            "from": 0,
+            "to": 1,
+            "note": "link arm from member 0 shoulder to member 1 near shoulder"
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "note": "link arm from member 1 shoulder to member 2 near shoulder"
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "note": "link arm from member 2 shoulder to member 3 near shoulder"
+          }
+        ],
+        "extras": []
+      }
+    }
+  },
+  "5": {
+    "scale": 6,
+    "poses": {
+      "chill": {
+        "label": "Standing chill",
+        "members": [
+          {
+            "slot": 0,
+            "x": -38,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "neutral",
+            "held": "coffee"
+          },
+          {
+            "slot": 1,
+            "x": 0,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "happy"
+          },
+          {
+            "slot": 2,
+            "x": 38,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "cross",
+            "armR": "cross",
+            "preset": "neutral"
+          },
+          {
+            "slot": 3,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "cross",
+            "armR": "cross",
+            "eyes": "content",
+            "mouth": "smile"
+          },
+          {
+            "slot": 4,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "armR": "chin",
+            "preset": "thoughtful"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "armsaround": {
+        "label": "Arms around",
+        "members": [
+          {
+            "slot": 0,
+            "x": -52,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile"
+          },
+          {
+            "slot": 1,
+            "x": -26,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile"
+          },
+          {
+            "slot": 2,
+            "x": 0,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "open"
+          },
+          {
+            "slot": 3,
+            "x": 26,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile"
+          },
+          {
+            "slot": 4,
+            "x": 52,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "eyes": "happy",
+            "mouth": "smile"
+          }
+        ],
+        "links": [
+          {
+            "from": 0,
+            "to": 1,
+            "note": "link arm from member 0 shoulder to member 1 near shoulder"
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "note": "link arm from member 1 shoulder to member 2 near shoulder"
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "note": "link arm from member 2 shoulder to member 3 near shoulder"
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "note": "link arm from member 3 shoulder to member 4 near shoulder"
+          }
+        ],
+        "extras": []
+      },
+      "victory": {
+        "label": "Victory group",
+        "members": [
+          {
+            "slot": 0,
+            "x": -38,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "sparkles"
+          },
+          {
+            "slot": 1,
+            "x": 38,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "sparkles"
+          },
+          {
+            "slot": 2,
+            "x": 0,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "proud",
+            "effect": "fireworks"
+          },
+          {
+            "slot": 3,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "wave1",
+            "armR": "down",
+            "preset": "excited"
+          },
+          {
+            "slot": 4,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "down",
+            "armR": "wave1",
+            "preset": "excited"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "crew": {
+        "label": "Adventure crew",
+        "members": [
+          {
+            "slot": 0,
+            "x": -38,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "held": "binoculars",
+            "hat": "pith",
+            "mode": "walk"
+          },
+          {
+            "slot": 1,
+            "x": 0,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "happy",
+            "costume": "explorer"
+          },
+          {
+            "slot": 2,
+            "x": 38,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "held": "bottle",
+            "hat": "sunhat",
+            "mode": "walk"
+          },
+          {
+            "slot": 3,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "held": "torch",
+            "hat": "beanie",
+            "mode": "walk"
+          },
+          {
+            "slot": 4,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "held": "map",
+            "hat": "cap",
+            "mode": "walk"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "festival": {
+        "label": "Festival vibes",
+        "members": [
+          {
+            "slot": 0,
+            "x": -38,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "hat": "flowercrown",
+            "mode": "festival"
+          },
+          {
+            "slot": 1,
+            "x": 0,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "happy",
+            "held": "guitar",
+            "mode": "festival",
+            "effect": "confetti"
+          },
+          {
+            "slot": 2,
+            "x": 38,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "proud",
+            "hat": "party",
+            "mode": "festival"
+          },
+          {
+            "slot": 3,
+            "x": -19,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy",
+            "hat": "headphones",
+            "mode": "festival"
+          },
+          {
+            "slot": 4,
+            "x": 19,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "armR": "wave1",
+            "preset": "excited",
+            "hat": "bunnyears",
+            "mode": "festival"
+          }
+        ],
+        "links": [],
+        "extras": []
+      }
+    }
+  },
+  "6": {
+    "scale": 6,
+    "poses": {
+      "grouphug": {
+        "label": "Group hug",
+        "members": [
+          {
+            "slot": 0,
+            "x": -55,
+            "y": 0,
+            "drawOrder": 0,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          },
+          {
+            "slot": 1,
+            "x": -33,
+            "y": 0,
+            "drawOrder": 2,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          },
+          {
+            "slot": 2,
+            "x": -11,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1,
+            "effect": "hearts"
+          },
+          {
+            "slot": 3,
+            "x": 11,
+            "y": 0,
+            "drawOrder": 5,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          },
+          {
+            "slot": 4,
+            "x": 33,
+            "y": 0,
+            "drawOrder": 3,
+            "hideArm": [
+              "armR"
+            ],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          },
+          {
+            "slot": 5,
+            "x": 55,
+            "y": 0,
+            "drawOrder": 1,
+            "hideArm": [],
+            "eyes": "happy",
+            "mouth": "smile",
+            "blush": 1
+          }
+        ],
+        "links": [
+          {
+            "from": 0,
+            "to": 1,
+            "note": "link arm from member 0 shoulder to member 1 near shoulder"
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "note": "link arm from member 1 shoulder to member 2 near shoulder"
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "note": "link arm from member 2 shoulder to member 3 near shoulder"
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "note": "link arm from member 3 shoulder to member 4 near shoulder"
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "note": "link arm from member 4 shoulder to member 5 near shoulder"
+          }
+        ],
+        "extras": []
+      },
+      "lineup": {
+        "label": "Line up",
+        "members": [
+          {
+            "slot": 0,
+            "x": -48,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "happy"
+          },
+          {
+            "slot": 1,
+            "x": -16,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "neutral"
+          },
+          {
+            "slot": 2,
+            "x": 16,
+            "y": -38,
+            "drawOrder": 3,
+            "hideArm": [],
+            "preset": "excited"
+          },
+          {
+            "slot": 3,
+            "x": 48,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "preset": "neutral"
+          },
+          {
+            "slot": 4,
+            "x": -32,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "proud"
+          },
+          {
+            "slot": 5,
+            "x": 32,
+            "y": 0,
+            "drawOrder": 5,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "jumpshot": {
+        "label": "Jump shot",
+        "members": [
+          {
+            "slot": 0,
+            "x": -48,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          },
+          {
+            "slot": 1,
+            "x": -16,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited",
+            "effect": "confetti"
+          },
+          {
+            "slot": 2,
+            "x": 16,
+            "y": -38,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          },
+          {
+            "slot": 3,
+            "x": 48,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "pose": "air",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          },
+          {
+            "slot": 4,
+            "x": -32,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          },
+          {
+            "slot": 5,
+            "x": 32,
+            "y": 0,
+            "drawOrder": 5,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "excited"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "adventure": {
+        "label": "Adventure",
+        "members": [
+          {
+            "slot": 0,
+            "x": -48,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "hat": "beanie",
+            "mode": "walk"
+          },
+          {
+            "slot": 1,
+            "x": -16,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "armR": "wave1",
+            "preset": "happy",
+            "hat": "pith",
+            "mode": "walk"
+          },
+          {
+            "slot": 2,
+            "x": 16,
+            "y": -38,
+            "drawOrder": 3,
+            "hideArm": [],
+            "held": "binoculars",
+            "hat": "cap",
+            "mode": "walk"
+          },
+          {
+            "slot": 3,
+            "x": 48,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "hat": "sunhat",
+            "mode": "walk"
+          },
+          {
+            "slot": 4,
+            "x": -32,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy",
+            "held": "map"
+          },
+          {
+            "slot": 5,
+            "x": 32,
+            "y": 0,
+            "drawOrder": 5,
+            "hideArm": [],
+            "pose": "sit",
+            "held": "bottle"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "relaxed": {
+        "label": "Relaxed",
+        "members": [
+          {
+            "slot": 0,
+            "x": -48,
+            "y": -40,
+            "drawOrder": 0,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "content",
+            "mouth": "smile",
+            "held": "coffee"
+          },
+          {
+            "slot": 1,
+            "x": -16,
+            "y": -40,
+            "drawOrder": 2,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "content",
+            "mouth": "smile"
+          },
+          {
+            "slot": 2,
+            "x": 16,
+            "y": -40,
+            "drawOrder": 3,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "content",
+            "mouth": "smile",
+            "held": "book"
+          },
+          {
+            "slot": 3,
+            "x": 48,
+            "y": -40,
+            "drawOrder": 1,
+            "hideArm": [],
+            "pose": "sit",
+            "eyes": "content",
+            "mouth": "smile"
+          },
+          {
+            "slot": 4,
+            "x": -32,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy"
+          },
+          {
+            "slot": 5,
+            "x": 32,
+            "y": 0,
+            "drawOrder": 5,
+            "hideArm": [],
+            "pose": "sit",
+            "preset": "happy",
+            "held": "guitar"
+          }
+        ],
+        "links": [],
+        "extras": []
+      },
+      "nightout": {
+        "label": "Night out",
+        "members": [
+          {
+            "slot": 0,
+            "x": -48,
+            "y": -38,
+            "drawOrder": 0,
+            "hideArm": [],
+            "preset": "happy",
+            "held": "cup",
+            "hat": "party"
+          },
+          {
+            "slot": 1,
+            "x": -16,
+            "y": -38,
+            "drawOrder": 2,
+            "hideArm": [],
+            "preset": "excited",
+            "mode": "festival"
+          },
+          {
+            "slot": 2,
+            "x": 16,
+            "y": -38,
+            "drawOrder": 3,
+            "hideArm": [],
+            "preset": "happy",
+            "held": "balloon"
+          },
+          {
+            "slot": 3,
+            "x": 48,
+            "y": -38,
+            "drawOrder": 1,
+            "hideArm": [],
+            "eyes": "content",
+            "mouth": "smile",
+            "held": "cup",
+            "effect": "fireworks"
+          },
+          {
+            "slot": 4,
+            "x": -32,
+            "y": 0,
+            "drawOrder": 4,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "bothUp",
+            "armR": "bothUp",
+            "preset": "proud",
+            "hat": "crown"
+          },
+          {
+            "slot": 5,
+            "x": 32,
+            "y": 0,
+            "drawOrder": 5,
+            "hideArm": [],
+            "pose": "sit",
+            "armL": "wave1",
+            "preset": "excited",
+            "hat": "party",
+            "mode": "festival"
+          }
+        ],
+        "links": [],
+        "extras": []
+      }
+    }
+  }
+}

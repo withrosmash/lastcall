@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Style B check</title>
+<style>
+  body{margin:0;padding:16px;font:13px system-ui;background:#000;color:#ddd}
+  h2{font-size:14px;margin:18px 0 8px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .light{background:#EEF2F8;color:#0B1526;padding:10px;border-radius:10px}
+  canvas{image-rendering:pixelated}
+</style>
+<script src="handback/avatar-draw.js"></script>
+<div id="out"></div>
+<script>
+const A = window.LeitAvatar, out = document.getElementById('out');
+const LOOKS = {
+  default: {},
+  'black hair, dark skin, black top': { hair: 'coily', top: 'hoodie', glasses: 'none', colors: { hair: '#141414', skin: '#6B4226', top: '#111111', bottoms: '#1A1A1A', shoes: '#151515' } },
+  'pale everything': { hair: 'long', glasses: 'round', colors: { hair: '#F3E9C8', skin: '#FBE3D3', top: '#FFFFFF', bottoms: '#E8E8E8' } },
+  'pink pigtails, dress': { hair: 'pigtails', top: 'dress', glasses: 'none', colors: { hair: '#E86AA0', top: '#3D6FB0' } },
+  'braids, jacket, sunglasses': { hair: 'braids', top: 'jacket', glasses: 'sun', colors: { hair: '#2A1A12', skin: '#8D5A3B', top: '#C0392B' } },
+};
+const section = (title, light) => {
+  const h = document.createElement('h2'); h.textContent = title;
+  const r = document.createElement('div'); r.className = 'row' + (light ? ' light' : '');
+  out.append(h, r); return r;
+};
+const add = (row, label, fn) => {
+  const c = document.createElement('div'); c.className = 'cell';
+  const cv = document.createElement('canvas'); fn(cv);
+  const l = document.createElement('div'); l.textContent = label;
+  c.append(cv, l); row.append(c);
+};
+for (const light of [false, true]) {
+  const r = section(`Live screen, 3x (${light ? 'light' : 'black'})`, light);
+  for (const [n, look] of Object.entries(LOOKS)) add(r, n, (cv) => A.draw(cv, look, { scale: 3 }));
+}
+const t = section('Live screen at 2x, the size it would replace today’s 4x');
+for (const [n, look] of Object.entries(LOOKS)) add(t, n, (cv) => A.draw(cv, look, { scale: 2 }));
+const w = section('Wardrobe tile, 1x and 2x');
+add(w, '1x', (cv) => A.draw(cv, {}, { scale: 1 }));
+add(w, '2x', (cv) => A.draw(cv, {}, { scale: 2 }));
+const m = section('Map walker, 4 frames at 3x');
+for (let f = 0; f < 4; f++) add(m, 'frame ' + f, (cv) => A.drawMini(cv, LOOKS['black hair, dark skin, black top'], { scale: 3, frame: f }));
+for (let f = 0; f < 4; f++) add(m, 'default ' + f, (cv) => A.drawMini(cv, {}, { scale: 3, frame: f }));
+const e = section('Expressions at 3x (head crop)');
+for (const p of A.PRESETS) add(e, p, (cv) => A.draw(cv, { preset: p }, { scale: 3, crop: [8, 8, 48, 40] }));
+</script>
