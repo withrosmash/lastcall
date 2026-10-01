@@ -4,6 +4,7 @@ import * as S from './state.js';
 import { pickDrink } from './drinks.js';
 import { MODES, recentFor } from './modes.js';
 import { modePicker, modeChip } from './modepick.js';
+import { wordmarkSvg } from './wordmark.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
 import * as geo from './geo.js';
@@ -55,7 +56,7 @@ export function startScreen(ctx) {
     el('div', { class: 'avatar-home' },
       av.canvas,
       el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')),
-    el('div', { class: 'eb eb--mint-dim', text: 'Leit' }),
+    el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(15)),
     el('h1', { class: 'display', style: 'margin-top:10px' },
       t('Track the {n}.'), el('br'), 'Piece it together later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
@@ -91,7 +92,7 @@ export function startScreen(ctx) {
 
 const ONBOARD = [
   {
-    eyebrow: 'Leit', title: 'This is you, roughly.',
+    eyebrow: 'Leit', brand: true, title: 'This is you, roughly.',
     body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like.',
     note: 'No account, no sign-up. Everything stays on the phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
@@ -151,7 +152,9 @@ export function onboardingScreen(ctx) {
       i > 0 ? el('button', { class: 'back press', type: 'button', onclick: () => to(i - 1) },
         icon('chevron-left', { size: 15 }), el('span', { text: 'Back' })) : null),
     el('div', { class: 'onboard__stage' }, av.canvas),
-    el('div', { class: 'eb eb--mint-dim', text: step.eyebrow }),
+    step.brand
+      ? el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(15))
+      : el('div', { class: 'eb eb--mint-dim', text: step.eyebrow }),
     el('h1', { class: 'display', style: 'margin-top:10px', text: step.title }),
     el('p', { class: 'body', style: 'margin:12px 0 0', text: t(step.body) }),
     el('p', { class: 'cap', style: 'margin:10px 0 0;color:var(--mint-dim)', text: step.note }),

@@ -404,7 +404,7 @@ canvas.avatar{
 }
 [data-theme="light"] .handoff__disc{background:radial-gradient(circle at 50% 15%,#6F9BDB,#0047AB 55%,#062A66)}
 .handoff__disc canvas{margin-bottom:-27px}
-.handoff__mark{position:absolute;bottom:calc(34px + var(--safe-bottom));font:700 15px/1 var(--font-sans);letter-spacing:-.02em;color:var(--mint-dim)}
+.handoff__mark{position:absolute;bottom:calc(34px + var(--safe-bottom));display:flex;color:var(--mint-dim)}
 @media (prefers-reduced-motion:reduce){.handoff{transition:none}}
 
 /* ---------- mode picker ---------- */
@@ -432,3 +432,7 @@ canvas.avatar{
 .pickrow[aria-pressed="true"] .pickrow__box{border-color:var(--mint)}
 .chip--static{pointer-events:none}
 .badge-row{display:flex;flex-wrap:wrap;gap:10px}
+
+/* The wordmark in place of the eyebrow: its own height, no label tracking. */
+.brandmark{display:flex;line-height:0;margin-top:15px}
+.brandmark svg{display:block}

@@ -8,6 +8,7 @@ import { avatarScreen } from './avatarscreen.js';
 import { MODES, recentFor, rememberFor } from './modes.js';
 import { bloomCss } from './glow.js';
 import { countCard } from './stats.js';
+import { wordmarkSvg } from './wordmark.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen, appearanceScreen, numbersScreen } from './history.js';
@@ -527,7 +528,7 @@ function handoff() {
   av.play('hello');
   const node = el('div', { class: 'handoff', 'aria-hidden': 'true' },
     el('div', { class: 'handoff__disc' }, av.canvas),
-    el('span', { class: 'handoff__mark', text: 'Leit' }));
+    el('span', { class: 'handoff__mark' }, wordmarkSvg(18)));
   document.body.append(node);
   av.start();
   setTimeout(() => {
