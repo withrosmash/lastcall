@@ -73,7 +73,7 @@ export function mapScreen(ctx) {
     denied ? spacer() : null,
     foot(
       denied
-        ? btn('Back to session', 'btn--sec', () => ctx.back())
+        ? btn(t('Back to the {n}'), 'btn--sec', () => ctx.back())
         : btn('Drop pin', 'btn--pri', () => dropPin(ctx, s), { iconName: 'map-pin', lg: true }),
     ),
   ];

@@ -6,7 +6,7 @@ export const BADGES = [
   {
     "slug": "first-night",
     "name": "First Adventure",
-    "criteria": "End your first session",
+    "criteria": "End your first {n}",
     "accent": "mint",
     "cat": "Firsts",
     "hidden": false
@@ -46,7 +46,7 @@ export const BADGES = [
   {
     "slug": "marathon",
     "name": "Marathon, Not a Sprint",
-    "criteria": "Session over 8 hours",
+    "criteria": "{A} over 8 hours",
     "accent": "amber",
     "cat": "Funny",
     "hidden": false
@@ -102,7 +102,7 @@ export const BADGES = [
   {
     "slug": "early-doors",
     "name": "Early Doors",
-    "criteria": "Session started before 5pm",
+    "criteria": "{A} started before 5pm",
     "accent": "amber",
     "cat": "Funny",
     "hidden": false
@@ -110,7 +110,7 @@ export const BADGES = [
   {
     "slug": "sunrise-service",
     "name": "Sunrise Service",
-    "criteria": "Session ended after 5am",
+    "criteria": "{A} ended after 5am",
     "accent": "amber",
     "cat": "Funny",
     "hidden": true

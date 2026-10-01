@@ -487,7 +487,7 @@ export function confirmEnd(ctx) {
   sheet((close) => [
     el('h2', { class: 'title', text: phrase('endTitle') }),
     el('p', { class: 'body', style: 'margin:0' },
-      `You’ve been out ${longDuration(S.elapsedMs(s))}. This stops tracking and builds your recap. You can’t reopen a session once it’s closed.`),
+      `You’ve been out ${longDuration(S.elapsedMs(s))}. This stops tracking and builds your recap. Once it’s ended, it can’t be reopened.`),
     foot(
       btn(t('End {n}'), 'btn--pri', () => { close(); ctx.endNight(); }),
       btn('Keep tracking', 'btn--sec', close),

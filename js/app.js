@@ -8,6 +8,7 @@ import { avatarScreen } from './avatarscreen.js';
 import { MODES, recentFor, rememberFor } from './modes.js';
 import { bloomCss } from './glow.js';
 import { countCard } from './stats.js';
+import { t } from './words.js';
 import { wordmarkSvg } from './wordmark.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
@@ -569,7 +570,7 @@ function boot() {
     save();
     store.flush();
     go('recap', active);
-    toast('That session was left open, so it was closed for you.');
+    toast(t('Your last {n} was left open, so it was closed for you.'));
   } else if (active) {
     keepalive.setSessionActive(true);
     go('live');
