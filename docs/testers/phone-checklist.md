@@ -1,4 +1,4 @@
-# Phone checklist (build 988e9c3)
+# Phone checklist (build 01967ac)
 
 Things only a real phone can show. The tickable version is the Leit phone checklist artifact (https://claude.ai/artifact/WmDr4Z74iExSoxxss31sLG); this file mirrors it.
 
@@ -57,3 +57,16 @@ Step 1 wipes the app. Export your history first: Settings › Export history.
 ## TalkBack (optional)
 
 31. With TalkBack on, the live timer reads its time, sheets read their title first, and closing a sheet goes back to the button that opened it.
+
+## From your notes
+New in build 01967ac.
+
+32. On a walk, go 30 minutes without water. The live screen says how many minutes without water, and with the phone locked a notification still arrives. Hydrate clears it.
+33. Start a walk with location skipped. The water notification still arrives after 30 minutes.
+34. On a walk, the water tile’s setting offers 20, 30, 45 or 60 minutes, or Never. Settings has the same choice under “On a walk, remind me after”.
+35. On a night out, the reminder still counts drinks, as before.
+36. Every share card shows the date alone, with no kinds of adventure after it.
+37. On the photo card, the time has its “Time out” label again, and on a walk “Pace per km” sits beside it. Nothing overlaps.
+38. On the route card, a walk shows “Pace per km” next to Time out, and the map runs down behind the badges and stats to the avatar’s head, on 4:5 and 9:16.
+39. The share page has Home next to Save, and Home goes back to the start screen.
+40. Trousers have flat hems with the top of the shoe showing.
