@@ -38,8 +38,7 @@ export function react(name, opts) { liveAv?.play(name, opts); }
 // How the night is going decides how the avatar idles between reactions. It
 // livens up with water, food, stops and challenges — never with drinks.
 function moodFor(s, prefs, now = Date.now()) {
-  const every = prefs.hydrationEvery;
-  if (every > 0 && S.drinksSinceWater(s) >= every) return 'Thirsty';
+  if (S.waterDue(s, prefs, now).due) return 'Thirsty';
   const h = new Date(now).getHours();
   if ((h >= 1 && h < 6) || now - s.startedAt > 5 * 3600e3) return 'Sleepy';
   const recent = (list) => (list || []).filter((e) => now - e.t < 20 * 60e3).length;
@@ -282,13 +281,17 @@ export function liveScreen(ctx) {
     if (paceOld) { const fresh = paceTile(S.walkPace(s)); if (fresh.textContent !== paceOld.textContent) paceOld.replaceWith(fresh); }
     // Moods drift with the clock too: sleepy after 1am, busy spells fade.
     av.setMood(moodFor(s, ctx.state.prefs));
+    // On a walk, water comes due with the clock rather than with a log.
+    const due = S.waterDue(s, ctx.state.prefs);
+    if (due.kind === 'time' && due.due && !ctx.walkNudged) {
+      ctx.walkNudged = true;
+      react('nudge', { queue: true });
+      ctx.render();
+    }
   };
 
-  const since = S.drinksSinceWater(s);
-  const every = ctx.state.prefs.hydrationEvery;
-  // every === 0 means reminders are off — without this guard the >= test is
-  // always true and the banner would never leave the screen.
-  const behind = every > 0 && since >= every && !ctx.nudgeDismissed;
+  const water = S.waterDue(s, ctx.state.prefs);
+  const behind = water.due && !ctx.nudgeDismissed;
 
   const gpsNote = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported'
     ? t('Location is off, so there’s no map for this {n}.') + ' Drinks, water and time are all still being tracked.'
@@ -307,8 +310,10 @@ export function liveScreen(ctx) {
     liveTiles(ctx, s),
 
     behind ? el('div', { class: 'warn' },
-      el('div', { class: 'warn__h', text: `${words(since)} drinks since your last water.` }),
-      el('div', { class: 'cap cap--up', text: 'Takes ten seconds. Tomorrow says thanks.' }),
+      el('div', { class: 'warn__h', text: water.kind === 'time'
+        ? `${waterTime(water.mins)} since your last water.` : `${words(water.since)} drinks since your last water.` }),
+      el('div', { class: 'cap cap--up', text: water.kind === 'time'
+        ? 'A few sips now and the next stretch feels easier.' : 'Takes ten seconds. Tomorrow says thanks.' }),
       el('div', { class: 'btn-pair' },
         btn('Hydrate', 'btn--pink', () => ctx.logWater(), { iconName: 'droplet' }),
         btn('Later', 'btn--sec', () => { ctx.nudgeDismissed = true; ctx.render(); }),
@@ -443,8 +448,10 @@ function moreSheet(ctx) {
 // The water tile doubles as the way into its reminder setting: it's where you
 // look when the nudge fires, so it's where the control belongs. The caption
 // says the current setting so the tile advertises that it does something.
+const waterTime = (mins) => (mins < 60 ? `${mins} minutes` : `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`);
+
 function waterTile(ctx, s) {
-  const every = ctx.state.prefs.hydrationEvery;
+  const { every, kind } = S.waterDue(s, ctx.state.prefs);
   return el('button', {
     class: 'tile press', type: 'button', style: 'text-align:left;width:100%',
     'aria-label': `Water, ${s.waters.length}. Reminder settings`,
@@ -453,34 +460,43 @@ function waterTile(ctx, s) {
     el('div', { class: 'tile__k', text: 'Water' }),
     el('div', { class: 'tile__v', text: String(s.waters.length) }),
     el('div', { class: 'cap', style: 'margin-top:2px',
-      text: every ? `Remind every ${every} ›` : 'Reminders off ›' }),
+      text: !every ? 'Reminders off ›' : kind === 'time' ? `Remind every ${every} min ›` : `Remind every ${every} ›` }),
   );
 }
 
 const THRESHOLDS = [3, 4, 5, 6, 8];
+const WALK_MINUTES = [20, 30, 45, 60];
 
+// On a walk the reminder is minutes since the last water; anywhere else it's
+// drinks since the last water. The sheet sets whichever this adventure is on.
 function hydrationSheet(ctx) {
   const p = ctx.state.prefs;
+  const walk = S.currentPart(ctx.state.active).mode === 'walk';
+  const key = walk ? 'walkWaterEvery' : 'hydrationEvery';
+  const options = walk ? WALK_MINUTES.map((n) => [`${n} min`, n]) : THRESHOLDS.map((n) => [String(n), n]);
   sheet((close) => {
     const row = el('div', { class: 'chips' });
     const note = el('p', { class: 'body', style: 'margin:0' });
     const paint = () => {
       row.replaceChildren(
-        ...[...THRESHOLDS.map((n) => [String(n), n]), ['Never', 0]].map(([label, n]) =>
+        ...[...options, ['Never', 0]].map(([label, n]) =>
           el('button', {
             class: 'chip press', type: 'button',
-            'aria-pressed': p.hydrationEvery === n ? 'true' : 'false',
+            'aria-pressed': (p[key] ?? 30) === n ? 'true' : 'false',
             onclick: () => {
-              p.hydrationEvery = n;
+              p[key] = n;
               ctx.nudgeDismissed = false;
+              ctx.walkNudged = false;
               ctx.save();
+              ctx.planWater?.();
               paint();
             },
           }, label)),
       );
-      note.textContent = p.hydrationEvery
-        ? `You’ll get a nudge once you’re ${p.hydrationEvery} drinks past your last water.`
-        : t('No water reminders this {n}.') + ' Everything else is tracked the same.';
+      const every = p[key] ?? 30;
+      note.textContent = !every ? t('No water reminders this {n}.') + ' Everything else is tracked the same.'
+        : walk ? `On a walk, you’ll get a nudge ${every} minutes after your last water.`
+          : `You’ll get a nudge once you’re ${every} drinks past your last water.`;
     };
     paint();
     return [

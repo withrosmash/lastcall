@@ -165,7 +165,9 @@ async function startNight({ skipLocation = false } = {}) {
   prefs.lastCompany = company;
   ctx.state.active = S.newSession(Date.now(), { mode, company });
   ctx.nudgeDismissed = false;
+  ctx.walkNudged = false;
   save();
+  planWater();
   keepalive.setSessionActive(true);
   go('live');
   react('start');
@@ -229,6 +231,7 @@ function switchMode(choice) {
   const was = s && S.currentPart(s);
   if (!s || !S.switchPart(s, choice)) return;
   save();
+  planWater();
   render();
   react('checkin');
   keepalive.showQuickLog(quickLogLabel());
@@ -299,6 +302,7 @@ async function drainQuickLogs({ silent = false } = {}) {
   s.drinks.sort((a, b) => a.t - b.t);
   s.waters.sort((a, b) => a.t - b.t);
   save();
+  if (events.some((e) => e.type === 'water')) { ctx.nudgeDismissed = false; ctx.walkNudged = false; planWater(); }
   if (!silent) {
     render();
     react(events[events.length - 1].type === 'water' ? 'water' : 'drink');
@@ -332,11 +336,11 @@ function logDrink(kind) {
     toast('Undone.');
   });
 
-  const every = ctx.state.prefs.hydrationEvery;
-  const since = S.drinksSinceWater(s);
+  const w = S.waterDue(s, ctx.state.prefs);
   react('drink');
-  if (every > 0 && since >= every) {
-    notify.hydrationNudge(since);
+  // Drinks only count towards water away from a walk; a walk's reminder is timed.
+  if (w.due && w.kind === 'drinks') {
+    notify.hydrationNudge(w.since);
     // Finishes the sip first, then turns to you with the cup.
     react('nudge', { queue: true });
   }
@@ -349,12 +353,14 @@ function logWater() {
   ctx.nudgeDismissed = false;
   save();
   render();
-  notify.clearHydration();
+  ctx.walkNudged = false;
+  planWater();
   buzz();
   react('water');
   toast('Water logged. Tap to undo.', 4000, () => {
     s.waters.pop();
     save();
+    planWater();
     render();
     toast('Undone.');
   });
@@ -458,7 +464,7 @@ async function startTracking() {
     },
   });
   startSteps();
-  notify.init();
+  notify.init().then(() => planWater());
   keepalive.showQuickLog(quickLogLabel());
   keepalive.onQuickLog(() => drainQuickLogs());
   drainQuickLogs();
@@ -483,6 +489,17 @@ async function startSteps() {
   });
   if (ctx.stepsAvailable && ctx.screen === 'live') render();
 }
+
+// A walk's water reminder is timed, so it's scheduled ahead: at the start,
+// after each water, on a switch, and when its setting changes. Anywhere else
+// the reminder follows drinks, so nothing waits on the clock.
+function planWater() {
+  const s = ctx.state.active;
+  const w = s && S.waterDue(s, ctx.state.prefs);
+  if (w?.kind === 'time' && w.at) { if (!w.due) notify.waterAt(w.at); }
+  else notify.clearHydration();
+}
+ctx.planWater = planWater;
 
 function stopTracking() {
   geo.stop();

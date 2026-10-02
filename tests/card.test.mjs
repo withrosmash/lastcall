@@ -16,3 +16,28 @@ test('the photo card avatar is the same size as before, and stays whole-pixel', 
   assert.equal(avatarCell({ scale: 3 }), 9);
   assert.equal(avatarCell({ scale: 0.2 }), 3);
 });
+
+test('the card’s date line is the date alone', async () => {
+  const { placeLine } = await import('../js/card.js');
+  const { newSession, switchPart } = await import('../js/state.js');
+  const s = newSession(new Date('2026-10-02T10:00').getTime(), { mode: 'walk' });
+  switchPart(s, { mode: 'festival', company: 'group' }, s.startedAt + 3600e3);
+  const line = placeLine(s);
+  assert.ok(!line.includes('·') && !/Walk|Festival/.test(line), line);
+  assert.ok(line.includes('2'), line);
+});
+
+test('a walk’s card puts its pace next to the time out', async () => {
+  const { timeCells } = await import('../js/card.js');
+  const { newSession } = await import('../js/state.js');
+  const walk = newSession(0, { mode: 'walk' });
+  walk.trail = [{ t: 0, lat: 51.5, lng: -0.1 }, { t: 12 * 60e3, lat: 51.509, lng: -0.1 }];
+  walk.endedAt = 12 * 60e3;
+  const [time, pace] = timeCells(walk, 12 * 60e3);
+  assert.deepEqual(time, ['Time out', '0h 12m']);
+  assert.equal(pace[0], 'Pace per km');
+  assert.match(pace[1], /^1[12]:\d\d$/, 'about 1 km in 12 minutes');
+  const night = newSession(0, { mode: 'night' });
+  night.endedAt = 3600e3;
+  assert.deepEqual(timeCells(night, 3600e3), [['Time out', '1h 00m']]);
+});

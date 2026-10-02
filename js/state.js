@@ -258,6 +258,26 @@ export function drinksSinceWater(s) {
   return s.drinks.filter((d) => d.t > lastWater).length;
 }
 
+/**
+ * Whether it's time for water, and why. On a walk it's time since the last
+ * water (or since the walk began), every `walkWaterEvery` minutes; anywhere
+ * else it's drinks since the last water, every `hydrationEvery`. 0 is off.
+ */
+export function waterDue(s, prefs, now = Date.now()) {
+  if (!s) return { due: false };
+  const part = currentPart(s);
+  if (part.mode === 'walk') {
+    const every = prefs.walkWaterEvery ?? 30;
+    const last = s.waters.length ? s.waters[s.waters.length - 1].t : 0;
+    const from = Math.max(last, part.t);
+    const mins = Math.floor((now - from) / 60e3);
+    return { due: every > 0 && mins >= every, kind: 'time', mins, every, at: every > 0 ? from + every * 60e3 : null };
+  }
+  const every = prefs.hydrationEvery;
+  const since = drinksSinceWater(s);
+  return { due: every > 0 && since >= every, kind: 'drinks', since, every };
+}
+
 export function drinkOfChoice(s) {
   if (!s || !s.drinks.length) return null;
   const counts = new Map();

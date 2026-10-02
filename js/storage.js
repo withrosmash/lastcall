@@ -6,7 +6,7 @@ const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs(), ba
 export function defaultPrefs() {
   // Threshold of 5 is the design system's value, not a guess.
   return {
-    hydrationEvery: 5, batterySaver: false, units: 'km',
+    hydrationEvery: 5, walkWaterEvery: 30, batterySaver: false, units: 'km',
     recentDrinks: [], locationPrimed: false, historyRange: '8w',
     theme: 'dark',
     lastMode: 'night', lastCompany: 'group', recentByMode: {}, modeTouches: true, biggerText: false, calmAvatar: false,

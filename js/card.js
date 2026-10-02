@@ -171,7 +171,10 @@ export function shareScreen(ctx, session) {
     spacer(),
     foot(
       btn('Share', 'btn--pri', () => shareCard(), { iconName: 'share-2', lg: true }),
-      btn('Save to photos', 'btn--sec', () => saveCard(), { iconName: 'download' }),
+      // Half width beside Home, so the short label: the toast says where it went.
+      el('div', { class: 'btn-pair' },
+        btn('Save', 'btn--sec', () => saveCard(), { iconName: 'download' }),
+        btn('Home', 'btn--sec', () => ctx.go('start'))),
     ),
   ];
 }
@@ -245,12 +248,13 @@ function makeState(s, allBadges = []) {
       route: { on: s.trail.length > 1, x: PAD, y: 300, scale: 1 },
       title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
       avatar: { on: true, x: 1080 - PAD - 300, y: 1350 - PAD - 520, scale: 1 },
-      time: { on: true, x: PAD, y: 1350 - PAD - 300, scale: 1 },
+      // Time out is labelled now, 34px taller, so it sits that much higher.
+      time: { on: true, x: PAD, y: 1350 - PAD - 336, scale: 1 },
       stats: { on: true, x: PAD, y: 1350 - PAD - 190, scale: 1 },
       date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1 },
       stops: { on: false, x: PAD, y: 200, scale: 1 },
-      water: { on: false, x: PAD, y: 1350 - PAD - 420, scale: 1 },
-      food: { on: false, x: PAD + 260, y: 1350 - PAD - 420, scale: 1 },
+      water: { on: false, x: PAD, y: 1350 - PAD - 460, scale: 1 },
+      food: { on: false, x: PAD + 260, y: 1350 - PAD - 460, scale: 1 },
       badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1 },
     },
     bounds: new Map(),
@@ -639,10 +643,19 @@ const labelInk = () => (overImage() ? theme().labelInk : C.faint);
 const mutedInk = () => (overImage() ? theme().muted : C.muted);
 
 // Date only. The place was the first stop's name, which on most nights is
-// either "Unnamed stop" or a venue that says nothing about the night.
-function placeLine(s) {
-  const date = new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
-  return `${date} · ${S.modeLine(s)}`;
+// either "Unnamed stop" or a venue that says nothing about the night, and the
+// kinds of adventure ran long once modes could change partway.
+export function placeLine(s) {
+  return new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
+}
+
+/** Time out, and on a walk with a route its pace beside it. */
+export function timeCells(s, ms) {
+  const cells = [['Time out', hm(ms)]];
+  const pace = S.onlyMode(s, 'walk') && s.trail.length > 1 ? S.walkPace(s, s.endedAt ?? Date.now()) : null;
+  // The unit lives in the label, so the figure stays as short as Distance's.
+  if (pace) cells.push(['Pace per km', pace]);
+  return cells;
 }
 
 /* ---------- draw ----------
@@ -766,7 +779,7 @@ function drawRouteCard(g, w, h, want) {
   const rows = [];
   if (on.stats.on && top.length) rows.push({ id: 'stats', cells: top, step: 300 });
   if (on.stats.on) rows.push({ id: 'stats', cells: second, step: 150 });
-  if (on.time.on) rows.push({ id: 'time', cells: [['Time out', hm(ui.sum.ms)]], step: 0 });
+  if (on.time.on) rows.push({ id: 'time', cells: timeCells(ui.session, ui.sum.ms), step: 300 });
   rows.forEach((r, i) => {
     if (!want(r.id)) return;
     r.cells.forEach(([l, v, pink], j) => cell(M + j * r.step, i + 3 - rows.length, l, v, pink));
@@ -924,9 +937,17 @@ function drawFree(g, w, h, forExport, want, live) {
 
 const handleCentre = (b) => ({ x: b.x + b.w + 16, y: b.y + b.h + 16 });
 
+// Labelled, like the route card: Time out, and on a walk its pace beside it.
 function drawTime(g, x, y) {
-  const w = drawText(g, hms(ui.sum.ms), x, y, { size: 96, weight: 700, spacing: -4 });
-  return { w, h: 100 };
+  drawText(g, 'Time out', x, y, { size: 26, weight: 600, color: labelInk() });
+  let w = drawText(g, hms(ui.sum.ms), x, y + 34, { size: 96, weight: 700, spacing: -4 });
+  const pace = timeCells(ui.session, ui.sum.ms)[1];
+  if (pace) {
+    const px = x + w + 56;
+    drawText(g, pace[0], px, y, { size: 26, weight: 600, color: labelInk() });
+    w = px - x + drawText(g, pace[1], px, y + 34 + 40, { size: 52, weight: 700, spacing: -2 });
+  }
+  return { w, h: 134 };
 }
 
 // One labelled figure: the shape water and food share. Labels are sentence

@@ -216,6 +216,12 @@ export function settingsScreen(ctx) {
     onclick: () => pick(n),
   }, label);
 
+  const walkChoice = (label, n) => el('button', {
+    class: 'chip press', type: 'button',
+    'aria-pressed': (p.walkWaterEvery ?? 30) === n ? 'true' : 'false',
+    onclick: () => { p.walkWaterEvery = n; ctx.save(); ctx.planWater?.(); ctx.render(); },
+  }, label);
+
   const row = el('div', { class: 'chips' },
     THRESHOLDS.map((n) => choice(String(n), n)),
     choice('Never', 0),
@@ -237,6 +243,16 @@ export function settingsScreen(ctx) {
       p.hydrationEvery
         ? `You’ll get a nudge once you’re ${p.hydrationEvery} drinks past your last water.`
         : 'No water reminders. Everything else is tracked the same.'),
+
+    el('h2', { class: 'eb', style: 'margin:0', text: 'On a walk, remind me after' }),
+    el('div', { class: 'chips' },
+      [20, 30, 45, 60].map((n) => walkChoice(`${n} min`, n)),
+      walkChoice('Never', 0),
+    ),
+    el('p', { class: 'body', style: 'margin:0' },
+      (p.walkWaterEvery ?? 30)
+        ? `On a walk the reminder goes by time: a nudge ${p.walkWaterEvery ?? 30} minutes after your last water.`
+        : 'No water reminders on a walk.'),
 
     el('h2', { class: 'eb', style: 'margin:0', text: 'Accessibility' }),
     switchRow({

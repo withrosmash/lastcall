@@ -42,6 +42,17 @@ export async function hydrationNudge(sinceCount) {
   } catch { /* notification is a courtesy, never a failure path */ }
 }
 
+/** On a walk the reminder is timed, so it's scheduled to land at `when`, phone in pocket or not. */
+export async function waterAt(when) {
+  if (!granted) return;
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: HYDRATION_ID }] });
+    await LocalNotifications.schedule({
+      notifications: [{ id: HYDRATION_ID, title: 'Leit', body: 'Time for a water.', schedule: { at: new Date(Math.max(when, Date.now() + 5000)) } }],
+    });
+  } catch { /* notification is a courtesy, never a failure path */ }
+}
+
 export async function clearHydration() {
   if (!granted) return;
   try { await LocalNotifications.cancel({ notifications: [{ id: HYDRATION_ID }] }); }

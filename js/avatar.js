@@ -714,7 +714,7 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
     for (const s of me.sparks) { s.x += s.vx; s.y += s.vy; if (!s.note) s.vy += 0.12 * SY; s.life -= 1 / 12; }
   }
 
-  const ZZ = ['ZZZ', '.Z.', 'ZZZ'];
+  const ZZ = ['ZZZZ', '..Z.', '.Z..', 'ZZZZ'];
   const NOTE = ['.NN', '.N.', 'NN.', 'NN.'];
   // Overlays (impact marks, Zs, sparks, notes) are in the animations' own
   // 32 x 43 units; `u` is one of those units in device pixels.
@@ -741,8 +741,10 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
       for (let i = 0; i < 3; i++) {
         const o = ((me.tick / 12) * 0.7 + i * 0.33) % 1, k = i === 2 ? 2 : 1;
         g.globalAlpha = Math.max(0, 1 - o);
+        // Each Z on whole art pixels (the last one twice the size), rising and fading.
+        const [zx, zy] = at(23 + i * 3, 9 - o * 8);
         ZZ.forEach((row, y) => [...row].forEach((ch, x) => {
-          if (ch === 'Z') g.fillRect(...at(24 + i * 2 + x * k, 9 - o * 8 + y * k), u * k, u * k);
+          if (ch === 'Z') g.fillRect(zx + x * k * d, zy + y * k * d, k * d, k * d);
         }));
       }
       g.globalAlpha = 1;
