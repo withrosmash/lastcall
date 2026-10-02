@@ -40,3 +40,14 @@ test('a costume and an effect build without touching the page', () => {
   const b = A.build({ costume: 'wizard', effect: 'confetti', fxFrame: 2, held: 'guitar' });
   assert.ok(b.layers.hat && b.layers.fx);
 });
+
+test('trousers stop at a flat hem, with the top of the shoe showing (owner’s tweak, option A)', () => {
+  const b = A.build({ top: 'hoodie' });
+  const rowsOf = (layer, slot) => b.layers[layer].map((p, i) => (p && p.s === slot ? (i / A.W) | 0 : -1)).filter((y) => y >= 0);
+  const hem = Math.max(...rowsOf('body', 'B'));
+  const shoe = Math.max(...rowsOf('footL', 'F'));
+  assert.ok(shoe - hem >= 3, `trousers end at row ${hem}, shoes at ${shoe}`);
+  // Flat: the bottom row of each leg is as wide as the row above it.
+  const width = (y) => b.layers.body.filter((p, i) => p && p.s === 'B' && ((i / A.W) | 0) === y).length;
+  assert.equal(width(hem), width(hem - 1));
+});
