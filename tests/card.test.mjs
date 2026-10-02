@@ -50,3 +50,10 @@ test('the route card map fades out level with the avatar’s head, on both sizes
     assert.ok(bottom > top && bottom < top + 46 * 5, `${h}: map ends at ${bottom}, avatar top ${top}`);
   }
 });
+
+test('with the stops list on, the map stops above it, so stop names never sit on the map', async () => {
+  const { routeMapEnd, routeMapBottom } = await import('../js/card.js');
+  assert.equal(routeMapEnd(1350, null), routeMapBottom(1350));
+  assert.equal(routeMapEnd(1350, 500), 500);
+  assert.equal(routeMapEnd(1350, 1200), routeMapBottom(1350));
+});

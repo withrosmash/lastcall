@@ -167,8 +167,10 @@ async function startNight({ skipLocation = false } = {}) {
   ctx.nudgeDismissed = false;
   ctx.walkNudged = false;
   save();
-  planWater();
   keepalive.setSessionActive(true);
+  // Asked here as well as with tracking: a walk started without location
+  // still needs it for the timed water reminder.
+  notify.init().then(() => planWater());
   go('live');
   react('start');
   // Sequenced ahead of the location dialog: Android shows one permission
@@ -230,6 +232,7 @@ function switchMode(choice) {
   const s = ctx.state.active;
   const was = s && S.currentPart(s);
   if (!s || !S.switchPart(s, choice)) return;
+  ctx.walkNudged = false;
   save();
   planWater();
   render();
@@ -493,11 +496,18 @@ async function startSteps() {
 // A walk's water reminder is timed, so it's scheduled ahead: at the start,
 // after each water, on a switch, and when its setting changes. Anywhere else
 // the reminder follows drinks, so nothing waits on the clock.
+// Only a timed reminder is cancelled here, so a drinks nudge just queued
+// (30 seconds out) survives a switch between other kinds of adventure.
+let timedWater = false;
 function planWater() {
   const s = ctx.state.active;
   const w = s && S.waterDue(s, ctx.state.prefs);
-  if (w?.kind === 'time' && w.at) { if (!w.due) notify.waterAt(w.at); }
-  else notify.clearHydration();
+  if (w?.kind === 'time' && w.at) {
+    if (!w.due) { notify.waterAt(w.at); timedWater = true; }
+  } else if (timedWater) {
+    notify.clearHydration();
+    timedWater = false;
+  }
 }
 ctx.planWater = planWater;
 

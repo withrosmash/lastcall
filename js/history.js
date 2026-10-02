@@ -219,7 +219,7 @@ export function settingsScreen(ctx) {
   const walkChoice = (label, n) => el('button', {
     class: 'chip press', type: 'button',
     'aria-pressed': (p.walkWaterEvery ?? 30) === n ? 'true' : 'false',
-    onclick: () => { p.walkWaterEvery = n; ctx.save(); ctx.planWater?.(); ctx.render(); },
+    onclick: () => { p.walkWaterEvery = n; ctx.walkNudged = false; ctx.nudgeDismissed = false; ctx.save(); ctx.planWater?.(); ctx.render(); },
   }, label);
 
   const row = el('div', { class: 'chips' },

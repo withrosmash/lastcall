@@ -742,7 +742,8 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
         const o = ((me.tick / 12) * 0.7 + i * 0.33) % 1, k = i === 2 ? 2 : 1;
         g.globalAlpha = Math.max(0, 1 - o);
         // Each Z on whole art pixels (the last one twice the size), rising and fading.
-        const [zx, zy] = at(23 + i * 3, 9 - o * 8);
+        // Spaced to keep the big one inside the canvas.
+        const [zx, zy] = at(21 + i * 2.5, 9 - o * 8);
         ZZ.forEach((row, y) => [...row].forEach((ch, x) => {
           if (ch === 'Z') g.fillRect(zx + x * k * d, zy + y * k * d, k * d, k * d);
         }));

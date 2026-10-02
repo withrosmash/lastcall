@@ -311,7 +311,7 @@ export function liveScreen(ctx) {
 
     behind ? el('div', { class: 'warn' },
       el('div', { class: 'warn__h', text: water.kind === 'time'
-        ? `${waterTime(water.mins)} since your last water.` : `${words(water.since)} drinks since your last water.` }),
+        ? `${waterTime(water.mins)} without water.` : `${words(water.since)} drinks since your last water.` }),
       el('div', { class: 'cap cap--up', text: water.kind === 'time'
         ? 'A few sips now and the next stretch feels easier.' : 'Takes ten seconds. Tomorrow says thanks.' }),
       el('div', { class: 'btn-pair' },
