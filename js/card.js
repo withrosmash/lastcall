@@ -273,6 +273,11 @@ const clampScale = (n) => (Number.isFinite(n) ? Math.min(SCALE_MAX, Math.max(SCA
 export const avatarCell = (e) => Math.min(9, Math.max(3, Math.round(5 * (e.scale || 1))));
 const snapScale = (key, node) => { if (key === 'avatar') node.scale = avatarCell(node) / 5; };
 
+/** Top of the avatar standing beside the stats on the route card (scale 5). */
+export const AVATAR_CORNER_TOP = (h) => h - PAD - 440;
+/** Where the route card's map has faded out: level with that avatar's head. */
+export const routeMapBottom = (h) => AVATAR_CORNER_TOP(h) + 140;
+
 /** With no route, the avatar's scale in the map's space, or 0 when there isn't room for it. */
 export function cardAvatarScale(regionH) {
   return regionH >= AH * 3 ? Math.min(9, Math.max(3, Math.floor((regionH * 0.9) / AH))) : 0;
@@ -734,7 +739,8 @@ function drawRouteCard(g, w, h, want) {
   if (on.stops.on && ui.session.pins.length) stack.push({ id: 'stops', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
   if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: 215 });
   const above = stack.reduce((n, b) => n + b.h, 0);
-  const mapH = h - 520 - above;
+  // The map runs down behind the stats; its fade ends level with the avatar's head.
+  const mapH = routeMapBottom(h);
   const region = { x: M, y: title ? 150 : 90, w: w - M * 2, h: h - 790 - above - (title ? 60 : 0) };
   const trail = ui.session.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
@@ -795,7 +801,7 @@ function drawRouteCard(g, w, h, want) {
     // beside the stats as usual, clear of the title.
     const s = noRoute ? cardAvatarScale(region.h) : 0;
     if (s) paintAvatar(g, ui.look, Math.round(w / 2 - (AW * s) / 2), Math.round(region.y + (region.h - AH * s) / 2), s, FACE_STATE[ui.face]);
-    else paintAvatar(g, ui.look, w - M - 290, h - M - 440, 5, FACE_STATE[ui.face]);
+    else paintAvatar(g, ui.look, w - M - 290, AVATAR_CORNER_TOP(h), 5, FACE_STATE[ui.face]);
   }
 }
 

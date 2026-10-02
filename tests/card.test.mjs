@@ -41,3 +41,12 @@ test('a walk’s card puts its pace next to the time out', async () => {
   night.endedAt = 3600e3;
   assert.deepEqual(timeCells(night, 3600e3), [['Time out', '1h 00m']]);
 });
+
+test('the route card map fades out level with the avatar’s head, on both sizes', async () => {
+  const { routeMapBottom, AVATAR_CORNER_TOP } = await import('../js/card.js');
+  for (const h of [1350, 1920]) {
+    const top = AVATAR_CORNER_TOP(h), bottom = routeMapBottom(h);
+    // The head is the top 46 art rows of the avatar, at 5 card pixels each.
+    assert.ok(bottom > top && bottom < top + 46 * 5, `${h}: map ends at ${bottom}, avatar top ${top}`);
+  }
+});
