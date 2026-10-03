@@ -81,3 +81,25 @@ test('only measured numbers are offered', async () => {
   walk.trail = [{ t: 0, lat: 51.5, lng: -0.1 }, { t: 12 * 60e3, lat: 51.509, lng: -0.1 }];
   assert.deepEqual(offeredNumbers(walk, summarise(walk)), ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace']);
 });
+
+test('a resized number stays in the stack, and the stack makes room for it', async () => {
+  const { photoStack } = await import('../js/card.js');
+  const keys = ['drinks', 'water', 'time', 'pace', 'date'];
+  const plain = photoStack(keys, 1350);
+  const big = photoStack(keys, 1350, { time: 1.5, drinks: 1.4 });
+  assert.ok(big.pace.x >= plain.pace.x + 200, 'pace moves right of the larger time');
+  assert.equal(big.pace.y, big.time.y);
+  assert.ok(big.time.y < plain.time.y, 'the taller row rises from the date');
+  assert.ok(big.water.x > plain.water.x, 'water moves right of the larger drinks');
+});
+
+test('on 4:5 the route is framed above the avatar, whatever is switched off', async () => {
+  const { routeRegionH, AVATAR_CORNER_TOP } = await import('../js/card.js');
+  const top = 150;
+  // A stack that has slid low (one row, no badges) still stops above the avatar.
+  assert.ok(top + routeRegionH(1350, { top, stackTop: 1100, above: 0, title: true, route: true }) <= AVATAR_CORNER_TOP(1350) - 30);
+  // With no route there's no line to clip, so the space can run on for a big avatar.
+  assert.equal(routeRegionH(1350, { top, stackTop: 1100, above: 0, title: true, route: false }), 1100 - 30 - top);
+  // 9:16 keeps the frame the owner signed off.
+  assert.equal(routeRegionH(1920, { top, stackTop: 1400, above: 215, title: true, route: true }), 1920 - 790 - 215 - 60);
+});

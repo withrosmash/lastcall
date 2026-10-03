@@ -263,7 +263,7 @@ export function settingsScreen(ctx) {
     }),
     switchRow({
       label: 'Calmer avatar',
-      hint: 'Stands still between reactions. It still reacts when you log something.',
+      hint: 'Stays put between reactions, and reacts when you log something.',
       on: p.calmAvatar,
       onChange: (on) => { p.calmAvatar = on; ctx.save(); ctx.applyAccessibility(); },
     }),

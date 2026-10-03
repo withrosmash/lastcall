@@ -281,6 +281,17 @@ export const routeMapBottom = (h) => AVATAR_CORNER_TOP(h) + 140;
 /** The map's end on a card: at the avatar's head, or above the stops list so names never sit on tiles. */
 export const routeMapEnd = (h, stopsTop) => Math.min(routeMapBottom(h), stopsTop ?? Infinity);
 
+/**
+ * How tall the route card's route frame is. On 4:5 it runs down to the badges
+ * and numbers but never behind the avatar beside them; with no route the space
+ * is the big avatar's. 9:16 keeps the frame the owner signed off.
+ */
+export function routeRegionH(h, { top, stackTop, above, title, route }) {
+  if (h >= 1500) return h - 790 - above - (title ? 60 : 0);
+  const bottom = route ? Math.min(stackTop, AVATAR_CORNER_TOP(h)) : stackTop;
+  return bottom - 30 - top;
+}
+
 /** With no route, the avatar's scale in the map's space, or 0 when there isn't room for it. */
 export function cardAvatarScale(regionH) {
   return regionH >= AH * 3 ? Math.min(9, Math.max(3, Math.floor((regionH * 0.9) / AH))) : 0;
@@ -307,7 +318,7 @@ function elementToggles() {
       },
     }, t.label));
   // On a photo, Tidy puts moved numbers back into the stack.
-  if (ui.mode === 'photo' && STACKED.some((k) => ui.elements[k].placed)) {
+  if (ui.mode === 'photo' && STACKED.some((k) => ui.elements[k].placed || (ui.elements[k].scale || 1) !== 1)) {
     chips.push(el('button', {
       class: 'chip press', type: 'button',
       onclick: () => {
@@ -462,7 +473,6 @@ function attachDrag(canvas) {
     if (ui.pinch && pointers.size >= 2) {
       const [a, b] = [...pointers.values()];
       const pn = ui.pinch, node = ui.elements[pn.key];
-      node.placed = true;
       node.scale = clampScale(pn.baseScale * (dist(a, b) / pn.baseDist));
       snapScale(pn.key, node);
       if (pn.cx != null) {
@@ -478,7 +488,6 @@ function attachDrag(canvas) {
     if (ui.resize) {
       const el2 = ui.elements[ui.resize.key];
       const b = ui.bounds.get(ui.resize.key);
-      el2.placed = true;
       el2.scale = clampScale(ui.resize.baseScale * (dist(p, { x: b.x, y: b.y }) / ui.resize.baseDist));
       snapScale(ui.resize.key, el2);
       draw();
@@ -487,7 +496,13 @@ function attachDrag(canvas) {
 
     if (ui.drag) {
       const node = ui.elements[ui.drag.key];
-      if (!node.placed) { node.placed = true; ui.refreshChrome?.(); }
+      // A real move takes a piece out of the stack; a wobble while tapping doesn't.
+      if (!node.placed) {
+        const b0 = ui.bounds.get(ui.drag.key);
+        if (b0 && Math.hypot(p.x - ui.drag.dx - b0.x, p.y - ui.drag.dy - b0.y) < 14) return;
+        node.placed = true;
+        ui.refreshChrome?.();
+      }
       const snapped = snap(ui.drag.key, p.x - ui.drag.dx, p.y - ui.drag.dy);
       node.x = snapped.x;
       node.y = snapped.y;
@@ -505,6 +520,8 @@ function attachDrag(canvas) {
   const end = (e) => {
     pointers.delete(e.pointerId);
     try { canvas.releasePointerCapture(e.pointerId); } catch { /* already released */ }
+    // A resize or pinch can bring up Tidy, so the controls catch up when it ends.
+    if ((ui.resize || ui.pinch) && pointers.size < 2) ui.refreshChrome?.();
     if (pointers.size < 2) ui.pinch = null;
     if (!pointers.size) {
       ui.drag = null;
@@ -736,26 +753,27 @@ export function numberRows(keys) {
 /**
  * Where the photo card's numbers and date sit until they're moved: built up
  * from the bottom. The date, then time out and pace large and side by side,
- * then the other numbers three to a row. Returns { key: { x, y } }.
+ * then the other numbers three to a row. A resized piece keeps its place and
+ * the stack makes room for its size (`scales`). Returns { key: { x, y } }.
  */
-export function photoStack(keys, h) {
+export function photoStack(keys, h, scales = {}) {
   const at = {};
+  const k = (key) => scales[key] || 1;
   let floor = h - PAD - 40;
   if (keys.includes('date')) { at.date = { x: PAD, y: h - PAD - 90 }; floor = at.date.y - 4; }
-  const hero = ['time', 'pace'].filter((k) => keys.includes(k));
-  if (hero.length) {
-    const y = floor - 134;
-    hero.forEach((k, i) => { at[k] = { x: PAD + i * 420, y }; });
-    floor = y - 18;
-  }
+  // Lay a row left to right at its pitch, standing on the floor; return its top.
+  const row = (list, pitch, height, gap) => {
+    const y = floor - height * Math.max(...list.map(k));
+    let x = PAD;
+    for (const key of list) { at[key] = { x, y }; x += pitch * k(key); }
+    floor = y - gap;
+  };
+  const hero = ['time', 'pace'].filter((key) => keys.includes(key));
+  if (hero.length) row(hero, 420, 134, 18);
   const small = NUMBERS.filter((n) => n.group !== 'C' && keys.includes(n.key)).map((n) => n.key);
   const rows = [];
   for (let i = 0; i < small.length; i += 3) rows.push(small.slice(i, i + 3));
-  for (let r = rows.length - 1; r >= 0; r--) {
-    const y = floor - 96;
-    rows[r].forEach((k, i) => { at[k] = { x: PAD + i * 190, y }; });
-    floor = y - 14;
-  }
+  for (let r = rows.length - 1; r >= 0; r--) row(rows[r], 205, 96, 14);
   return at;
 }
 
@@ -848,7 +866,7 @@ function drawRouteCard(g, w, h, want) {
   // The route is framed in the space above the badges and stats. On 4:5 that
   // space runs down to the badges, so the route sits larger; 9:16 keeps its frame.
   const regionY = title ? 150 : 90;
-  const regionH = h < 1500 ? stackTop - 30 - regionY : h - 790 - above - (title ? 60 : 0);
+  const regionH = routeRegionH(h, { top: regionY, stackTop, above, title, route: ui.session.trail.length > 1 });
   const region = { x: M, y: regionY, w: w - M * 2, h: regionH };
   const trail = ui.session.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
@@ -988,7 +1006,8 @@ function drawFree(g, w, h, forExport, want, live) {
   // Unmoved numbers and the date take their place in the stack, so switching
   // one off closes the gap; moved ones stay where they were put.
   const shown = (k) => ui.elements[k].on && (k === 'date' || ui.offered.includes(k));
-  const auto = photoStack(STACKED.filter((k) => shown(k) && !ui.elements[k].placed), h);
+  const stacked = STACKED.filter((k) => shown(k) && !ui.elements[k].placed);
+  const auto = photoStack(stacked, h, Object.fromEntries(stacked.map((k) => [k, ui.elements[k].scale || 1])));
   for (const k of STACKED) if (!ui.elements[k].placed && auto[k]) Object.assign(ui.elements[k], auto[k]);
   for (const key of DRAW_ORDER) {
     const e = ui.elements[key];
