@@ -186,19 +186,19 @@ const tab = (label, onclick, on) =>
 
 // The toggles under "On the card". Title shows when there is one; the avatar
 // has its own row of faces, with None to leave it off.
+// Each number has its own toggle, between Route and Date (see NUMBERS).
 const TYPES = [
   { key: 'map', label: 'Map', presetOnly: true },
   { key: 'route', label: 'Route' },
-  { key: 'stats', label: 'Stats' },
-  { key: 'time', label: 'Time out' },
+  { key: 'numbers' },
   { key: 'date', label: 'Date' },
-  { key: 'stops', label: 'Stops' },
-  { key: 'water', label: 'Water' },
-  { key: 'food', label: 'Food' },
+  { key: 'places', label: 'Stop names' },
   { key: 'badges', label: 'Badges' },
 ];
 // Photo cards draw in this order, so later ones sit on top and win a tap.
-const DRAW_ORDER = ['route', 'avatar', 'title', 'time', 'stats', 'water', 'food', 'date', 'stops', 'badges'];
+const DRAW_ORDER = ['route', 'avatar', 'title', 'distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date', 'places', 'badges'];
+// What the photo card stacks from the bottom until it's moved.
+const STACKED = ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'];
 
 function makeState(s, allBadges = []) {
   // Badges the night itself earned, art preloaded for the canvas. The SVGs are
@@ -228,9 +228,11 @@ function makeState(s, allBadges = []) {
     badgeImgs.push(entry);
   }
 
+  const sum = S.summarise(s);
   return {
     session: s,
-    sum: S.summarise(s),
+    sum,
+    offered: offeredNumbers(s, sum),
     badgeImgs,
     mode: 'preset',
     ratio: 'feed',
@@ -249,12 +251,11 @@ function makeState(s, allBadges = []) {
       title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
       avatar: { on: true, x: 1080 - PAD - 300, y: 1350 - PAD - 520, scale: 1 },
       // Time out is labelled now, 34px taller, so it sits that much higher.
-      time: { on: true, x: PAD, y: 1350 - PAD - 336, scale: 1 },
-      stats: { on: true, x: PAD, y: 1350 - PAD - 190, scale: 1 },
-      date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1 },
-      stops: { on: false, x: PAD, y: 200, scale: 1 },
-      water: { on: false, x: PAD, y: 1350 - PAD - 460, scale: 1 },
-      food: { on: false, x: PAD + 260, y: 1350 - PAD - 460, scale: 1 },
+      // The numbers and the date stack from the bottom (photoStack) until
+      // one is moved or resized, which sets `placed` and leaves it there.
+      ...Object.fromEntries(NUMBERS.map((n) => [n.key, { on: !['water', 'food'].includes(n.key), x: PAD, y: 0, scale: 1, placed: false }])),
+      date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1, placed: false },
+      places: { on: false, x: PAD, y: 200, scale: 1 },
       badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1 },
     },
     bounds: new Map(),
@@ -286,11 +287,15 @@ export function cardAvatarScale(regionH) {
 }
 
 function elementToggles() {
-  // The badges toggle only exists when the night actually earned some.
-  return TYPES.filter((t) =>
+  // Badges and stop names only exist when the adventure has some; numbers
+  // only when it measured them.
+  const types = TYPES.flatMap((t) => (t.key === 'numbers'
+    ? NUMBERS.filter((n) => ui.offered.includes(n.key)) : [t])).filter((t) =>
     (t.key !== 'badges' || ui.badgeImgs.length)
+    && (t.key !== 'places' || ui.session.pins.length)
     && (!t.presetOnly || ui.mode === 'preset')
-    && (!['map', 'route'].includes(t.key) || ui.session.trail.length > 1)).map((t) =>
+    && (!['map', 'route'].includes(t.key) || ui.session.trail.length > 1));
+  const chips = types.map((t) =>
     el('button', {
       class: 'chip press', type: 'button',
       'aria-pressed': ui.elements[t.key].on ? 'true' : 'false',
@@ -301,6 +306,18 @@ function elementToggles() {
         draw();
       },
     }, t.label));
+  // On a photo, Tidy puts moved numbers back into the stack.
+  if (ui.mode === 'photo' && STACKED.some((k) => ui.elements[k].placed)) {
+    chips.push(el('button', {
+      class: 'chip press', type: 'button',
+      onclick: () => {
+        for (const k of STACKED) Object.assign(ui.elements[k], { placed: false, scale: 1 });
+        ui.refreshChrome();
+        draw();
+      },
+    }, 'Tidy'));
+  }
+  return chips;
 }
 
 function setMode(mode) { ui.mode = mode; ui.selected = null; ui.refreshChrome?.(); draw(); }
@@ -445,6 +462,7 @@ function attachDrag(canvas) {
     if (ui.pinch && pointers.size >= 2) {
       const [a, b] = [...pointers.values()];
       const pn = ui.pinch, node = ui.elements[pn.key];
+      node.placed = true;
       node.scale = clampScale(pn.baseScale * (dist(a, b) / pn.baseDist));
       snapScale(pn.key, node);
       if (pn.cx != null) {
@@ -460,6 +478,7 @@ function attachDrag(canvas) {
     if (ui.resize) {
       const el2 = ui.elements[ui.resize.key];
       const b = ui.bounds.get(ui.resize.key);
+      el2.placed = true;
       el2.scale = clampScale(ui.resize.baseScale * (dist(p, { x: b.x, y: b.y }) / ui.resize.baseDist));
       snapScale(ui.resize.key, el2);
       draw();
@@ -468,6 +487,7 @@ function attachDrag(canvas) {
 
     if (ui.drag) {
       const node = ui.elements[ui.drag.key];
+      if (!node.placed) { node.placed = true; ui.refreshChrome?.(); }
       const snapped = snap(ui.drag.key, p.x - ui.drag.dx, p.y - ui.drag.dy);
       node.x = snapped.x;
       node.y = snapped.y;
@@ -656,13 +676,87 @@ export function placeLine(s) {
   return new Date(s.startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
 }
 
-/** Time out, and on a walk with a route its pace beside it. */
-export function timeCells(s, ms) {
-  const cells = [['Time out', hm(ms)]];
-  const pace = S.onlyMode(s, 'walk') && s.trail.length > 1 ? S.walkPace(s, s.endedAt ?? Date.now()) : null;
-  // The unit lives in the label, so the figure stays as short as Distance's.
-  if (pace) cells.push(['Pace per km', pace]);
-  return cells;
+/* ---------- the numbers ----------
+   Every number is its own element, switched on and off by itself. Groups set
+   where they stack: A (distance, steps) on top, B (the counts) in the middle,
+   C (time out, pace) at the bottom, nearest the date. */
+
+export const NUMBERS = [
+  { key: 'distance', label: 'Distance', group: 'A' },
+  { key: 'steps', label: 'Steps', group: 'A' },
+  { key: 'stops', label: 'Stops', group: 'B' },
+  { key: 'drinks', label: 'Drinks', group: 'B' },
+  { key: 'water', label: 'Water', group: 'B' },
+  { key: 'food', label: 'Food', group: 'B' },
+  { key: 'time', label: 'Time out', group: 'C' },
+  { key: 'pace', label: 'Pace per km', group: 'C' },
+];
+const NUMBER_KEYS = NUMBERS.map((n) => n.key);
+const walkPaceOf = (s) => (S.onlyMode(s, 'walk') && s.trail.length > 1 ? S.walkPace(s, s.endedAt ?? Date.now()) : null);
+
+/** The numbers this adventure measured, in stacking order: nothing it couldn't measure is offered. */
+export function offeredNumbers(s, sum) {
+  return NUMBER_KEYS.filter((k) => (k === 'distance' ? s.trail.length > 1 : k === 'steps' ? sum.steps > 0 : k === 'pace' ? !!walkPaceOf(s) : true));
+}
+
+/** A number's value as the cards show it. The photo card's time keeps its seconds. */
+function numberValue(key, s, sum, { clock = false } = {}) {
+  switch (key) {
+    case 'distance': return `${km(sum.distanceM)} km`;
+    case 'steps': return abbrev(sum.steps);
+    case 'stops': return String(sum.stops);
+    case 'drinks': return String(sum.drinks);
+    case 'water': return String(sum.waters);
+    case 'food': return String((s.meals || []).length);
+    case 'time': return clock ? hms(sum.ms) : hm(sum.ms);
+    case 'pace': return walkPaceOf(s) || '';
+    default: return '';
+  }
+}
+
+/**
+ * The route card's rows, top to bottom, as { key, col } with col in quarter
+ * widths. Distance, steps, time out and pace take half a row; the counts take
+ * a quarter. A switched-off number leaves no gap: its row closes up, and an
+ * empty row disappears so everything above it moves down.
+ */
+export function numberRows(keys) {
+  const rows = [];
+  const pack = (group, span) => {
+    const list = NUMBERS.filter((n) => n.group === group && keys.includes(n.key)).map((n) => n.key);
+    const per = 4 / span;
+    for (let i = 0; i < list.length; i += per) rows.push(list.slice(i, i + per).map((key, j) => ({ key, col: j * span })));
+  };
+  pack('A', 2);
+  pack('B', 1);
+  pack('C', 2);
+  return rows;
+}
+
+/**
+ * Where the photo card's numbers and date sit until they're moved: built up
+ * from the bottom. The date, then time out and pace large and side by side,
+ * then the other numbers three to a row. Returns { key: { x, y } }.
+ */
+export function photoStack(keys, h) {
+  const at = {};
+  let floor = h - PAD - 40;
+  if (keys.includes('date')) { at.date = { x: PAD, y: h - PAD - 90 }; floor = at.date.y - 4; }
+  const hero = ['time', 'pace'].filter((k) => keys.includes(k));
+  if (hero.length) {
+    const y = floor - 134;
+    hero.forEach((k, i) => { at[k] = { x: PAD + i * 420, y }; });
+    floor = y - 18;
+  }
+  const small = NUMBERS.filter((n) => n.group !== 'C' && keys.includes(n.key)).map((n) => n.key);
+  const rows = [];
+  for (let i = 0; i < small.length; i += 3) rows.push(small.slice(i, i + 3));
+  for (let r = rows.length - 1; r >= 0; r--) {
+    const y = floor - 96;
+    rows[r].forEach((k, i) => { at[k] = { x: PAD + i * 190, y }; });
+    floor = y - 14;
+  }
+  return at;
 }
 
 /* ---------- draw ----------
@@ -735,19 +829,26 @@ function drawRouteCard(g, w, h, want) {
   const on = ui.elements;
   const M = PAD;
   const title = ui.title.trim();
-  const rowTop = (r) => h - M - 500 + r * 130;
+  // The numbers stack up from the bottom: the bottom row sits just above the
+  // date (lower without it) and each row above is 130 higher. Badges and stop
+  // names sit on top of the numbers, so everything moves down together.
+  const rows = numberRows(ui.offered.filter((k) => on[k].on));
+  const bottom = on.date.on ? h - M - 240 : h - M - 190;
+  const rowY = (i) => bottom - (rows.length - 1 - i) * 130;
+  const numbersTop = rows.length ? rowY(0) : bottom + 130;
 
   const stack = [];
-  if (on.stops.on && ui.session.pins.length) stack.push({ id: 'stops', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
+  if (on.places.on && ui.session.pins.length) stack.push({ id: 'places', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
   if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: 215 });
   const above = stack.reduce((n, b) => n + b.h, 0);
+  const stackTop = numbersTop - above;
   // The map runs down behind the badges and stats and fades out level with
   // the avatar's head; a stops list (names, not icons) keeps it above.
-  const mapH = routeMapEnd(h, stack[0]?.id === 'stops' ? rowTop(0) - above : null);
+  const mapH = routeMapEnd(h, stack[0]?.id === 'places' ? stackTop : null);
   // The route is framed in the space above the badges and stats. On 4:5 that
   // space runs down to the badges, so the route sits larger; 9:16 keeps its frame.
   const regionY = title ? 150 : 90;
-  const regionH = h < 1500 ? rowTop(0) - above - 30 - regionY : h - 790 - above - (title ? 60 : 0);
+  const regionH = h < 1500 ? stackTop - 30 - regionY : h - 790 - above - (title ? 60 : 0);
   const region = { x: M, y: regionY, w: w - M * 2, h: regionH };
   const trail = ui.session.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
@@ -771,32 +872,20 @@ function drawRouteCard(g, w, h, want) {
     else outlineRoute(g, region, T);
   }
 
-  let y = rowTop(0) - above;
+  let y = stackTop;
   for (const b of stack) {
     if (want(b.id)) DRAW[b.id](g, M, y, w);
     y += b.h;
   }
 
-  const cell = (x, r, label, value, pink) => {
-    drawText(g, label, x, rowTop(r), { size: 28, weight: 600, color: T.label });
-    drawText(g, value, x, rowTop(r) + 36, { size: 76, weight: 700, color: pink ? T.pink : T.text, spacing: -2 });
-  };
-  // Only what was measured: no route means no distance, no counter no steps.
-  // The rows sit on the foot, so an empty one closes up rather than leaving
-  // a gap (the layout is the same for every video layer).
-  const top = noRoute ? [] : [['Distance', `${km(ui.sum.distanceM)} km`]];
-  if (ui.sum.steps) top.push(['Steps', abbrev(ui.sum.steps)]);
-  const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks)]];
-  if (on.water.on) second.push(['Water', String(ui.sum.waters)]);
-  if (on.food.on) second.push(['Food', String((ui.session.meals || []).length)]);
-  const rows = [];
-  if (on.stats.on && top.length) rows.push({ id: 'stats', cells: top, step: 300 });
-  if (on.stats.on) rows.push({ id: 'stats', cells: second, step: 150 });
-  if (on.time.on) rows.push({ id: 'time', cells: timeCells(ui.session, ui.sum.ms), step: 300 });
-  rows.forEach((r, i) => {
-    if (!want(r.id)) return;
-    r.cells.forEach(([l, v, pink], j) => cell(M + j * r.step, i + 3 - rows.length, l, v, pink));
-  });
+  // Each number is its own layer for Save for video, and only measured ones
+  // are ever offered, so nothing reads as a zero it didn't count.
+  rows.forEach((row, i) => row.forEach(({ key, col }) => {
+    if (!want(key)) return;
+    const x = M + col * 150, label = NUMBERS.find((n) => n.key === key).label;
+    drawText(g, label, x, rowY(i), { size: 28, weight: 600, color: T.label });
+    drawText(g, numberValue(key, ui.session, ui.sum), x, rowY(i) + 36, { size: 76, weight: 700, color: T.text, spacing: -2 });
+  }));
   // A cap height (30px) of clear space between the date and the wordmark.
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 79, { size: 30, weight: 400, color: T.date });
   // The wordmark's foot sits where the typed name's baseline did.
@@ -896,9 +985,15 @@ function outlineRoute(g, region, T) {
 
 function drawFree(g, w, h, forExport, want, live) {
   const setBounds = (key, b) => { if (live) ui.bounds.set(key, b); };
+  // Unmoved numbers and the date take their place in the stack, so switching
+  // one off closes the gap; moved ones stay where they were put.
+  const shown = (k) => ui.elements[k].on && (k === 'date' || ui.offered.includes(k));
+  const auto = photoStack(STACKED.filter((k) => shown(k) && !ui.elements[k].placed), h);
+  for (const k of STACKED) if (!ui.elements[k].placed && auto[k]) Object.assign(ui.elements[k], auto[k]);
   for (const key of DRAW_ORDER) {
     const e = ui.elements[key];
     if (!e?.on || !want(key)) continue;
+    if (NUMBER_KEYS.includes(key) && !ui.offered.includes(key)) continue;
     if (key === 'title' && !ui.title.trim()) continue;
     if (key === 'avatar') {
       if (ui.face === 'none' || !ui.look) continue;
@@ -950,41 +1045,17 @@ function drawFree(g, w, h, forExport, want, live) {
 
 const handleCentre = (b) => ({ x: b.x + b.w + 16, y: b.y + b.h + 16 });
 
-// Labelled, like the route card: Time out, and on a walk its pace beside it.
-function drawTime(g, x, y) {
-  drawText(g, 'Time out', x, y, { size: 26, weight: 600, color: labelInk() });
-  let w = drawText(g, hms(ui.sum.ms), x, y + 34, { size: 96, weight: 700, spacing: -4 });
-  const pace = timeCells(ui.session, ui.sum.ms)[1];
-  if (pace) {
-    const px = x + w + 56;
-    drawText(g, pace[0], px, y, { size: 26, weight: 600, color: labelInk() });
-    w = px - x + drawText(g, pace[1], px, y + 34 + 40, { size: 52, weight: 700, spacing: -2 });
-  }
-  return { w, h: 134 };
-}
-
-// One labelled figure: the shape water and food share. Labels are sentence
-// case now, like the rest of the app.
-function bigStat(g, x, y, label, value) {
-  drawText(g, label, x, y, { size: 26, weight: 600, color: labelInk() });
-  const w = drawText(g, value, x, y + 34, { size: 52, weight: 700, spacing: -2 });
-  return { w: Math.max(w, 90), h: 96 };
-}
-
-function drawStats(g, x, y) {
-  const cells = [
-    ['Drinks', String(ui.sum.drinks), null],
-    ['Stops', String(ui.sum.stops), null],
-    ui.sum.steps ? ['Steps', abbrev(ui.sum.steps), null] : null,
-    ui.session.trail.length > 1 ? ['Km', km(ui.sum.distanceM), null] : null,
-  ].filter(Boolean);
-  let cx = x;
-  for (const [k, v, color] of cells) {
-    drawText(g, k, cx, y, { size: 26, weight: 600, color: labelInk() });
-    drawText(g, v, cx, y + 34, { size: 52, weight: 700, color, spacing: -2 });
-    cx += 190;
-  }
-  return { w: 190 * cells.length - 60, h: 96 };
+// One labelled figure. Time out and pace are the large pair; the rest are
+// the smaller size water and food always had. Labels are sentence case.
+function numberStat(key) {
+  const n = NUMBERS.find((m) => m.key === key);
+  const hero = n.group === 'C';
+  return (g, x, y) => {
+    const lw = drawText(g, n.label, x, y, { size: 26, weight: 600, color: labelInk() });
+    const vw = drawText(g, numberValue(key, ui.session, ui.sum, { clock: true }), x, y + 34,
+      hero ? { size: 96, weight: 700, spacing: -4 } : { size: 52, weight: 700, spacing: -2 });
+    return { w: Math.max(lw, vw, 90), h: hero ? 134 : 96 };
+  };
 }
 
 const DRAW = {
@@ -998,8 +1069,7 @@ const DRAW = {
     const w = drawText(g, ui.title.trim(), x, y, { size: 72, weight: 700, spacing: -1 });
     return { w, h: 84 };
   },
-  time: drawTime,
-  stats: drawStats,
+  ...Object.fromEntries(NUMBERS.map((n) => [n.key, numberStat(n.key)])),
   date(g, x, y) {
     const w = drawText(g, placeLine(ui.session), x, y, { size: 28, weight: 400, color: mutedInk() });
     return { w, h: 34 };
@@ -1018,13 +1088,7 @@ const DRAW = {
     });
     return { w: cellW * items.length - gap, h: size + 14 + labelH };
   },
-  water(g, x, y) {
-    return bigStat(g, x, y, 'Water', String(ui.sum.waters));
-  },
-  food(g, x, y) {
-    return bigStat(g, x, y, 'Food', String((ui.session.meals || []).length));
-  },
-  stops(g, x, y) {
+  places(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);
     if (!names.length) {
       const w = drawText(g, 'No stops pinned', x, y, { size: 26, weight: 600, color: labelInk() });
@@ -1126,8 +1190,9 @@ function download(blob, name = filename()) {
    tiles are fetched with CORS, so even the map layer exports cleanly. */
 
 const LAYER_LABEL = {
-  map: 'Map', route: 'Route', title: 'Title', stats: 'Stats', time: 'Time out', date: 'Date', stops: 'Stops',
-  water: 'Water', food: 'Food', badges: 'Badges', avatar: 'Avatar', wordmark: 'Wordmark',
+  map: 'Map', route: 'Route', title: 'Title', date: 'Date', places: 'Stop names',
+  badges: 'Badges', avatar: 'Avatar', wordmark: 'Wordmark',
+  ...Object.fromEntries(NUMBERS.map((n) => [n.key, n.label])),
 };
 
 function layerIds() {
@@ -1135,11 +1200,12 @@ function layerIds() {
   const hasTitle = !!ui.title.trim();
   const hasAvatar = ui.face !== 'none';
   if (ui.mode === 'preset') {
-    return ['map', 'route', 'title', 'badges', 'stops', 'stats', 'time', 'date', 'avatar', 'wordmark'].filter((id) => {
+    return ['map', 'route', 'title', 'badges', 'places', ...NUMBER_KEYS, 'date', 'avatar', 'wordmark'].filter((id) => {
       if (id === 'title') return hasTitle;
       if (id === 'avatar') return hasAvatar;
       if (id === 'badges') return on.badges.on && ui.badgeImgs.length;
-      if (id === 'stops') return on.stops.on && ui.session.pins.length;
+      if (id === 'places') return on.places.on && ui.session.pins.length;
+      if (NUMBER_KEYS.includes(id)) return on[id].on && ui.offered.includes(id);
       if (id === 'route') return on.route.on && ui.session.trail.length > 1;
       if (id === 'wordmark') return true;
       if (id === 'map') return true;
@@ -1150,6 +1216,8 @@ function layerIds() {
     if (id === 'title') return hasTitle && on.title.on;
     if (id === 'avatar') return hasAvatar && on.avatar.on;
     if (id === 'route') return on.route.on && ui.session.trail.length > 1;
+    if (id === 'places') return on.places.on && ui.session.pins.length;
+    if (NUMBER_KEYS.includes(id)) return on[id].on && ui.offered.includes(id);
     return on[id]?.on;
   }), 'wordmark'];
 }

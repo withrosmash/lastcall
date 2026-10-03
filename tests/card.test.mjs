@@ -27,21 +27,6 @@ test('the card’s date line is the date alone', async () => {
   assert.ok(line.includes('2'), line);
 });
 
-test('a walk’s card puts its pace next to the time out', async () => {
-  const { timeCells } = await import('../js/card.js');
-  const { newSession } = await import('../js/state.js');
-  const walk = newSession(0, { mode: 'walk' });
-  walk.trail = [{ t: 0, lat: 51.5, lng: -0.1 }, { t: 12 * 60e3, lat: 51.509, lng: -0.1 }];
-  walk.endedAt = 12 * 60e3;
-  const [time, pace] = timeCells(walk, 12 * 60e3);
-  assert.deepEqual(time, ['Time out', '0h 12m']);
-  assert.equal(pace[0], 'Pace per km');
-  assert.match(pace[1], /^1[12]:\d\d$/, 'about 1 km in 12 minutes');
-  const night = newSession(0, { mode: 'night' });
-  night.endedAt = 3600e3;
-  assert.deepEqual(timeCells(night, 3600e3), [['Time out', '1h 00m']]);
-});
-
 test('the route card map fades out level with the avatar’s head, on both sizes', async () => {
   const { routeMapBottom, AVATAR_CORNER_TOP } = await import('../js/card.js');
   for (const h of [1350, 1920]) {
@@ -56,4 +41,43 @@ test('with the stops list on, the map stops above it, so stop names never sit on
   assert.equal(routeMapEnd(1350, null), routeMapBottom(1350));
   assert.equal(routeMapEnd(1350, 500), 500);
   assert.equal(routeMapEnd(1350, 1200), routeMapBottom(1350));
+});
+
+/* ---------- numbers as elements ---------- */
+
+const keysOf = (rows) => rows.map((r) => r.map((c) => `${c.key}@${c.col}`).join(' '));
+
+test('route card numbers stack from the bottom in their rows', async () => {
+  const { numberRows } = await import('../js/card.js');
+  const all = ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace'];
+  assert.deepEqual(keysOf(numberRows(all)), ['distance@0 steps@2', 'stops@0 drinks@1 water@2 food@3', 'time@0 pace@2']);
+  assert.deepEqual(keysOf(numberRows(['distance', 'steps', 'time', 'pace'])), ['distance@0 steps@2', 'time@0 pace@2'], 'the middle row closes up');
+  assert.deepEqual(keysOf(numberRows(['stops', 'drinks', 'water'])), ['stops@0 drinks@1 water@2'], 'the counts become the bottom row');
+  assert.deepEqual(keysOf(numberRows(['steps', 'pace'])), ['steps@0', 'pace@0'], 'each slides left');
+  assert.deepEqual(numberRows([]), []);
+});
+
+test('photo card numbers stack up from the date, and switching one off closes the gap', async () => {
+  const { photoStack } = await import('../js/card.js');
+  const all = ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'];
+  const p = photoStack(all, 1350);
+  assert.equal(p.date.y, 1350 - 64 - 90);
+  assert.ok(p.time.y < p.date.y && p.pace.y === p.time.y && p.pace.x > p.time.x, 'time and pace side by side above the date');
+  assert.ok(p.food.y < p.time.y && p.distance.y < p.food.y, 'counts above them, distance and steps on top');
+  const noCounts = photoStack(['distance', 'steps', 'time', 'pace', 'date'], 1350);
+  assert.equal(noCounts.time.y, p.time.y);
+  assert.ok(noCounts.distance.y > p.distance.y, 'distance drops into the gap');
+  const noDate = photoStack(['time', 'pace'], 1350);
+  assert.ok(noDate.time.y > p.time.y, 'with no date the bottom row sits lower');
+  assert.equal(photoStack(all, 1920).date.y, 1920 - 64 - 90, '9:16 builds from its own bottom');
+});
+
+test('only measured numbers are offered', async () => {
+  const { offeredNumbers } = await import('../js/card.js');
+  const { newSession, summarise } = await import('../js/state.js');
+  const night = Object.assign(newSession(0, { mode: 'night' }), { endedAt: 3600e3 });
+  assert.deepEqual(offeredNumbers(night, summarise(night)), ['stops', 'drinks', 'water', 'food', 'time']);
+  const walk = Object.assign(newSession(0, { mode: 'walk' }), { endedAt: 12 * 60e3, steps: 900 });
+  walk.trail = [{ t: 0, lat: 51.5, lng: -0.1 }, { t: 12 * 60e3, lat: 51.509, lng: -0.1 }];
+  assert.deepEqual(offeredNumbers(walk, summarise(walk)), ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace']);
 });
