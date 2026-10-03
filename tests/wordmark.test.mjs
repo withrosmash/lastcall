@@ -99,11 +99,11 @@ async function readPng(path) {
   return { w, h, px };
 }
 
-test('the app icon is the white wordmark on forest', async () => {
+test('the app icon is the white wordmark on dark forest', async () => {
   const { w, h, px } = await readPng('../design/round4/icon-1024.png');
   assert.equal(w, 1024);
   assert.equal(h, 1024);
-  assert.deepEqual(px(0, 0), [0x21, 0x76, 0x4f]);
+  assert.deepEqual(px(0, 0), [0x11, 0x45, 0x30]);
   const row = Math.round(h / 2) - 10;
   const white = [];
   for (let x = 0; x < w; x++) if (px(x, row).every((v) => v > 245)) white.push(x);

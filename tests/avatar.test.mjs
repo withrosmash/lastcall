@@ -205,3 +205,11 @@ test('reactions build nothing new once warmed, even with an effect on', async ()
   }
   assert.equal(__stats.builds - before, 0);
 });
+
+test('Calmer avatar has no idle moves at all; reactions are separate', async () => {
+  const { idlePool } = await import('../js/avatar.js');
+  for (const mood of Object.keys(__MOODS)) {
+    assert.deepEqual(idlePool(mood, true), [], mood);
+    assert.ok(idlePool(mood, false).length > 0, mood);
+  }
+});

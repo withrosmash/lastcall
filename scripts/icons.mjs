@@ -1,8 +1,8 @@
 // Draws every icon and splash image the app ships, with a tiny
 // self-contained PNG encoder. No ImageMagick, no rsvg, no npm image deps.
 //
-// The owner's choice (2026-10-01): the white Leit wordmark on forest green
-// (#21764F, the round 2 forest). The wordmark is all right angles, so it
+// The owner's choice (2026-10-01): the white Leit wordmark on forest green,
+// darkened to #114530 on 2026-10-03. The wordmark is all right angles, so it
 // fills as rectangles, supersampled at the edges. The status bar icon stays
 // the avatar's mono face: a wordmark is unreadable at 24dp.
 //
@@ -22,7 +22,7 @@ const RES = resolve(root, 'android/app/src/main/res');
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
-const FOREST = hex('#21764F');
+const FOREST = hex('#114530');
 const WHITE = [255, 255, 255];
 const STOPS = [[0, hex('#35A26F')], [0.45, hex('#17553B')], [1, hex('#061710')]];
 

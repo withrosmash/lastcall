@@ -278,6 +278,13 @@ export function waterDue(s, prefs, now = Date.now()) {
   return { due: every > 0 && since >= every, kind: 'drinks', since, every };
 }
 
+/** Whether the recap dozes off: home between 1am and 6am, or out for over 5 hours. */
+export function dozesOff(s) {
+  const end = s.endedAt ?? Date.now();
+  const h = new Date(end).getHours();
+  return (h >= 1 && h < 6) || end - s.startedAt > 5 * 3600e3;
+}
+
 export function drinkOfChoice(s) {
   if (!s || !s.drinks.length) return null;
   const counts = new Map();

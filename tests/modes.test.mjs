@@ -195,3 +195,13 @@ test('pace waits two minutes before it shows', async () => {
   assert.equal(pace(60e3, 400), null);
   assert.equal(pace(5 * 60e3, 400), '12:30');
 });
+
+test('the recap only dozes off late at night or after a long adventure', async () => {
+  const { dozesOff, newSession } = await import('../js/state.js');
+  const at = (iso) => new Date(iso).getTime();
+  const ended = (start, end) => Object.assign(newSession(at(start)), { endedAt: at(end) });
+  assert.equal(dozesOff(ended('2026-10-02T22:00', '2026-10-03T02:00')), true, 'home at 2am');
+  assert.equal(dozesOff(ended('2026-10-02T14:00', '2026-10-02T15:00')), false, 'an afternoon walk');
+  assert.equal(dozesOff(ended('2026-10-02T10:00', '2026-10-02T16:30')), true, 'six and a half hours out');
+  assert.equal(dozesOff(ended('2026-10-02T19:00', '2026-10-02T23:30')), false, 'home before 1am');
+});

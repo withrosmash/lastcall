@@ -744,7 +744,11 @@ function drawRouteCard(g, w, h, want) {
   // The map runs down behind the badges and stats and fades out level with
   // the avatar's head; a stops list (names, not icons) keeps it above.
   const mapH = routeMapEnd(h, stack[0]?.id === 'stops' ? rowTop(0) - above : null);
-  const region = { x: M, y: title ? 150 : 90, w: w - M * 2, h: h - 790 - above - (title ? 60 : 0) };
+  // The route is framed in the space above the badges and stats. On 4:5 that
+  // space runs down to the badges, so the route sits larger; 9:16 keeps its frame.
+  const regionY = title ? 150 : 90;
+  const regionH = h < 1500 ? rowTop(0) - above - 30 - regionY : h - 790 - above - (title ? 60 : 0);
+  const region = { x: M, y: regionY, w: w - M * 2, h: regionH };
   const trail = ui.session.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
 
@@ -782,7 +786,7 @@ function drawRouteCard(g, w, h, want) {
   // a gap (the layout is the same for every video layer).
   const top = noRoute ? [] : [['Distance', `${km(ui.sum.distanceM)} km`]];
   if (ui.sum.steps) top.push(['Steps', abbrev(ui.sum.steps)]);
-  const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks), true]];
+  const second = [['Stops', String(ui.sum.stops)], ['Drinks', String(ui.sum.drinks)]];
   if (on.water.on) second.push(['Water', String(ui.sum.waters)]);
   if (on.food.on) second.push(['Food', String((ui.session.meals || []).length)]);
   const rows = [];
@@ -969,7 +973,7 @@ function bigStat(g, x, y, label, value) {
 
 function drawStats(g, x, y) {
   const cells = [
-    ['Drinks', String(ui.sum.drinks), C.pink],
+    ['Drinks', String(ui.sum.drinks), null],
     ['Stops', String(ui.sum.stops), null],
     ui.sum.steps ? ['Steps', abbrev(ui.sum.steps), null] : null,
     ui.session.trail.length > 1 ? ['Km', km(ui.sum.distanceM), null] : null,

@@ -472,6 +472,13 @@ const ANIM = {
     K(2, { squash: 1, eyes: 'happy', mouth: 'smile' }),
     K(3, { eyes: 'wink', mouth: 'smile' }),
   ],
+  // The happy finish, for an adventure that wasn't late or long (end dozes off).
+  finish: [
+    K(3, { armL: 'up', armR: 'up', eyes: 'happy', mouth: 'wide', blush: 2, rootDY: -2 }),
+    K(3, { armL: 'up', armR: 'up', eyes: 'star', mouth: 'wide', blush: 2 }),
+    K(3, { eyes: 'happy', mouth: 'cat', blush: 2 }),
+    K(14, { eyes: 'content', mouth: 'smile', blush: 2 }),
+  ],
   end: [
     K(3, { armL: 'up', armR: 'up', mouth: 'wide', eyes: 'closed', headDY: -1 }),
     K(3, { armL: 'up', armR: 'up', mouth: 'wide', eyes: 'closed' }),
@@ -612,12 +619,14 @@ export const __MOODS = MOODS;
 
 /* ================= an avatar on screen ================= */
 
-// Calmer avatar (Settings, Accessibility): idle moves come a third as often
-// and skip the bouncier ones. Reactions to what you log still play.
+// Calmer avatar (Settings, Accessibility): it stands still between reactions,
+// with no idle moves, no breathing bob and still effects. Reactions to what
+// you log still play, and it still blinks.
 let calm = false;
 export const setAvatarCalm = (on) => { calm = !!on; };
-const LIVELY = new Set(['dance', 'hello', 'tap']);
-const WARM = ['drink', 'water', 'food', 'checkin', 'cheer', 'start', 'badge', 'end'];
+/** The idle moves a mood picks from between reactions: none with Calmer avatar. */
+export const idlePool = (mood, isCalm = calm) => (isCalm ? [] : MOODS[mood].idle);
+const WARM = ['drink', 'water', 'food', 'checkin', 'cheer', 'start', 'badge', 'end', 'finish'];
 
 export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, label = 'Your avatar' } = {}) {
   const canvas = document.createElement('canvas');
@@ -652,7 +661,8 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
   function frame() {
     const f = me.cur ? me.cur.frames[me.cur.i][1] : {};
     const st = { ...MOODS[me.mood].base, ...(me.face || {}), ...f };
-    const fr = toFrame(st, { tick: me.tick, lid: me.lid, hairPrev: me.hairPrev, still: !('headDY' in f) && !('rootDY' in f) && !f.squash && !f.legBend });
+    // Calmer avatar: no breathing bob either, only the reactions move it.
+    const fr = toFrame(st, { tick: me.tick, lid: me.lid, hairPrev: me.hairPrev, still: !calm && !('headDY' in f) && !('rootDY' in f) && !f.squash && !f.legBend });
     me.hairPrev = fr.headY;
     return fr;
   }
@@ -700,13 +710,13 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
       }
     } else if (--me.idleIn <= 0) {
       const m = MOODS[me.mood];
-      const pool = calm ? m.idle.filter((k) => !LIVELY.has(k)) : m.idle;
+      const pool = idlePool(me.mood);
       if (!reduceMotion() && pool.length) {
         const name = pool[Math.floor(Math.random() * pool.length)];
         me.cur = { frames: ANIM[name], i: 0, left: ANIM[name][0][0], idle: true };
         enter();
       }
-      me.idleIn = (m.every[0] + Math.random() * (m.every[1] - m.every[0])) * (calm ? 3 : 1);
+      me.idleIn = m.every[0] + Math.random() * (m.every[1] - m.every[0]);
     }
     me.lid = 0;
     if (me.blinkStep > 0) { me.lid = [0, 0.5, 1, 0.5][me.blinkStep]; me.blinkStep = (me.blinkStep + 1) % 4; }

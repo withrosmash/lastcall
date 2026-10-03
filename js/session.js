@@ -53,7 +53,9 @@ export function startScreen(ctx) {
   const av = createAvatar({ cell: 2, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' });
   queueMicrotask(() => av.start());
   return [
-    el('div', { class: 'topbar' }, iconBtn('settings', 'Settings', () => ctx.go('settings'))),
+    el('div', { class: 'topbar' },
+      iconBtn('award', 'Badges', () => ctx.go('badges')),
+      iconBtn('settings', 'Settings', () => ctx.go('settings'))),
     spacer(),
     el('div', { class: 'avatar-home' },
       av.canvas,
@@ -561,13 +563,16 @@ export function recapScreen(ctx, session) {
   // instead of a celebration here; other new badges still get one. Once per
   // night: the recap re-renders when you come back and shouldn't replay.
   const av = createAvatar({ cell: 1.5, look: dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode) });
-  av.setMood('Sleepy');
+  // Dozes off only after a late or long one; otherwise a happy finish.
+  const sleepy = S.dozesOff(s);
+  av.setMood(sleepy ? 'Sleepy' : 'Fresh');
   if (ctx.recapPlayed !== s.id) {
     ctx.recapPlayed = s.id;
     const slugs = (ctx.newBadges || []).map((b) => b.slug);
     const unlocking = itemsForBadges(slugs).length > 0;
-    if (slugs.length && !unlocking) { av.play('badge'); av.play('end', { queue: true }); }
-    else av.play('end');
+    const ending = sleepy ? 'end' : 'finish';
+    if (slugs.length && !unlocking) { av.play('badge'); av.play(ending, { queue: true }); }
+    else av.play(ending);
     if (unlocking) {
       // A beat after the recap lands, so the night's numbers register first.
       setTimeout(() => {
