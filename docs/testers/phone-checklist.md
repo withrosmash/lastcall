@@ -1,4 +1,4 @@
-# Phone checklist (build 01967ac)
+# Phone checklist (build af7d7bb)
 
 Things only a real phone can show. The tickable version is the Leit phone checklist artifact (https://claude.ai/artifact/WmDr4Z74iExSoxxss31sLG); this file mirrors it.
 
@@ -70,3 +70,16 @@ New in build 01967ac.
 38. On the route card, a walk shows “Pace per km” next to Time out, and the map runs down behind the badges and stats to the avatar’s head, on 4:5 and 9:16.
 39. The share page has Home next to Save, and Home goes back to the start screen.
 40. Trousers have flat hems with the top of the shoe showing.
+
+## Round 3 notes
+New in build af7d7bb.
+
+41. The home screen icon is a darker forest green.
+42. The start screen has a badges icon next to the gear.
+43. A short daytime adventure ends with the avatar cheering, not dozing off. One that ends after 1am, or lasts over 5 hours, still dozes off.
+44. With Calmer avatar on, the avatar stays put between reactions: no idle moves, no breathing bob, effects still. Logging something still gets a reaction.
+45. On the route card, every number has its own switch. Turning some off closes the gap, and the badges slide down.
+46. On the 4:5 route card, the route sits larger than before and never runs behind the avatar.
+47. On the photo card, the numbers stack up from the date. Drag one away and the rest close up. Make Time out bigger and Pace moves aside. Tidy puts everything back.
+48. On the photo card, Pace is as big as the time.
+49. Drinks numbers are white on every card.
