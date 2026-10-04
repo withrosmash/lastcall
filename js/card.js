@@ -196,9 +196,10 @@ const TYPES = [
   { key: 'badges', label: 'Badges' },
 ];
 // Photo cards draw in this order, so later ones sit on top and win a tap.
-const DRAW_ORDER = ['route', 'avatar', 'title', 'distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date', 'places', 'badges'];
+// Both lists come from NUMBERS, so a new number can't be left off the card.
+export const photoOrder = () => ['route', 'avatar', 'title', ...NUMBER_KEYS, 'date', 'places', 'badges'];
 // What the photo card stacks from the bottom until it's moved.
-const STACKED = ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'];
+export const photoStacked = () => [...NUMBER_KEYS, 'date'];
 
 function makeState(s, allBadges = [], prefs = {}) {
   // Badges the night itself earned, art preloaded for the canvas. The SVGs are
@@ -319,11 +320,11 @@ function elementToggles() {
       },
     }, t.label));
   // On a photo, Tidy puts moved numbers back into the stack.
-  if (ui.mode === 'photo' && STACKED.some((k) => ui.elements[k].placed || (ui.elements[k].scale || 1) !== 1)) {
+  if (ui.mode === 'photo' && photoStacked().some((k) => ui.elements[k].placed || (ui.elements[k].scale || 1) !== 1)) {
     chips.push(el('button', {
       class: 'chip press', type: 'button',
       onclick: () => {
-        for (const k of STACKED) Object.assign(ui.elements[k], { placed: false, scale: 1 });
+        for (const k of photoStacked()) Object.assign(ui.elements[k], { placed: false, scale: 1 });
         ui.refreshChrome();
         draw();
       },
@@ -1028,11 +1029,11 @@ function drawFree(g, w, h, forExport, want, live) {
   // Unmoved numbers and the date take their place in the stack, so switching
   // one off closes the gap; moved ones stay where they were put.
   const shown = (k) => ui.elements[k].on && (k === 'date' || ui.offered.includes(k));
-  const stacked = STACKED.filter((k) => shown(k) && !ui.elements[k].placed);
+  const stacked = photoStacked().filter((k) => shown(k) && !ui.elements[k].placed);
   const auto = photoStack(stacked, h, Object.fromEntries(stacked.map((k) => [k, ui.elements[k].scale || 1])),
-    Object.fromEntries(stacked.map((k) => [k, ui.bounds.get(k)?.w || 0])));
-  for (const k of STACKED) if (!ui.elements[k].placed && auto[k]) Object.assign(ui.elements[k], auto[k]);
-  for (const key of DRAW_ORDER) {
+    Object.fromEntries(stacked.map((k) => [k, pieceWidth(g, k) * (ui.elements[k].scale || 1)])));
+  for (const k of photoStacked()) if (!ui.elements[k].placed && auto[k]) Object.assign(ui.elements[k], auto[k]);
+  for (const key of photoOrder()) {
     const e = ui.elements[key];
     if (!e?.on || !want(key)) continue;
     if (NUMBER_KEYS.includes(key) && !ui.offered.includes(key)) continue;
@@ -1086,6 +1087,16 @@ function drawFree(g, w, h, forExport, want, live) {
 }
 
 const handleCentre = (b) => ({ x: b.x + b.w + 16, y: b.y + b.h + 16 });
+
+// A stacked piece's width, measured as numberStat draws it, so the stack can
+// leave a gap after a long value (15.5 km) on this draw, not the next.
+function pieceWidth(g, key) {
+  if (key === 'date') return textWidth(g, placeLine(ui.session), { size: 28, weight: 400 });
+  const n = NUMBERS.find((m) => m.key === key);
+  const value = numberValue(key, ui.session, ui.sum, { clock: true });
+  const big = n.group === 'C' ? { size: 96, weight: 700, spacing: -4 } : { size: 52, weight: 700, spacing: -2 };
+  return Math.max(textWidth(g, n.label, { size: 26, weight: 600 }), textWidth(g, value, big), 90);
+}
 
 // One labelled figure. Time out and pace are the large pair; the rest are
 // the smaller size water and food always had. Labels are sentence case.
@@ -1254,7 +1265,7 @@ function layerIds() {
       return on[id]?.on;
     });
   }
-  return [...DRAW_ORDER.filter((id) => {
+  return [...photoOrder().filter((id) => {
     if (id === 'title') return hasTitle && on.title.on;
     if (id === 'avatar') return hasAvatar && on.avatar.on;
     if (id === 'route') return on.route.on && ui.session.trail.length > 1;

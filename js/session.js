@@ -570,8 +570,10 @@ export function recapScreen(ctx, session) {
   av?.setMood(sleepy ? 'Sleepy' : 'Fresh');
   // With the avatar off there's no reaction and no unlock sheet; items still
   // unlock quietly, ready if it's switched back on.
-  if (av && ctx.recapPlayed !== s.id) {
-    ctx.recapPlayed = s.id;
+  // Marked played either way, so switching the avatar on later doesn't replay it.
+  const firstShow = ctx.recapPlayed !== s.id;
+  ctx.recapPlayed = s.id;
+  if (av && firstShow) {
     const slugs = (ctx.newBadges || []).map((b) => b.slug);
     const unlocking = itemsForBadges(slugs).length > 0;
     const ending = sleepy ? 'end' : 'finish';

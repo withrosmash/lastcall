@@ -128,3 +128,11 @@ test('the photo stack leaves a gap after a wide number too', async () => {
   const p = photoStack(['distance', 'steps', 'date'], 1350, {}, { distance: 260 });
   assert.ok(p.steps.x >= p.distance.x + 260 + 48);
 });
+
+test('every number is a photo-card piece that stacks and draws', async () => {
+  const { NUMBERS, photoOrder, photoStacked } = await import('../js/card.js');
+  for (const { key } of NUMBERS) {
+    assert.ok(photoOrder().includes(key), `${key} draws on the photo card`);
+    assert.ok(photoStacked().includes(key), `${key} stacks on the photo card`);
+  }
+});
