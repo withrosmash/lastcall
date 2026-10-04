@@ -705,6 +705,7 @@ export const NUMBERS = [
   { key: 'drinks', label: 'Drinks', group: 'B' },
   { key: 'water', label: 'Water', group: 'B' },
   { key: 'food', label: 'Food', group: 'B' },
+  { key: 'acts', label: 'Acts seen', group: 'B' },
   { key: 'time', label: 'Time out', group: 'C' },
   { key: 'pace', label: 'Pace per km', group: 'C' },
 ];
@@ -713,11 +714,14 @@ const walkPaceOf = (s) => (S.onlyMode(s, 'walk') && s.trail.length > 1 ? S.walkP
 
 /** The numbers this adventure measured, in stacking order: nothing it couldn't measure is offered. */
 export function offeredNumbers(s, sum) {
-  return NUMBER_KEYS.filter((k) => (k === 'distance' ? s.trail.length > 1 : k === 'steps' ? sum.steps > 0 : k === 'pace' ? !!walkPaceOf(s) : true));
+  const measured = {
+    distance: s.trail.length > 1, steps: sum.steps > 0, pace: !!walkPaceOf(s), acts: (s.sets || []).length > 0,
+  };
+  return NUMBER_KEYS.filter((k) => measured[k] ?? true);
 }
 
 /** A number's value as the cards show it. The photo card's time keeps its seconds. */
-function numberValue(key, s, sum, { clock = false } = {}) {
+export function numberValue(key, s, sum, { clock = false } = {}) {
   switch (key) {
     case 'distance': return `${km(sum.distanceM)} km`;
     case 'steps': return abbrev(sum.steps);
@@ -727,8 +731,18 @@ function numberValue(key, s, sum, { clock = false } = {}) {
     case 'food': return String((s.meals || []).length);
     case 'time': return clock ? hms(sum.ms) : hm(sum.ms);
     case 'pace': return walkPaceOf(s) || '';
+    case 'acts': return String(S.festivalActs([s]).length);
     default: return '';
   }
+}
+
+/** A row's x positions: each on its column, or further right to keep a 48px gap after the one before. */
+export function rowXs(widths, cols, { left = PAD, unit = 150, gap = 48 } = {}) {
+  const xs = [];
+  cols.forEach((col, i) => {
+    xs.push(i ? Math.max(left + col * unit, xs[i - 1] + widths[i - 1] + gap) : left + col * unit);
+  });
+  return xs;
 }
 
 /**
@@ -756,7 +770,7 @@ export function numberRows(keys) {
  * then the other numbers three to a row. A resized piece keeps its place and
  * the stack makes room for its size (`scales`). Returns { key: { x, y } }.
  */
-export function photoStack(keys, h, scales = {}) {
+export function photoStack(keys, h, scales = {}, widths = {}) {
   const at = {};
   const k = (key) => scales[key] || 1;
   let floor = h - PAD - 40;
@@ -765,7 +779,8 @@ export function photoStack(keys, h, scales = {}) {
   const row = (list, pitch, height, gap) => {
     const y = floor - height * Math.max(...list.map(k));
     let x = PAD;
-    for (const key of list) { at[key] = { x, y }; x += pitch * k(key); }
+    // Each piece's pitch, or its measured width plus a gap if that's wider.
+    for (const key of list) { at[key] = { x, y }; x += Math.max(pitch * k(key), (widths[key] || 0) + 48); }
     floor = y - gap;
   };
   const hero = ['time', 'pace'].filter((key) => keys.includes(key));
@@ -898,12 +913,18 @@ function drawRouteCard(g, w, h, want) {
 
   // Each number is its own layer for Save for video, and only measured ones
   // are ever offered, so nothing reads as a zero it didn't count.
-  rows.forEach((row, i) => row.forEach(({ key, col }) => {
-    if (!want(key)) return;
-    const x = M + col * 150, label = NUMBERS.find((n) => n.key === key).label;
-    drawText(g, label, x, rowY(i), { size: 28, weight: 600, color: T.label });
-    drawText(g, numberValue(key, ui.session, ui.sum), x, rowY(i) + 36, { size: 76, weight: 700, color: T.text, spacing: -2 });
-  }));
+  const LABEL = { size: 28, weight: 600 }, VALUE = { size: 76, weight: 700, spacing: -2 };
+  rows.forEach((row, i) => {
+    const cells = row.map(({ key }) => ({ key, label: NUMBERS.find((n) => n.key === key).label, value: numberValue(key, ui.session, ui.sum) }));
+    // Measured, so a long value (15.5 km) never runs into the next number.
+    const widths = cells.map((c) => Math.max(textWidth(g, c.label, LABEL), textWidth(g, c.value, VALUE)));
+    const xs = rowXs(widths, row.map((c) => c.col), { left: M });
+    cells.forEach((c, j) => {
+      if (!want(c.key)) return;
+      drawText(g, c.label, xs[j], rowY(i), { ...LABEL, color: T.label });
+      drawText(g, c.value, xs[j], rowY(i) + 36, { ...VALUE, color: T.text });
+    });
+  });
   // A cap height (30px) of clear space between the date and the wordmark.
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 79, { size: 30, weight: 400, color: T.date });
   // The wordmark's foot sits where the typed name's baseline did.
@@ -1007,7 +1028,8 @@ function drawFree(g, w, h, forExport, want, live) {
   // one off closes the gap; moved ones stay where they were put.
   const shown = (k) => ui.elements[k].on && (k === 'date' || ui.offered.includes(k));
   const stacked = STACKED.filter((k) => shown(k) && !ui.elements[k].placed);
-  const auto = photoStack(stacked, h, Object.fromEntries(stacked.map((k) => [k, ui.elements[k].scale || 1])));
+  const auto = photoStack(stacked, h, Object.fromEntries(stacked.map((k) => [k, ui.elements[k].scale || 1])),
+    Object.fromEntries(stacked.map((k) => [k, ui.bounds.get(k)?.w || 0])));
   for (const k of STACKED) if (!ui.elements[k].placed && auto[k]) Object.assign(ui.elements[k], auto[k]);
   for (const key of DRAW_ORDER) {
     const e = ui.elements[key];

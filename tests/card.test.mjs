@@ -103,3 +103,28 @@ test('on 4:5 the route is framed above the avatar, whatever is switched off', as
   // 9:16 keeps the frame the owner signed off.
   assert.equal(routeRegionH(1920, { top, stackTop: 1400, above: 215, title: true, route: true }), 1920 - 790 - 215 - 60);
 });
+
+test('a festival day offers Acts seen, counting each act once', async () => {
+  const { offeredNumbers, numberValue } = await import('../js/card.js');
+  const { newSession, summarise, addSet } = await import('../js/state.js');
+  const day = Object.assign(newSession(0, { mode: 'festival' }), { endedAt: 8 * 3600e3 });
+  assert.ok(!offeredNumbers(day, summarise(day)).includes('acts'), 'no sets, no acts');
+  addSet(day, { name: 'The Midnight Band' }, 1000);
+  addSet(day, { name: 'the midnight band ' }, 2000);
+  addSet(day, { name: 'Dawn Chorus' }, 3000);
+  assert.ok(offeredNumbers(day, summarise(day)).includes('acts'));
+  assert.equal(numberValue('acts', day, summarise(day)), '2');
+});
+
+test('a wide number always leaves a gap before the next one', async () => {
+  const { rowXs } = await import('../js/card.js');
+  assert.deepEqual(rowXs([200, 180], [0, 2]), [64, 364], 'room to spare: the column wins');
+  assert.deepEqual(rowXs([300, 180], [0, 2]), [64, 412], '15.5 km pushes Steps along by the gap');
+  assert.deepEqual(rowXs([90, 90, 90, 90], [0, 1, 2, 3]), [64, 214, 364, 514]);
+});
+
+test('the photo stack leaves a gap after a wide number too', async () => {
+  const { photoStack } = await import('../js/card.js');
+  const p = photoStack(['distance', 'steps', 'date'], 1350, {}, { distance: 260 });
+  assert.ok(p.steps.x >= p.distance.x + 260 + 48);
+});
