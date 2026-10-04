@@ -1,4 +1,4 @@
-# Phone checklist (build af7d7bb)
+# Phone checklist (build 18c40f5)
 
 Things only a real phone can show. The tickable version is the Leit phone checklist artifact (https://claude.ai/artifact/WmDr4Z74iExSoxxss31sLG); this file mirrors it.
 
@@ -83,3 +83,13 @@ New in build af7d7bb.
 47. On the photo card, the numbers stack up from the date. Drag one away and the rest close up. Make Time out bigger and Pace moves aside. Tidy puts everything back.
 48. On the photo card, Pace is as big as the time.
 49. Drinks numbers are white on every card.
+
+## Round 4 notes
+New in build 18c40f5.
+
+50. The icon’s wordmark is smaller, with more green around it.
+51. Customise has a Held tab (it was Hold), and the badges screen has a Lifetime section (it was Aspirational).
+52. Drinks numbers are white everywhere: live screen tiles, history, the recap and the start screen.
+53. A festival day’s card offers Acts seen, counting each act once, on both the route and photo cards.
+54. A long distance like 15.5 km always leaves a gap before Steps, on both cards.
+55. Settings › Show my avatar off: no avatar on the start, live, recap or morning screens, and new cards start with Avatar set to None. Turn it back on and everything returns.
