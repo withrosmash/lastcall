@@ -31,7 +31,7 @@ export const ITEMS = [
   { id: 'wizard', slot: 'costume', name: 'Wizard', badge: 'archivist' },
   { id: 'astronaut', slot: 'costume', name: 'Astronaut', badge: 'century-club' },
   { id: 'elvis', slot: 'costume', name: 'Elvis', badge: 'pin-cushion' },
-  { group: 'Hold' },
+  { group: 'Held' },
   { id: 'mug', slot: 'held', name: 'Mug', badge: null },
   { id: 'book', slot: 'held', name: 'Book', badge: null },
   { id: 'bottle', slot: 'held', name: 'Water bottle', badge: 'hydro-homie' },

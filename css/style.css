@@ -139,7 +139,8 @@ input::placeholder{color:var(--placeholder)}
 .tile{background:var(--surface-tile);border-radius:var(--r-tile);padding:var(--pad-tile)}
 .tile__k{font:var(--type-label);letter-spacing:var(--tr-label);color:var(--faint)}
 .tile__v{font:var(--type-stat);letter-spacing:var(--tr-stat);font-variant-numeric:tabular-nums;margin-top:2px}
-.tile__v--drinks{color:var(--pink)}
+/* Drinks read like every other number now (owner, 2026-10-04). */
+.tile__v--drinks{color:inherit}
 .tile__v--hydration{color:var(--amber)}
 .tile__u{font:var(--type-caption);color:var(--muted-up);letter-spacing:0}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-tight)}
@@ -209,7 +210,7 @@ input::placeholder{color:var(--placeholder)}
 }
 .listrow__d{font-size:13px;font-weight:var(--fw-bold)}
 .listrow__m{display:flex;gap:10px;font:var(--type-caption);color:var(--muted-up);font-variant-numeric:tabular-nums;white-space:nowrap}
-.listrow__m b{color:var(--pink);font-weight:var(--fw-regular)}
+.listrow__m b{color:var(--text);font-weight:var(--fw-regular)}
 
 /* Centring plus a max width keeps a one- or two-bucket range (a brand new
    All time) reading as bars rather than a full-width rule. */

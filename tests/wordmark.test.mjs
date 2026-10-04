@@ -109,5 +109,5 @@ test('the app icon is the white wordmark on dark forest', async () => {
   for (let x = 0; x < w; x++) if (px(x, row).every((v) => v > 245)) white.push(x);
   assert.ok(white.length > 0, 'white ink across the middle');
   const span = (white.at(-1) - white[0] + 1) / w;
-  assert.ok(span >= 0.5 && span <= 0.64, `wordmark spans ${span.toFixed(3)} of the icon`);
+  assert.ok(span >= 0.4 && span <= 0.52, `wordmark spans ${span.toFixed(3)} of the icon`);
 });

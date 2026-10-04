@@ -61,7 +61,7 @@ function markCoverage(W, H, width) {
  * (`bg`), clipped by `mask` (none, circle, round). Without bg it's the
  * adaptive foreground: white on transparent.
  */
-function iconPixels(P, { bg = true, mark = true, mask = 'none', width = 0.6 } = {}) {
+function iconPixels(P, { bg = true, mark = true, mask = 'none', width = 0.48 } = {}) {
   const out = Buffer.alloc(P * P * 4);
   const cov = mark ? markCoverage(P, P, P * width) : new Float32Array(P * P);
   for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
@@ -78,7 +78,7 @@ function iconPixels(P, { bg = true, mark = true, mask = 'none', width = 0.6 } = 
 function splashPixels(w, h) {
   const out = Buffer.alloc(w * h * 4);
   const P = Math.round(Math.min(w, h) / 2);
-  const disc = iconPixels(P, { mask: 'circle', width: 0.56 });
+  const disc = iconPixels(P, { mask: 'circle', width: 0.44 });
   const x0 = Math.round((w - P) / 2), y0 = Math.round((h - P) / 2);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const k = (y * w + x) * 4;
@@ -146,7 +146,7 @@ const square = (path, P, opts) => png(path, P, P, iconPixels(P, opts));
 await square(resolve(root, 'icons/icon-192.png'), 192, {});
 await square(resolve(root, 'icons/icon-512.png'), 512, {});
 // Maskable icons can be cropped to a circle 80% across, so the wordmark sits further in.
-await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { width: 0.5 });
+await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { width: 0.4 });
 await square(resolve(root, 'icons/apple-touch-icon.png'), 180, {});
 // For the Play listing.
 await png(resolve(root, 'design/round4/icon-1024.png'), 1024, 1024, iconPixels(1024, {}), { opaque: true });
@@ -192,11 +192,11 @@ await png(resolve(root, 'design/round3/feature-graphic.png'), 1024, 500, feature
 const LAUNCHER = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
 for (const [density, size] of Object.entries(LAUNCHER)) {
   await square(`${RES}/mipmap-${density}/ic_launcher.png`, size, { mask: 'round' });
-  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle', width: 0.56 });
+  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle', width: 0.44 });
   // Adaptive layers are 108dp and launchers may crop to a 66dp circle, so
-  // the wordmark is 56% of the layer: its corners stay inside that circle.
+  // the wordmark is 44% of the layer, well inside that circle (owner, 2026-10-04).
   const A = Math.round(size * 2.25);
-  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, width: 0.56 });
+  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, width: 0.44 });
   await square(`${RES}/mipmap-${density}/ic_launcher_background.png`, A, { mark: false });
 }
 
@@ -239,9 +239,9 @@ for (const density of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
 
 /* ---------- themed icon ----------
    Android 13 can tint launcher icons to the wallpaper; it uses this one-colour
-   layer: the wordmark, 56% across the 108dp canvas like the foreground. */
+   layer: the wordmark, 44% across the 108dp canvas like the foreground. */
 
-const mw = 108 * 0.56, mh = (mw * WORDMARK.h) / WORDMARK.w;
+const mw = 108 * 0.44, mh = (mw * WORDMARK.h) / WORDMARK.w;
 const f2 = (v) => +v.toFixed(2);
 const m = wordmarkRects(mh).map((r) => `M${f2((108 - mw) / 2 + r.x)},${f2((108 - mh) / 2 + r.y)}h${f2(r.w)}v${f2(r.h)}h${f2(-r.w)}z`).join('');
 await writeFile(`${RES}/drawable/ic_launcher_monochrome.xml`, `<?xml version="1.0" encoding="utf-8"?>

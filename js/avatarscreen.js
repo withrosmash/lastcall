@@ -36,9 +36,9 @@ function colourName(hex) {
 }
 
 const TABS = [['hair', 'Hair'], ['glasses', 'Glasses'], ['top', 'Top'], ['hats', 'Hats'], ['costumes', 'Costumes'],
-  ['hold', 'Hold'], ['extras', 'Extras'], ['effects', 'Effects'], ['colours', 'Colours']];
+  ['held', 'Held'], ['extras', 'Extras'], ['effects', 'Effects'], ['colours', 'Colours']];
 // Each item tab is one group of the unlock table (items-data.js).
-const GROUP_OF = { hats: 'Hats', costumes: 'Costumes', hold: 'Hold', extras: 'Extras', effects: 'Effects' };
+const GROUP_OF = { hats: 'Hats', costumes: 'Costumes', held: 'Held', extras: 'Extras', effects: 'Effects' };
 const BARE = { hat: null, held: null, costume: null, effect: null, scarf: false, backpack: false, shoes: 'plain', glasses: 'none' };
 
 export function avatarScreen(ctx) {

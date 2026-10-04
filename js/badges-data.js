@@ -200,7 +200,7 @@ export const BADGES = [
     "name": "Fifty Stops",
     "criteria": "50 stops pinned, all time",
     "accent": "pink",
-    "cat": "Aspirational",
+    "cat": "Lifetime",
     "hidden": false
   },
   {
@@ -208,7 +208,7 @@ export const BADGES = [
     "name": "Century Club",
     "criteria": "100 km walked across all {ns}",
     "accent": "forest",
-    "cat": "Aspirational",
+    "cat": "Lifetime",
     "hidden": false
   },
   {
@@ -216,7 +216,7 @@ export const BADGES = [
     "name": "The Archivist",
     "criteria": "25 {ns} tracked, all time",
     "accent": "amber",
-    "cat": "Aspirational",
+    "cat": "Lifetime",
     "hidden": false
   },
   {
@@ -256,7 +256,7 @@ export const BADGES = [
     "name": "Ringleader",
     "criteria": "25 challenges, all time",
     "accent": "amber",
-    "cat": "Aspirational",
+    "cat": "Lifetime",
     "hidden": false
   },
   {
@@ -264,7 +264,7 @@ export const BADGES = [
     "name": "Long Haul",
     "criteria": "Walk 50 km, all time",
     "accent": "forest",
-    "cat": "Aspirational",
+    "cat": "Lifetime",
     "hidden": false
   },
   {
