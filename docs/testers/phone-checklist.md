@@ -1,4 +1,4 @@
-# Phone checklist (build 18c40f5)
+# Phone checklist (build c9a5b64)
 
 Things only a real phone can show. The tickable version is the Leit phone checklist artifact (https://claude.ai/artifact/WmDr4Z74iExSoxxss31sLG); this file mirrors it.
 
@@ -93,3 +93,14 @@ New in build 18c40f5.
 53. A festival day’s card offers Acts seen, counting each act once, on both the route and photo cards.
 54. A long distance like 15.5 km always leaves a gap before Steps, on both cards.
 55. Settings › Show my avatar off: no avatar on the start, live, recap or morning screens, and new cards start with Avatar set to None. Turn it back on and everything returns.
+
+## Round 5 notes
+New in build c9a5b64.
+
+56. Opening the app goes from Android’s brief icon splash straight into the app, with no avatar-in-a-circle screen.
+57. The avatar’s humming sway and its dance have no music note any more.
+58. On a 9:16 route card the map keeps the same zoom whether badges or stop names are on or off.
+59. On a 4:5 route card the map zooms in when you switch rows off, and never zooms out further than it does with badges and three rows of numbers.
+60. On a 4:5 route card, with all three rows of numbers on, badges fill one row, with “+N” in the last spot if there are more. Switch number rows off and the badges get more rows, up to four.
+61. On a 9:16 route card and the photo card, up to eight badges show in two rows, with “+N” for the rest. With two or more rows the badges are a little smaller and closer together, and the names stay readable.
+62. A card for an adventure without a route (location off) still shows the big avatar clear of the stop names and badges.
