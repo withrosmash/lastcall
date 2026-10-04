@@ -529,7 +529,7 @@ const ANIM = {
     K(2, { legWalk: 1, armL: 'up', headDX: 1, mouth: 'open', eyes: 'happy', blush: 2, rootDY: -1 }),
     K(2, { legWalk: 0, armR: 'up', headDX: -1, mouth: 'cat', eyes: 'happy', blush: 2 }),
     K(2, { legWalk: 1, armL: 'up', headDX: 1, mouth: 'open', eyes: 'happy', blush: 2, rootDY: -1 }),
-    K(2, { legWalk: 0, armR: 'up', headDX: -1, mouth: 'cat', eyes: 'content', blush: 2, note: true }),
+    K(2, { legWalk: 0, armR: 'up', headDX: -1, mouth: 'cat', eyes: 'content', blush: 2 }),
     K(2, { legWalk: 1, armL: 'up', headDX: 1, mouth: 'open', eyes: 'star', blush: 2 }),
     K(3, { mouth: 'smile', eyes: 'wink' }),
   ],
@@ -550,7 +550,8 @@ const ANIM = {
   tap: [K(2, { legTap: 1 }), K(2, {}), K(2, { legTap: 1 }), K(2, {}), K(2, { legTap: 1 }), K(2, {})],
   yawn: [K(3, { mouth: 'ooh', eyes: 'sleepy' }), K(6, { mouth: 'wide', eyes: 'closed', headDY: -1, armL: 'up', brows: 'soft' }), K(3, { mouth: 'small', eyes: 'sleepy' }), K(3, {})],
   fan: [K(3, { armR: 'wave', mouth: 'ooh', eyes: 'half' }), K(3, { armR: 'wave2', mouth: 'ooh', eyes: 'half' }), K(3, { armR: 'wave', mouth: 'ooh', eyes: 'half' }), K(3, { armR: 'wave2', eyes: 'half' }), K(2, {})],
-  hum: [K(4, { eyes: 'content', mouth: 'cat', headDX: -1, note: true }), K(4, { eyes: 'content', mouth: 'cat', headDX: 1 }), K(4, { eyes: 'content', mouth: 'cat', headDX: -1, note: true }), K(4, { eyes: 'content', mouth: 'cat' })],
+  // A little sway with a content smile. Its music note read as sleepy, so it's gone (owner, 2026-10-05).
+  hum: [K(4, { eyes: 'content', mouth: 'cat', headDX: -1 }), K(4, { eyes: 'content', mouth: 'cat', headDX: 1 }), K(4, { eyes: 'content', mouth: 'cat', headDX: -1 }), K(4, { eyes: 'content', mouth: 'cat' })],
 };
 export const ANIMATIONS = Object.keys(ANIM);
 
@@ -677,7 +678,6 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
         me.sparks.push({ x: 16 * SX, y: 21 * SY, vx: Math.cos(a) * v * SX, vy: (Math.sin(a) * v - 0.3) * SY, life: 0.9, color });
       }
     }
-    if (s.note) me.sparks.push({ note: true, x: 25 * SX, y: 7 * SY, vx: 0.15 * SX, vy: -0.45 * SY, life: 1.4, color: '#7EE0C0' });
   }
 
   function run(name) {
@@ -721,12 +721,11 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
     me.lid = 0;
     if (me.blinkStep > 0) { me.lid = [0, 0.5, 1, 0.5][me.blinkStep]; me.blinkStep = (me.blinkStep + 1) % 4; }
     else if (--me.blinkIn <= 0) { me.lid = 0.5; me.blinkStep = 2; me.blinkIn = Math.random() < 0.2 ? 5 : 28 + Math.random() * 44; }
-    for (const s of me.sparks) { s.x += s.vx; s.y += s.vy; if (!s.note) s.vy += 0.12 * SY; s.life -= 1 / 12; }
+    for (const s of me.sparks) { s.x += s.vx; s.y += s.vy; s.vy += 0.12 * SY; s.life -= 1 / 12; }
   }
 
   const ZZ = ['ZZZZ', '..Z.', '.Z..', 'ZZZZ'];
-  const NOTE = ['.NN', '.N.', 'NN.', 'NN.'];
-  // Overlays (impact marks, Zs, sparks, notes) are in the animations' own
+  // Overlays (impact marks, Zs, sparks) are in the animations' own
   // 32 x 43 units; `u` is one of those units in device pixels.
   function paint() {
     const fr = frame();
@@ -765,8 +764,7 @@ export function createAvatar({ cell = 1.5, look = DEFAULT_LOOK, onTap = null, la
       g.globalAlpha = Math.max(0, Math.min(1, sp.life));
       g.fillStyle = sp.color;
       const sx = Math.round(sp.x) * d, sy = (Math.round(sp.y) + TOP) * d;
-      if (sp.note) NOTE.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'N') g.fillRect(sx + x * u, sy + y * u, u, u); }));
-      else g.fillRect(sx, sy, u, u);
+      g.fillRect(sx, sy, u, u);
     }
     g.globalAlpha = 1;
   }

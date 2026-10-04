@@ -36,13 +36,6 @@ test('the route card map fades out level with the avatar’s head, on both sizes
   }
 });
 
-test('with the stops list on, the map stops above it, so stop names never sit on the map', async () => {
-  const { routeMapEnd, routeMapBottom } = await import('../js/card.js');
-  assert.equal(routeMapEnd(1350, null), routeMapBottom(1350));
-  assert.equal(routeMapEnd(1350, 500), 500);
-  assert.equal(routeMapEnd(1350, 1200), routeMapBottom(1350));
-});
-
 /* ---------- numbers as elements ---------- */
 
 const keysOf = (rows) => rows.map((r) => r.map((c) => `${c.key}@${c.col}`).join(' '));
@@ -135,4 +128,50 @@ test('every number is a photo-card piece that stacks and draws', async () => {
     assert.ok(photoOrder().includes(key), `${key} draws on the photo card`);
     assert.ok(photoStacked().includes(key), `${key} stacks on the photo card`);
   }
+});
+
+test('9:16 keeps its route frame whatever is stacked; 4:5 zooms out no further than four rows', async () => {
+  const { routeFrameH, routeRegionH } = await import('../js/card.js');
+  const top = 150, three = 1920 - 64 - 240 - 260; // 9:16, the top of three number rows
+  const story = (stackTop, above) => routeFrameH(1920, { top, stackTop, above, title: true, route: true, bottom: 1920 - 64 - 240 });
+  assert.equal(story(three, 0), story(three - 215, 215), 'badges don’t change the 9:16 frame');
+  assert.equal(story(three, 0), story(three - 400, 400), 'nor do stop names');
+  const feed = (stackTop, above) => routeFrameH(1350, { top, stackTop, above, title: true, route: true, bottom: 1350 - 64 - 240 });
+  const fourRows = feed(1350 - 64 - 240 - 260 - 215, 215);
+  assert.equal(feed(1350 - 64 - 240 - 260 - 215 - 180, 395), fourRows, 'five rows: no further out than four');
+  assert.ok(feed(1350 - 64 - 240 - 130, 0) > fourRows, 'two rows: zooms in');
+});
+
+test('badges fill the rows they are given; past that the last spot counts the rest', async () => {
+  const { badgeGrid } = await import('../js/card.js');
+  assert.deepEqual(badgeGrid(9, 1), { shown: 3, more: 6, rows: 1 });
+  assert.deepEqual(badgeGrid(4, 1), { shown: 4, more: 0, rows: 1 });
+  assert.deepEqual(badgeGrid(9, 3), { shown: 9, more: 0, rows: 3 });
+  assert.deepEqual(badgeGrid(17, 4), { shown: 15, more: 2, rows: 4 });
+});
+
+test('on a 4:5 route card the badges get the rows the others leave', async () => {
+  const { badgeRowsFor } = await import('../js/card.js');
+  assert.deepEqual([4, 3, 2, 1, 0].map((other) => badgeRowsFor(1350, other)), [1, 1, 2, 3, 4]);
+  assert.equal(badgeRowsFor(1920, 3), 2, '9:16 keeps up to eight');
+});
+
+test('up to eight badges show in rows of four; past that the eighth spot counts the rest', async () => {
+  const { badgeGrid } = await import('../js/card.js');
+  assert.deepEqual(badgeGrid(3), { shown: 3, more: 0, rows: 1 });
+  assert.deepEqual(badgeGrid(4), { shown: 4, more: 0, rows: 1 });
+  assert.deepEqual(badgeGrid(5), { shown: 5, more: 0, rows: 2 });
+  assert.deepEqual(badgeGrid(8), { shown: 8, more: 0, rows: 2 });
+  assert.deepEqual(badgeGrid(9), { shown: 7, more: 2, rows: 2 });
+  assert.deepEqual(badgeGrid(0), { shown: 0, more: 0, rows: 0 });
+});
+
+test('badge rows are only as tall as their own labels need', async () => {
+  const { badgeRowsLayout } = await import('../js/card.js');
+  const oneLine = 24, twoLines = 46;
+  assert.deepEqual(badgeRowsLayout([oneLine], 120), { tops: [0], h: 120 + 12 + oneLine });
+  const two = badgeRowsLayout([oneLine, twoLines], 120);
+  assert.equal(two.tops[1], 120 + 12 + oneLine + 14, 'the second row starts just below the first row’s labels');
+  assert.equal(two.h, two.tops[1] + 120 + 12 + twoLines);
+  assert.ok(badgeRowsLayout([oneLine, oneLine, oneLine], 120).tops[2] < 2 * 190, 'tighter than the old fixed rows');
 });

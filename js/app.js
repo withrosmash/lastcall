@@ -2,14 +2,12 @@ import * as store from './storage.js';
 import * as S from './state.js';
 import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme, el } from './ui.js';
 import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScreen, morningNight, onboardingScreen, needsOnboarding } from './session.js';
-import { createAvatar, setAvatarCalm } from './avatar.js';
-import { avatarLook } from './wardrobe.js';
+import { setAvatarCalm } from './avatar.js';
 import { avatarScreen } from './avatarscreen.js';
 import { MODES, recentFor, rememberFor } from './modes.js';
 import { bloomCss } from './glow.js';
 import { countCard } from './stats.js';
 import { t } from './words.js';
-import { wordmarkSvg } from './wordmark.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
 import { historyScreen, detailScreen, settingsScreen, appearanceScreen, numbersScreen } from './history.js';
@@ -566,30 +564,10 @@ function setTheme(theme) {
   render();
 }
 
-/* The splash hand-off. Android's splash can only show the default face,
-   because it's read from a fixed file before any app code runs. So the app's
-   first frame puts the user's own avatar in the same circle, waving, then
-   fades into the app. Native only: the web preview has no system splash. */
-function handoff() {
-  if (!geo.isNative() || ctx.state.prefs.showAvatar === false) return;
-  const av = createAvatar({ cell: 1.5, look: avatarLook(ctx), label: 'Your avatar' });
-  av.play('hello');
-  const node = el('div', { class: 'handoff', 'aria-hidden': 'true' },
-    el('div', { class: 'handoff__disc' }, av.canvas),
-    el('span', { class: 'handoff__mark' }, wordmarkSvg(18)));
-  document.body.append(node);
-  av.start();
-  setTimeout(() => {
-    node.classList.add('is-out');
-    setTimeout(() => node.remove(), 320);
-  }, 1100);
-}
-
 function boot() {
   store.installFlushHooks();
   keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
   applyAccessibility();
-  handoff();
 
   const active = ctx.state.active;
   if (active && S.isStale(active)) {

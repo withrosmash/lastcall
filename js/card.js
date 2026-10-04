@@ -207,8 +207,7 @@ function makeState(s, allBadges = [], prefs = {}) {
   const sessionBadges = allBadges
     .filter((b) => [...(s.sessionIds || [s.id]), s.festivalId].includes(b.sessionId))
     .map((b) => BADGES.find((m) => m.slug === b.slug))
-    .filter(Boolean)
-    .slice(0, 4);
+    .filter(Boolean);
   // A badge whose art is missing drops out of the card rather than exporting
   // a labelled gap.
   const badgeImgs = [];
@@ -249,7 +248,8 @@ function makeState(s, allBadges = [], prefs = {}) {
     // Photo-card positions. The route card lays itself out.
     elements: {
       map: { on: s.trail.length > 1 },
-      route: { on: s.trail.length > 1, x: PAD, y: 300, scale: 1 },
+      // Starts below the badges, which take a second row past four.
+      route: { on: s.trail.length > 1, x: PAD, y: 300 + (badgeGrid(sessionBadges.length).rows > 1 ? BADGE_ROW_STEP : 0), scale: 1 },
       title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
       avatar: { on: true, x: 1080 - PAD - 300, y: 1350 - PAD - 520, scale: 1 },
       // Time out is labelled now, 34px taller, so it sits that much higher.
@@ -280,8 +280,6 @@ const snapScale = (key, node) => { if (key === 'avatar') node.scale = avatarCell
 export const AVATAR_CORNER_TOP = (h) => h - PAD - 440;
 /** Where the route card's map has faded out: level with that avatar's head. */
 export const routeMapBottom = (h) => AVATAR_CORNER_TOP(h) + 140;
-/** The map's end on a card: at the avatar's head, or above the stops list so names never sit on tiles. */
-export const routeMapEnd = (h, stopsTop) => Math.min(routeMapBottom(h), stopsTop ?? Infinity);
 
 /**
  * How tall the route card's route frame is. On 4:5 it runs down to the badges
@@ -292,6 +290,61 @@ export function routeRegionH(h, { top, stackTop, above, title, route }) {
   if (h >= 1500) return h - 790 - above - (title ? 60 : 0);
   const bottom = route ? Math.min(stackTop, AVATAR_CORNER_TOP(h)) : stackTop;
   return bottom - 30 - top;
+}
+
+/**
+ * The route frame the owner chose (2026-10-05): 9:16 keeps the frame it has
+ * with three rows of numbers, whatever is stacked above them; 4:5 zooms out no
+ * further than it does with four rows (badges on three rows of numbers), and
+ * zooms in when there are fewer. `bottom` is the bottom number row's top.
+ */
+export function routeFrameH(h, { top, stackTop, above, title, route, bottom }) {
+  const threeRows = bottom - 2 * 130;
+  if (h >= 1500) return routeRegionH(h, { top, stackTop: threeRows, above: 0, title, route });
+  return routeRegionH(h, { top, stackTop: Math.max(stackTop, threeRows - 215), above, title, route });
+}
+
+/**
+ * Badges on a card, four to a row, in at most `maxRows` rows. When there are
+ * more than fit, the last spot shows how many more there are instead.
+ */
+export function badgeGrid(n, maxRows = 2) {
+  const room = maxRows * 4;
+  const shown = n > room ? room - 1 : n;
+  return { shown, more: n - shown, rows: Math.ceil((shown + (n > shown ? 1 : 0)) / 4) };
+}
+
+/**
+ * How many badge rows a route card allows (owner, 2026-10-05). On 4:5 the
+ * badges get the rows the others leave: three rows of numbers and stop names
+ * leave one, two leave two, one leaves three, none leaves four. 9:16 and the
+ * photo card allow two.
+ */
+export const badgeRowsFor = (h, otherRows) => (h >= 1500 ? 2 : Math.min(4, Math.max(1, 4 - otherRows)));
+// Disc and label sizes. With more than one row, `compact` can shrink them a
+// little so a tall stack of badges takes less of the card.
+const BADGE_STYLES = { full: { size: 120, gap: 34, label: 20 }, compact: { size: 104, gap: 50, label: 20 } };
+const BADGE_COMPACT = true;
+// Roughly one row of badges, for placing the photo card's route below two.
+const BADGE_ROW_STEP = 175;
+
+/** Badge rows stacked tight: each as tall as its disc and its own labels need. */
+export function badgeRowsLayout(labelHs, size) {
+  const tops = [];
+  let y = 0;
+  labelHs.forEach((lh) => { tops.push(y); y += size + 12 + lh + 14; });
+  return { tops, h: tops.length ? tops.at(-1) + size + 12 + labelHs.at(-1) : 0 };
+}
+
+/** Where every badge goes, measured, for a stack of at most `maxRows` rows. */
+function badgesLayout(g, maxRows) {
+  const items = ui.badgeImgs;
+  const { shown, more, rows } = badgeGrid(items.length, maxRows);
+  const st = BADGE_COMPACT && rows > 1 ? BADGE_STYLES.compact : BADGE_STYLES.full;
+  const cellW = st.size + st.gap;
+  const labelHs = Array.from({ length: rows }, (_, r) => Math.max(0, ...items.slice(0, shown).slice(r * 4, r * 4 + 4)
+    .map(({ meta }) => labelFit(g, meta.name, cellW - 10, { size: st.label, spacing: 0 }).h)));
+  return { shown, more, rows, st, cellW, ...badgeRowsLayout(labelHs, st.size) };
 }
 
 /** With no route, the avatar's scale in the map's space, or 0 when there isn't room for it. */
@@ -642,14 +695,11 @@ function textWidth(g, str, { size = 16, weight = 600, spacing = 0 } = {}) {
 // A badge label has to stay inside its own cell — at full size "HOMING PIGEON"
 // ran straight into the next badge. Try one line, then the most balanced
 // two-line split, then shrink as a last resort. Returns the height used.
-function drawLabelFit(g, text, cx, y, maxW, base = {}) {
+// How a label fits its cell: one line, the most balanced two-line split, or
+// shrunk as a last resort. Measures only; drawLabelFit draws the result.
+function labelFit(g, text, maxW, base = {}) {
   const opts = { size: 16, weight: 600, color: labelInk(), spacing: 2, align: 'center', ...base };
-
-  if (textWidth(g, text, opts) <= maxW) {
-    drawText(g, text, cx, y, opts);
-    return opts.size + 4;
-  }
-
+  if (textWidth(g, text, opts) <= maxW) return { opts, lines: [text], h: opts.size + 4 };
   const words = text.split(' ');
   if (words.length > 1) {
     let best = null;
@@ -659,17 +709,17 @@ function drawLabelFit(g, text, cx, y, maxW, base = {}) {
       const w = Math.max(textWidth(g, a, opts), textWidth(g, b, opts));
       if (!best || w < best.w) best = { a, b, w };
     }
-    if (best && best.w <= maxW) {
-      drawText(g, best.a, cx, y, opts);
-      drawText(g, best.b, cx, y + opts.size + 3, opts);
-      return (opts.size + 3) * 2;
-    }
+    if (best && best.w <= maxW) return { opts, lines: [best.a, best.b], h: (opts.size + 3) * 2 };
   }
-
   let size = opts.size;
   while (size > 10 && textWidth(g, text, { ...opts, size }) > maxW) size -= 1;
-  drawText(g, text, cx, y, { ...opts, size });
-  return size + 4;
+  return { opts: { ...opts, size }, lines: [text], h: size + 4 };
+}
+
+function drawLabelFit(g, text, cx, y, maxW, base = {}) {
+  const fit = labelFit(g, text, maxW, base);
+  fit.lines.forEach((line, i) => drawText(g, line, cx, y + i * (fit.opts.size + 3), fit.opts));
+  return fit.h;
 }
 
 function measure(g, chars, spacing) {
@@ -874,16 +924,19 @@ function drawRouteCard(g, w, h, want) {
 
   const stack = [];
   if (on.places.on && ui.session.pins.length) stack.push({ id: 'places', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
-  if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: 215 });
+  const placesOn = on.places.on && ui.session.pins.length;
+  const badgeRows = badgeRowsFor(h, rows.length + (placesOn ? 1 : 0));
+  // The badges' own height plus the same clear space below them as before.
+  if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: badgesLayout(g, badgeRows).h + 57 });
   const above = stack.reduce((n, b) => n + b.h, 0);
   const stackTop = numbersTop - above;
-  // The map runs down behind the badges and stats and fades out level with
-  // the avatar's head; a stops list (names, not icons) keeps it above.
-  const mapH = routeMapEnd(h, stack[0]?.id === 'places' ? stackTop : null);
+  // The map runs down behind the badges, stop names and numbers and fades out
+  // level with the avatar's head.
+  const mapH = routeMapBottom(h);
   // The route is framed in the space above the badges and stats. On 4:5 that
   // space runs down to the badges, so the route sits larger; 9:16 keeps its frame.
   const regionY = title ? 150 : 90;
-  const regionH = routeRegionH(h, { top: regionY, stackTop, above, title, route: ui.session.trail.length > 1 });
+  const regionH = routeFrameH(h, { top: regionY, stackTop, above, title, route: ui.session.trail.length > 1, bottom });
   const region = { x: M, y: regionY, w: w - M * 2, h: regionH };
   const trail = ui.session.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
@@ -909,7 +962,7 @@ function drawRouteCard(g, w, h, want) {
 
   let y = stackTop;
   for (const b of stack) {
-    if (want(b.id)) DRAW[b.id](g, M, y, w);
+    if (want(b.id)) DRAW[b.id](g, M, y, w, { maxRows: badgeRows });
     y += b.h;
   }
 
@@ -1127,20 +1180,37 @@ const DRAW = {
     const w = drawText(g, placeLine(ui.session), x, y, { size: 28, weight: 400, color: mutedInk() });
     return { w, h: 34 };
   },
-  badges(g, x, y) {
+  badges(g, x, y, w, { maxRows = 2 } = {}) {
     const items = ui.badgeImgs;
     if (!items.length) return { w: 0, h: 0 };
-    const size = 120, gap = 34, cellW = size + gap;
-    let labelH = 0;
+    const { shown, more, st, cellW, tops, h } = badgesLayout(g, maxRows);
+    const size = st.size;
     const light = ui.mode === 'preset' && ui.cardTheme === 'light';
-    items.forEach(({ meta, img: dark, imgLight }, i) => {
-      const cx = x + i * cellW;
+    const at = (k) => ({ cx: x + (k % 4) * cellW, cy: y + tops[Math.floor(k / 4)] });
+    items.slice(0, shown).forEach(({ meta, img: dark, imgLight }, k) => {
+      const { cx, cy } = at(k);
       const img = light && imgLight.complete && imgLight.naturalWidth ? imgLight : dark;
-      if (img.complete && img.naturalWidth) g.drawImage(img, cx, y, size, size);
-      labelH = Math.max(labelH, drawLabelFit(g, meta.name, cx + size / 2, y + size + 14, cellW - 10, { size: 20, spacing: 0 }));
+      if (img.complete && img.naturalWidth) g.drawImage(img, cx, cy, size, size);
+      drawLabelFit(g, meta.name, cx + size / 2, cy + size + 12, cellW - 10, { size: st.label, spacing: 0 });
     });
-    return { w: cellW * items.length - gap, h: size + 14 + labelH };
+    if (more) {
+      // The last spot: a plain disc with how many more were earned.
+      const { cx, cy } = at(shown);
+      g.save();
+      g.beginPath();
+      g.arc(cx + size / 2, cy + size / 2, size / 2 - 2, 0, Math.PI * 2);
+      g.lineWidth = 3;
+      g.strokeStyle = labelInk();
+      g.globalAlpha = 0.6;
+      g.stroke();
+      g.restore();
+      drawText(g, `+${more}`, cx + size / 2, cy + size / 2 - size * 0.18, { size: Math.round(size / 3), weight: 700, align: 'center' });
+    }
+    const cols = Math.min(4, shown + (more ? 1 : 0));
+    return { w: cellW * cols - st.gap, h };
   },
+
+
   places(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);
     if (!names.length) {
