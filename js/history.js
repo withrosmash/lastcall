@@ -256,6 +256,12 @@ export function settingsScreen(ctx) {
 
     el('h2', { class: 'eb', style: 'margin:0', text: 'Accessibility' }),
     switchRow({
+      label: 'Show my avatar',
+      hint: 'On the start, live and recap screens, and on new cards. Badges still unlock its items.',
+      on: p.showAvatar !== false,
+      onChange: (on) => { p.showAvatar = on; ctx.save(); ctx.render(); },
+    }),
+    switchRow({
       label: 'Bigger text',
       hint: 'Makes the text larger, on top of your phone’s own text size.',
       on: p.biggerText,

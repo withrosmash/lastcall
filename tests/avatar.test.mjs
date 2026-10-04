@@ -213,3 +213,10 @@ test('Calmer avatar has no idle moves at all; reactions are separate', async () 
     assert.ok(idlePool(mood, false).length > 0, mood);
   }
 });
+
+test('the avatar shows unless it has been switched off', async () => {
+  const { avatarOn } = await import('../js/wardrobe.js');
+  assert.equal(avatarOn({ state: { prefs: {} } }), true, 'on by default, old saves included');
+  assert.equal(avatarOn({ state: { prefs: { showAvatar: true } } }), true);
+  assert.equal(avatarOn({ state: { prefs: { showAvatar: false } } }), false);
+});

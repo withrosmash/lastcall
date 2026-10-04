@@ -11,6 +11,9 @@ import { t } from './words.js';
 
 export const avatarLook = (ctx) => normaliseLook(ctx.state.prefs.avatar);
 
+/** Whether the avatar is shown at all (Settings, Show my avatar). On unless switched off. */
+export const avatarOn = (ctx) => ctx.state.prefs.showAvatar !== false;
+
 /** The look dressed for a mode: one small touch, unless it's turned off. */
 export function dressedFor(ctx, look, mode) {
   if (ctx.state.prefs.modeTouches === false || !mode || mode === 'night') return look;

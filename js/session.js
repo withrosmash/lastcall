@@ -13,7 +13,7 @@ import { requestActivityPermission } from './keepalive.js';
 import * as notify from './notify.js';
 import { createAvatar } from './avatar.js';
 import { liveTileKeys, doneTileKeys, paceLabel } from './stats.js';
-import { avatarLook, openUnlocks, itemsForBadges, dressedFor } from './wardrobe.js';
+import { avatarLook, openUnlocks, itemsForBadges, dressedFor, avatarOn } from './wardrobe.js';
 import { t, phrase } from './words.js';
 
 /* ---------- avatar ---------- */
@@ -50,16 +50,17 @@ function moodFor(s, prefs, now = Date.now()) {
 
 export function startScreen(ctx) {
   const last = ctx.state.sessions.find((s) => s.endedAt);
-  const av = createAvatar({ cell: 2, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' });
-  queueMicrotask(() => av.start());
+  // With the avatar switched off, the start screen leads with the wordmark.
+  const av = avatarOn(ctx) ? createAvatar({ cell: 2, look: avatarLook(ctx), onTap: () => ctx.go('avatar'), label: 'Your avatar. Tap to customise.' }) : null;
+  if (av) queueMicrotask(() => av.start());
   return [
     el('div', { class: 'topbar' },
       iconBtn('award', 'Badges', () => ctx.go('badges')),
       iconBtn('settings', 'Settings', () => ctx.go('settings'))),
     spacer(),
-    el('div', { class: 'avatar-home' },
+    av ? el('div', { class: 'avatar-home' },
       av.canvas,
-      el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')),
+      el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')) : null,
     el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(15)),
     el('h1', { class: 'display', style: 'margin-top:10px' },
       t('Track the {n}.'), el('br'), 'Piece it together later.'),
@@ -222,15 +223,15 @@ export function morningScreen(ctx, night) {
     glasses: base.glasses === 'sun' ? 'none' : base.glasses,
     colors: { ...base.colors, top: '#3D6FB0' },
   };
-  const av = createAvatar({ cell: 2, look, label: 'Your avatar, the morning after', onTap: () => av.play('morningwave') });
-  av.setMood('Morning');
-  queueMicrotask(() => av.start());
+  const av = avatarOn(ctx) ? createAvatar({ cell: 2, look, label: 'Your avatar, the morning after', onTap: () => av.play('morningwave') }) : null;
+  av?.setMood('Morning');
+  if (av) queueMicrotask(() => av.start());
 
   const place = s.pins.length ? s.pins[s.pins.length - 1].name : null;
   return [
     el('div', { class: 'eb', text: place ? `${shortDate(s.startedAt)} · ${place}` : shortDate(s.startedAt) }),
     el('h1', { class: 'display', style: 'margin-top:4px', text: 'Morning.' }),
-    el('div', { class: 'morning__stage' }, av.canvas),
+    av ? el('div', { class: 'morning__stage' }, av.canvas) : null,
     el('p', { class: 'body', style: 'margin:0',
       text: `You were out ${longDuration(sum.ms)} and home by ${clockTime(s.endedAt)}.` }),
     doneTiles(s),
@@ -273,8 +274,9 @@ export function liveScreen(ctx) {
 
   // role=timer is quiet to screen readers until asked, unlike the old live region.
   const clock = el('div', { class: 'timer', role: 'timer', text: hms(S.elapsedMs(s)) });
-  const av = liveAvatar(ctx);
-  av.setMood(moodFor(s, ctx.state.prefs));
+  const av = avatarOn(ctx) ? liveAvatar(ctx) : null;
+  if (!av) liveAv = null;
+  av?.setMood(moodFor(s, ctx.state.prefs));
   ctx.tick = () => {
     clock.textContent = hms(S.elapsedMs(s));
     // Pace changes with the clock even when no new position arrives. The whole
@@ -282,7 +284,7 @@ export function liveScreen(ctx) {
     const paceOld = document.querySelector('[data-pace]');
     if (paceOld) { const fresh = paceTile(S.walkPace(s)); if (fresh.textContent !== paceOld.textContent) paceOld.replaceWith(fresh); }
     // Moods drift with the clock too: sleepy after 1am, busy spells fade.
-    av.setMood(moodFor(s, ctx.state.prefs));
+    av?.setMood(moodFor(s, ctx.state.prefs));
     // On a walk, water comes due with the clock rather than with a log.
     const due = S.waterDue(s, ctx.state.prefs);
     if (due.kind === 'time' && due.due && !ctx.walkNudged) {
@@ -307,7 +309,7 @@ export function liveScreen(ctx) {
     modeChip(ctx),
     el('div', { class: 'live-top' },
       el('div', {}, clock, el('div', { class: 'cap', text: `Started ${clockTime(s.startedAt)}` })),
-      av.canvas),
+      av?.canvas),
 
     liveTiles(ctx, s),
 
@@ -562,11 +564,13 @@ export function recapScreen(ctx, session) {
   // Yawns and dozes off. Badges that come with an item open the unlock sheet
   // instead of a celebration here; other new badges still get one. Once per
   // night: the recap re-renders when you come back and shouldn't replay.
-  const av = createAvatar({ cell: 1.5, look: dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode) });
+  const av = avatarOn(ctx) ? createAvatar({ cell: 1.5, look: dressedFor(ctx, avatarLook(ctx), S.currentPart(s).mode) }) : null;
   // Dozes off only after a late or long one; otherwise a happy finish.
   const sleepy = S.dozesOff(s);
-  av.setMood(sleepy ? 'Sleepy' : 'Fresh');
-  if (ctx.recapPlayed !== s.id) {
+  av?.setMood(sleepy ? 'Sleepy' : 'Fresh');
+  // With the avatar off there's no reaction and no unlock sheet; items still
+  // unlock quietly, ready if it's switched back on.
+  if (av && ctx.recapPlayed !== s.id) {
     ctx.recapPlayed = s.id;
     const slugs = (ctx.newBadges || []).map((b) => b.slug);
     const unlocking = itemsForBadges(slugs).length > 0;
@@ -580,7 +584,7 @@ export function recapScreen(ctx, session) {
       }, 900);
     }
   }
-  queueMicrotask(() => av.start());
+  if (av) queueMicrotask(() => av.start());
 
   return [
     el('div', { class: 'eb', text: S.modeLine(s) }),
@@ -591,7 +595,7 @@ export function recapScreen(ctx, session) {
         el('div', { class: 'timer timer--ended', text: hms(sum.ms) }),
         el('div', { class: 'cap', text: `${clockTime(s.startedAt)} to ${clockTime(s.endedAt)}` }),
       ),
-      av.canvas),
+      av?.canvas),
 
     glass(routeSvg(s, 190)),
 

@@ -74,7 +74,7 @@ const FACE_STATE = {
 export function cardScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
-  if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
+  if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges, ctx.state.prefs);
   ui.look = dressedFor(ctx, avatarLook(ctx), S.currentPart(ui.session).mode);
 
   const canvas = el('canvas', { id: 'card-canvas' });
@@ -157,7 +157,7 @@ export function cardScreen(ctx, session) {
 export function shareScreen(ctx, session) {
   const s = session || ctx.lastSession;
   if (!s) { ctx.go('start'); return []; }
-  if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges);
+  if (!ui || ui.session !== s) ui = makeState(s, ctx.state.badges, ctx.state.prefs);
   ui.look = dressedFor(ctx, avatarLook(ctx), S.currentPart(ui.session).mode);
 
   const canvas = el('canvas', { id: 'card-canvas' });
@@ -200,7 +200,7 @@ const DRAW_ORDER = ['route', 'avatar', 'title', 'distance', 'steps', 'stops', 'd
 // What the photo card stacks from the bottom until it's moved.
 const STACKED = ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'];
 
-function makeState(s, allBadges = []) {
+function makeState(s, allBadges = [], prefs = {}) {
   // Badges the night itself earned, art preloaded for the canvas. The SVGs are
   // same-origin, so drawing them never taints the export.
   const sessionBadges = allBadges
@@ -239,7 +239,8 @@ function makeState(s, allBadges = []) {
     theme: 'halo',
     cardTheme: 'dark',
     title: '',
-    face: 'normal',
+    // With the avatar switched off in Settings, cards start without it.
+    face: prefs.showAvatar === false ? 'none' : 'normal',
     look: null,
     photo: null,
     selected: null,

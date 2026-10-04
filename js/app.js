@@ -571,7 +571,7 @@ function setTheme(theme) {
    first frame puts the user's own avatar in the same circle, waving, then
    fades into the app. Native only: the web preview has no system splash. */
 function handoff() {
-  if (!geo.isNative()) return;
+  if (!geo.isNative() || ctx.state.prefs.showAvatar === false) return;
   const av = createAvatar({ cell: 1.5, look: avatarLook(ctx), label: 'Your avatar' });
   av.play('hello');
   const node = el('div', { class: 'handoff', 'aria-hidden': 'true' },
