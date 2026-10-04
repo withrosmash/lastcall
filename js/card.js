@@ -299,6 +299,9 @@ export function routeRegionH(h, { top, stackTop, above, title, route }) {
  * zooms in when there are fewer. `bottom` is the bottom number row's top.
  */
 export function routeFrameH(h, { top, stackTop, above, title, route, bottom }) {
+  // With no route the space is the big avatar's, which must stay clear of
+  // the stack, so it keeps following it.
+  if (!route) return routeRegionH(h, { top, stackTop, above, title, route });
   const threeRows = bottom - 2 * 130;
   if (h >= 1500) return routeRegionH(h, { top, stackTop: threeRows, above: 0, title, route });
   return routeRegionH(h, { top, stackTop: Math.max(stackTop, threeRows - 215), above, title, route });
@@ -321,12 +324,12 @@ export function badgeGrid(n, maxRows = 2) {
  * photo card allow two.
  */
 export const badgeRowsFor = (h, otherRows) => (h >= 1500 ? 2 : Math.min(4, Math.max(1, 4 - otherRows)));
-// Disc and label sizes. With more than one row, `compact` can shrink them a
-// little so a tall stack of badges takes less of the card.
+// Disc and label sizes. With more than one row the discs shrink a little
+// (labels keep their width, so they stay on one line) and rows close up.
 const BADGE_STYLES = { full: { size: 120, gap: 34, label: 20 }, compact: { size: 104, gap: 50, label: 20 } };
-const BADGE_COMPACT = true;
-// Roughly one row of badges, for placing the photo card's route below two.
-const BADGE_ROW_STEP = 175;
+// A second row of badges at its tallest (two-line labels), for placing the
+// photo card's route clear below it.
+const BADGE_ROW_STEP = 200;
 
 /** Badge rows stacked tight: each as tall as its disc and its own labels need. */
 export function badgeRowsLayout(labelHs, size) {
@@ -340,7 +343,7 @@ export function badgeRowsLayout(labelHs, size) {
 function badgesLayout(g, maxRows) {
   const items = ui.badgeImgs;
   const { shown, more, rows } = badgeGrid(items.length, maxRows);
-  const st = BADGE_COMPACT && rows > 1 ? BADGE_STYLES.compact : BADGE_STYLES.full;
+  const st = rows > 1 ? BADGE_STYLES.compact : BADGE_STYLES.full;
   const cellW = st.size + st.gap;
   const labelHs = Array.from({ length: rows }, (_, r) => Math.max(0, ...items.slice(0, shown).slice(r * 4, r * 4 + 4)
     .map(({ meta }) => labelFit(g, meta.name, cellW - 10, { size: st.label, spacing: 0 }).h)));
@@ -1209,7 +1212,6 @@ const DRAW = {
     const cols = Math.min(4, shown + (more ? 1 : 0));
     return { w: cellW * cols - st.gap, h };
   },
-
 
   places(g, x, y) {
     const names = ui.session.pins.map((p) => p.name).slice(0, 5);

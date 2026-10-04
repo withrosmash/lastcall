@@ -175,3 +175,11 @@ test('badge rows are only as tall as their own labels need', async () => {
   assert.equal(two.h, two.tops[1] + 120 + 12 + twoLines);
   assert.ok(badgeRowsLayout([oneLine, oneLine, oneLine], 120).tops[2] < 2 * 190, 'tighter than the old fixed rows');
 });
+
+test('with no route the space keeps clear of everything stacked below it, for the big avatar', async () => {
+  const { routeFrameH, routeRegionH } = await import('../js/card.js');
+  for (const h of [1350, 1920]) {
+    const args = { top: 150, stackTop: h === 1350 ? 287 : 719, above: 400, title: true, route: false, bottom: h - 64 - 240 };
+    assert.equal(routeFrameH(h, args), routeRegionH(h, args), `${h}: no fixed frame without a route`);
+  }
+});
