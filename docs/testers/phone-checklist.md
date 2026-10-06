@@ -106,7 +106,7 @@ New in build c9a5b64.
 62. A card for an adventure without a route (location off) still shows the big avatar clear of the stop names and badges.
 
 ## Round 6: nearby places
-New in build 621c50f. Suggestions now come from Leit’s own list of places, so check-in should be much quicker.
+New in build 387ae9b. Suggestions now come from Leit’s own list of places, so check-in should be much quicker.
 
 63. Check in at a pub or café in a town: suggestions appear within a second or two, nearest first.
 64. Check in near a stop you’ve named before: your own name for it comes first and shows straight away.
