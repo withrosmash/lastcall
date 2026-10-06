@@ -1,6 +1,6 @@
 # Our own map: groundwork
 
-**Status:** spike done 2026-10-06; the owner decides whether to go ahead. Nothing in the app has changed.
+**Status:** spike done 2026-10-06. Owner verdict the same day: the looks are on brand, and the lighter detail (zooms to 14, 1.5 GB UK) is chosen, since no difference showed on laptop or phone. Build it once the domain exists. Nothing in the app has changed yet.
 **Why:** Esri's keyless tiles (today's maps) aren't licensed for a commercial app, and they stop at zoom 16. Mapbox charges per map load (about $5 per 1,000 after 50,000 free a month, at list price).
 
 ## What we tried
@@ -33,5 +33,5 @@ UK extract time: about 9 seconds to plan; the transfer is 3.1 GB.
 - **Credit:** "© OpenStreetMap contributors · Protomaps" in place of the Esri credit.
 
 ## Open decisions
-1. **Detail:** full (3.0 GB) or lighter (1.5 GB, stretched at street level).
+1. **Detail:** decided, lighter (`--maxzoom=14`, 1.5 GB UK).
 2. **Go ahead:** after the domain exists, as its own milestone: a spec, then a plan.
