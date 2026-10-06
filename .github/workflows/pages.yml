@@ -29,6 +29,18 @@ jobs:
       # never drift from what ships on the phone. No npm install needed — the
       # build falls back to the committed vendor/capacitor-core.js.
       - run: node scripts/build.mjs
+      # The venue squares live on their own branch (built weekly by
+      # venues.yml) and are added to the site here, not to www/ in the repo,
+      # so they never end up inside the APK.
+      - name: Add the venue squares
+        run: |
+          if git clone -q --depth 1 --branch venues-data "https://github.com/${{ github.repository }}.git" venues-src; then
+            rm -rf venues-src/.git
+            mkdir -p www/venues
+            cp -R venues-src/. www/venues/
+          else
+            echo "No venues-data branch yet; publishing without venue squares."
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,0 +1,67 @@
+name: Venues
+
+# Builds the venue squares check-in suggests from: OpenStreetMap's UK food
+# and drink places, cut into small files (scripts/venues/build.mjs). The
+# output is force-pushed to the orphan venues-data branch, so it never builds
+# up history, and the Pages deploy copies it to /venues/. Any failed step
+# fails the job before the push, so the last good data stays published.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Mondays, 03:00 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/venues/**'
+      - 'js/venues.js'
+      - '.github/workflows/venues.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: venues
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install osmium
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+      - name: Download the UK extract
+        run: curl -fsSL --retry 3 -o uk.osm.pbf https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf
+      - name: Keep the food and drink places
+        run: |
+          # The filter comes from js/venues.js, the same list the app uses.
+          FILTER=$(node -e "import('./js/venues.js').then(m=>console.log(Object.entries(m.VENUE_TAGS).map(([k,v])=>'nwr/'+k+'='+v.join(',')).join(' ')))")
+          echo "$FILTER"
+          osmium tags-filter uk.osm.pbf $FILTER -o venues.osm.pbf
+          osmium export venues.osm.pbf -f geojsonseq -o venues.geojsonseq
+          echo "SOURCE=$(osmium fileinfo -g header.option.osmosis_replication_timestamp uk.osm.pbf)" >> "$GITHUB_ENV"
+      - name: Build the squares
+        run: |
+          node scripts/venues/build.mjs venues.geojsonseq out --source="$SOURCE"
+          # A truncated download would publish a nearly empty map; refuse it.
+          node -e "const i=require('./out/v1/index.json'); if (i.count < 100000) { console.error('only ' + i.count + ' places'); process.exit(1); }"
+      - name: Publish to the venues-data branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd out
+          git init -q -b venues-data
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "Venue squares from OpenStreetMap, $SOURCE"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" venues-data
+      - name: Redeploy Pages with the new squares
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main --repo ${{ github.repository }}
