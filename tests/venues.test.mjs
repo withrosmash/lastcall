@@ -111,3 +111,127 @@ test('overpassQuery asks for every kind in the list', () => {
   assert.ok(q.includes('around:150,51.5,-0.1'), q);
   assert.ok(q.trim().endsWith('out center 60;'), q);
 });
+
+// ---------- fetch layer ----------
+import { suggestVenues, overpassVenues, VENUES_BASE, INDEX_MAX_AGE } from '../js/venues.js';
+
+const DAY = 864e5;
+const SOHO = { lat: 51.5121, lng: -0.1315 };
+const INDEX_URL = VENUES_BASE + 'index.json';
+const sqUrl = (key, built) => `${VENUES_BASE}sq/${key}.json?b=${encodeURIComponent(built)}`;
+
+function net(routes) {
+  const calls = [];
+  const fetchImpl = async (url, opts = {}) => {
+    calls.push({ url, method: opts.method || 'GET' });
+    const key = url.startsWith('https://overpass') ? 'overpass' : url;
+    const r = routes[key];
+    if (r === undefined || r instanceof Error) throw r || new Error('offline: ' + url);
+    return new Response(JSON.stringify(r));
+  };
+  return { fetchImpl, calls };
+}
+
+function memCache() {
+  const store = new Map();
+  const c = {
+    store,
+    match: async (url) => (store.has(url) ? store.get(url).clone() : undefined),
+    put: async (url, res) => { store.set(url, res); },
+    keys: async () => [...store.keys()].map((url) => ({ url })),
+    delete: async (url) => store.delete(typeof url === 'string' ? url : url.url),
+  };
+  return { open: async () => c, c };
+}
+
+const index = (built) => ({ v: 1, built, source: 's', count: 3, squares: ['gcpv'] });
+const square = [
+  ['Near', SOHO.lat + 20 * LAT_M, SOHO.lng, 'pub'],
+  ['Nearer', SOHO.lat + 5 * LAT_M, SOHO.lng, 'cafe'],
+  ['Too far', SOHO.lat + 400 * LAT_M, SOHO.lng, 'bar'],
+];
+
+test('inside the index, venues come from the squares', async () => {
+  const { fetchImpl, calls } = net({ [INDEX_URL]: index('b1'), [sqUrl('gcpv', 'b1')]: square });
+  const got = await suggestVenues(SOHO, { fetchImpl, cacheImpl: memCache(), now: 10 * DAY });
+  assert.equal(got.source, 'squares');
+  assert.deepEqual(got.venues.map((v) => v.name), ['Nearer', 'Near']);
+  assert.ok(!calls.some((c) => c.url.startsWith('https://overpass')));
+});
+
+test('outside the index, Overpass is asked instead', async () => {
+  const { fetchImpl, calls } = net({
+    [INDEX_URL]: index('b1'),
+    overpass: { elements: [{ tags: { name: 'Bar Madrid', amenity: 'bar' }, lat: 40.4168, lon: -3.7038 }] },
+  });
+  const got = await suggestVenues({ lat: 40.4168, lng: -3.7038 }, { fetchImpl, cacheImpl: memCache(), now: 10 * DAY });
+  assert.equal(got.source, 'overpass');
+  assert.deepEqual(got.venues.map((v) => v.name), ['Bar Madrid']);
+  assert.equal(calls.at(-1).method, 'POST');
+});
+
+test('the index is fetched at most once a week, and a stale one is better than none', async () => {
+  const cacheImpl = memCache();
+  const first = net({ [INDEX_URL]: index('b1'), [sqUrl('gcpv', 'b1')]: square });
+  await suggestVenues(SOHO, { fetchImpl: first.fetchImpl, cacheImpl, now: 10 * DAY });
+
+  const twoDays = net({ [sqUrl('gcpv', 'b1')]: square });
+  await suggestVenues(SOHO, { fetchImpl: twoDays.fetchImpl, cacheImpl, now: 12 * DAY });
+  assert.ok(!twoDays.calls.some((c) => c.url === INDEX_URL));
+
+  const eightDays = net({ [INDEX_URL]: index('b1'), [sqUrl('gcpv', 'b1')]: square });
+  await suggestVenues(SOHO, { fetchImpl: eightDays.fetchImpl, cacheImpl, now: 10 * DAY + INDEX_MAX_AGE + DAY });
+  assert.ok(eightDays.calls.some((c) => c.url === INDEX_URL));
+
+  const offline = net({});
+  const got = await suggestVenues(SOHO, { fetchImpl: offline.fetchImpl, cacheImpl, now: 40 * DAY });
+  assert.equal(got.source, 'squares');
+  assert.deepEqual(got.venues.map((v) => v.name), ['Nearer', 'Near']);
+});
+
+test('a square already on the phone is not fetched again', async () => {
+  const cacheImpl = memCache();
+  await suggestVenues(SOHO, { ...net({ [INDEX_URL]: index('b1'), [sqUrl('gcpv', 'b1')]: square }), cacheImpl, now: 10 * DAY });
+  const again = net({});
+  const got = await suggestVenues(SOHO, { fetchImpl: again.fetchImpl, cacheImpl, now: 10 * DAY + 1000 });
+  assert.equal(again.calls.length, 0);
+  assert.equal(got.venues.length, 2);
+});
+
+test('a new weekly index drops the old squares', async () => {
+  const cacheImpl = memCache();
+  await suggestVenues(SOHO, { ...net({ [INDEX_URL]: index('b1'), [sqUrl('gcpv', 'b1')]: square }), cacheImpl, now: 10 * DAY });
+  assert.ok(cacheImpl.c.store.has(sqUrl('gcpv', 'b1')));
+  const next = net({ [INDEX_URL]: index('b2'), [sqUrl('gcpv', 'b2')]: [square[0]] });
+  const got = await suggestVenues(SOHO, { fetchImpl: next.fetchImpl, cacheImpl, now: 20 * DAY });
+  assert.ok(!cacheImpl.c.store.has(sqUrl('gcpv', 'b1')));
+  assert.ok(next.calls.some((c) => c.url === sqUrl('gcpv', 'b2')));
+  assert.deepEqual(got.venues.map((v) => v.name), ['Near']);
+});
+
+test('a square that cannot be fetched falls back to Overpass', async () => {
+  const { fetchImpl } = net({
+    [INDEX_URL]: index('b1'),
+    overpass: { elements: [{ tags: { name: 'Fallback' }, center: { lat: SOHO.lat, lon: SOHO.lng } }] },
+  });
+  const got = await suggestVenues(SOHO, { fetchImpl, cacheImpl: memCache(), now: 10 * DAY });
+  assert.equal(got.source, 'overpass');
+  assert.deepEqual(got.venues.map((v) => v.name), ['Fallback']);
+});
+
+test('without a cache it still works', async () => {
+  const { fetchImpl } = net({ [INDEX_URL]: index('b1'), [sqUrl('gcpv', 'b1')]: square });
+  const got = await suggestVenues(SOHO, { fetchImpl, cacheImpl: undefined, now: 10 * DAY });
+  assert.equal(got.venues.length, 2);
+});
+
+test('overpassVenues drops repeated names and sorts nearest first', async () => {
+  const { fetchImpl } = net({ overpass: { elements: [
+    { tags: { name: 'B' }, lat: SOHO.lat + 50 * LAT_M, lon: SOHO.lng },
+    { tags: { name: 'A' }, lat: SOHO.lat + 10 * LAT_M, lon: SOHO.lng },
+    { tags: { name: 'A' }, lat: SOHO.lat + 12 * LAT_M, lon: SOHO.lng },
+    { tags: {}, lat: SOHO.lat, lon: SOHO.lng },
+  ] } });
+  const got = await overpassVenues(SOHO, 150, fetchImpl);
+  assert.deepEqual(got.map((v) => v.name), ['A', 'B']);
+});

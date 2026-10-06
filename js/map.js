@@ -4,6 +4,7 @@ import * as geo from './geo.js';
 import { drawMini } from './avatar.js';
 import { t } from './words.js';
 import { MODES } from './modes.js';
+import { suggestVenues, ownPlaces, mergeSuggestions, filterByText, fold } from './venues.js';
 
 // Dark basemap: the standard OSM raster is light, which fights a true-black
 // night app and leaves the stats strip unreadable. CARTO's dark_all used to be
@@ -208,7 +209,7 @@ function dropPin(ctx, s) {
   sheet((close) => {
     const nameInput = el('input', {
       type: 'text', placeholder: 'The Grapes', autocapitalize: 'words', enterkeyhint: 'done',
-      oninput: (e) => { name = e.target.value; },
+      oninput: (e) => { name = e.target.value; renderChips(); },
     });
 
     // A tester missed this section entirely, for two reasons: the heading sat
@@ -221,33 +222,56 @@ function dropPin(ctx, s) {
     const chips = el('div', { class: 'chips' });
     const suggestions = el('div', { class: 'stack', style: 'gap:6px' }, label, chips, status);
 
+    // Your own named stops nearby show at once (they're on the phone); the
+    // venue squares follow. Typing narrows the chips to names containing
+    // what's typed, so a busy street with 200 places is still one tap away.
+    let list = [];
+    let phase = 'loading';
+    const own = here ? ownPlaces(ctx.state.sessions, s, here.lat, here.lng, 150) : [];
+
+    function renderChips() {
+      if (!here) return;
+      const shown = filterByText(list, nameInput.value);
+      const typed = fold(nameInput.value);
+      chips.replaceChildren(...shown.map((v) =>
+        el('button', {
+          class: 'chip chip--suggest press', type: 'button',
+          'aria-pressed': String(typed !== '' && fold(v.name) === typed),
+          onclick: () => {
+            name = v.name;
+            nameInput.value = v.name;
+            renderChips();
+          },
+        }, v.name)));
+      if (phase === 'loading') status.textContent = 'Looking for places nearby…';
+      else if (!list.length) {
+        status.textContent = phase === 'failed'
+          ? 'Couldn’t reach the venue list. Type the name instead.'
+          : 'Nothing found nearby. Type the name instead.';
+      } else if (typed && !shown.length) status.textContent = 'No match nearby. Your own name is fine.';
+      else if (phase === 'failed') status.textContent = 'Couldn’t reach the venue list. Your places are above.';
+      else status.textContent = 'Tap one, or type to search. Places from OpenStreetMap.';
+    }
+
     if (!here) {
       label.hidden = true;
       status.textContent = gpsOff
         ? 'Location is off, so this stop won’t be on the map. It still counts.'
         : 'Still finding you. The stop goes on the map once your position arrives.';
-    } else nearbyVenues(here).then((venues) => {
-      if (!suggestions.isConnected) return;
-      if (!venues.length) {
-        status.textContent = 'Nothing found nearby. Type the name instead.';
-        return;
-      }
-      chips.replaceChildren(...venues.slice(0, 6).map((v) =>
-        el('button', {
-          class: 'chip chip--suggest press', type: 'button',
-          onclick: () => {
-            name = v.name;
-            nameInput.value = v.name;
-            [...chips.children].forEach((c) => c.setAttribute('aria-pressed', 'false'));
-            chips.querySelector(`[data-name="${CSS.escape(v.name)}"]`)?.setAttribute('aria-pressed', 'true');
-          },
-          'data-name': v.name,
-          'aria-pressed': 'false',
-        }, v.name)));
-      status.textContent = 'Tap one, or type your own. Places from OpenStreetMap.';
-    }).catch(() => {
-      if (suggestions.isConnected) status.textContent = 'Couldn’t reach the venue list. Type the name instead.';
-    });
+    } else {
+      list = own;
+      renderChips();
+      suggestVenues(here).then(({ venues }) => {
+        if (!suggestions.isConnected) return;
+        list = mergeSuggestions(own, venues);
+        phase = 'done';
+        renderChips();
+      }).catch(() => {
+        if (!suggestions.isConnected) return;
+        phase = 'failed';
+        renderChips();
+      });
+    }
 
     return [
       el('h2', { class: 'title', text: 'Name this stop' }),
@@ -274,35 +298,6 @@ function dropPin(ctx, s) {
       })),
     ];
   });
-}
-
-// Venues around the current fix from OpenStreetMap's free Overpass API — no
-// key, no account. Sorted nearest-first. This is the app's one optional
-// network lookup beyond map tiles; it only ever suggests, never blocks.
-const OVERPASS = 'https://overpass-api.de/api/interpreter';
-const VENUE_KINDS = '^(pub|bar|restaurant|cafe|nightclub|fast_food|biergarten|casino)$';
-
-async function nearbyVenues({ lat, lng }, radiusM = 150) {
-  const query = `[out:json][timeout:8];node(around:${radiusM},${lat},${lng})["name"]["amenity"~"${VENUE_KINDS}"];out body 30;`;
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 8000);
-  try {
-    const res = await fetch(OVERPASS, {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      signal: ctl.signal,
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    const seen = new Set();
-    return (json.elements || [])
-      .filter((e) => e.tags?.name && !seen.has(e.tags.name) && seen.add(e.tags.name))
-      .map((e) => ({ name: e.tags.name, d: S.haversineM(lat, lng, e.lat, e.lon) }))
-      .sort((a, b) => a.d - b.d);
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 /* ---------- everywhere you've been ----------

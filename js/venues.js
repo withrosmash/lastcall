@@ -122,3 +122,105 @@ export function overpassQuery(lat, lng, radiusM) {
     .join('');
   return `[out:json][timeout:8];(${clauses});out center 60;`;
 }
+
+/* ---------- fetching ----------
+   The index lists every square and is fetched at most once a week. Squares
+   are fetched by the build stamp, so a new weekly build never mixes with an
+   old one, and both are kept in their own cache, which the service worker
+   leaves alone, so a repeat check-in works offline. Anything that goes wrong
+   falls back to the Overpass lookup the app used before. */
+
+export const VENUES_BASE = 'https://withrosmash.github.io/lastcall/venues/v1/';
+export const INDEX_MAX_AGE = 7 * 864e5;
+const RADIUS_M = 150;
+const TIMEOUT_MS = 5000;
+const CACHE_NAME = 'leit-venues-v1';
+const INDEX_URL = VENUES_BASE + 'index.json';
+const OVERPASS = 'https://overpass-api.de/api/interpreter';
+
+async function getJSON(fetchImpl, url, ms, opts = {}) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms);
+  try {
+    const res = await fetchImpl(url, { ...opts, signal: ctl.signal });
+    if (!res.ok) throw new Error(`${res.status} ${url}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function openCache(cacheImpl) {
+  try { return cacheImpl ? await cacheImpl.open(CACHE_NAME) : null; } catch { return null; }
+}
+
+async function loadIndex(fetchImpl, cache, now) {
+  let stale = null;
+  try {
+    const hit = cache && await cache.match(INDEX_URL);
+    if (hit) {
+      const age = now - Number(hit.headers.get('x-leit-fetched') || 0);
+      stale = await hit.json();
+      if (age >= 0 && age < INDEX_MAX_AGE) return stale;
+    }
+  } catch { stale = null; }
+
+  let fresh;
+  try { fresh = await getJSON(fetchImpl, INDEX_URL, TIMEOUT_MS); } catch { return stale; }
+  if (!fresh || !Array.isArray(fresh.squares)) return stale;
+  if (cache) {
+    try {
+      await cache.put(INDEX_URL, new Response(JSON.stringify(fresh), { headers: { 'x-leit-fetched': String(now) } }));
+      if (stale?.built !== fresh.built) {
+        const keep = `?b=${encodeURIComponent(fresh.built)}`;
+        for (const req of await cache.keys()) {
+          if (req.url.includes('?b=') && !req.url.endsWith(keep)) await cache.delete(req);
+        }
+      }
+    } catch { /* a full or blocked cache only costs a refetch */ }
+  }
+  return fresh;
+}
+
+async function loadSquare(key, index, fetchImpl, cache) {
+  const url = `${VENUES_BASE}sq/${key}.json?b=${encodeURIComponent(index.built)}`;
+  try {
+    const hit = cache && await cache.match(url);
+    if (hit) return await hit.json();
+  } catch { /* fall through to the network */ }
+  const list = await getJSON(fetchImpl, url, TIMEOUT_MS);
+  try { await cache?.put(url, new Response(JSON.stringify(list))); } catch { /* refetch next time */ }
+  return list;
+}
+
+/** Venues within 150 m from OpenStreetMap's public Overpass servers. */
+export async function overpassVenues({ lat, lng }, radiusM = RADIUS_M, fetchImpl = fetch) {
+  const json = await getJSON(fetchImpl, OVERPASS, 8000, {
+    method: 'POST',
+    body: 'data=' + encodeURIComponent(overpassQuery(lat, lng, radiusM)),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  const seen = new Set();
+  return (json.elements || [])
+    .map((e) => ({ name: e.tags?.name, lat: e.lat ?? e.center?.lat, lng: e.lon ?? e.center?.lon, kind: kindOf(e.tags) }))
+    .filter((e) => e.name && e.lat != null && !seen.has(fold(e.name)) && seen.add(fold(e.name)))
+    .map((e) => ({ name: e.name, d: haversineM(lat, lng, e.lat, e.lng), kind: e.kind }))
+    .sort((a, b) => a.d - b.d);
+}
+
+/**
+ * Venues within 150 m of `here`, nearest first. Rejects only when the
+ * Overpass fallback fails too.
+ */
+export async function suggestVenues(here, { fetchImpl = fetch, cacheImpl = globalThis.caches, now = Date.now() } = {}) {
+  const cache = await openCache(cacheImpl);
+  const index = await loadIndex(fetchImpl, cache, now);
+  const keys = index ? squaresFor(new Set(index.squares), here.lat, here.lng, RADIUS_M) : [];
+  if (keys.length) {
+    try {
+      const lists = await Promise.all(keys.map((k) => loadSquare(k, index, fetchImpl, cache)));
+      return { venues: nearbyFrom(lists.flat(), here.lat, here.lng, RADIUS_M), source: 'squares' };
+    } catch { /* a missing square: ask Overpass */ }
+  }
+  return { venues: await overpassVenues(here, RADIUS_M, fetchImpl), source: 'overpass' };
+}

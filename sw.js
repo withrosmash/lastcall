@@ -183,7 +183,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      // leit-venues-* is the check-in venue cache (js/venues.js): it outlives
+      // app updates on purpose, so a repeat check-in works offline.
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && !k.startsWith('leit-venues')).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -197,6 +199,10 @@ self.addEventListener('fetch', (event) => {
   // Map tiles are someone else's servers and change rarely — let the network
   // and the HTTP cache handle them rather than filling our own cache.
   if (url.origin !== self.location.origin) return;
+
+  // Venue squares (on the web preview, same origin) have their own cache in
+  // js/venues.js; keeping them out of the shell cache stops it filling up.
+  if (url.pathname.includes('/venues/')) return;
 
   // Stale-while-revalidate: the app shell boots instantly offline, and a fresh
   // copy lands in the cache for next launch.
