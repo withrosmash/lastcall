@@ -104,3 +104,13 @@ New in build c9a5b64.
 60. On a 4:5 route card, with all three rows of numbers on, badges fill one row, with “+N” in the last spot if there are more. Switch number rows off and the badges get more rows, up to four.
 61. On a 9:16 route card and the photo card, up to eight badges show in two rows, with “+N” for the rest. With two or more rows the badges are a little smaller and closer together, and the names stay readable.
 62. A card for an adventure without a route (location off) still shows the big avatar clear of the stop names and badges.
+
+## Round 6: nearby places
+New in build 621c50f. Suggestions now come from Leit’s own list of places, so check-in should be much quicker.
+
+63. Check in at a pub or café in a town: suggestions appear within a second or two, nearest first.
+64. Check in near a stop you’ve named before: your own name for it comes first and shows straight away.
+65. On a busy street, type part of a name: the chips narrow to matches. Tap one and the others stay; tap another to switch.
+66. Check in somewhere, turn on flight mode, then check in again at the same spot: the suggestions still appear.
+67. Check in in a park or a quiet residential street: “Nothing found nearby” shows quickly, without a long wait.
+68. If you’re abroad: suggestions still appear, just more slowly.
