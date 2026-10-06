@@ -127,6 +127,7 @@ function net(routes) {
     const key = url.startsWith('https://overpass') ? 'overpass' : url;
     const r = routes[key];
     if (r === undefined || r instanceof Error) throw r || new Error('offline: ' + url);
+    if (r && r.status) return new Response('', { status: r.status });
     return new Response(JSON.stringify(r));
   };
   return { fetchImpl, calls };
@@ -256,4 +257,41 @@ test('an empty patch inside the covered area is not sent to Overpass', async () 
   assert.equal(got.source, 'squares');
   assert.deepEqual(got.venues, []);
   assert.ok(!calls.some((x) => x.url.startsWith('https://overpass')));
+});
+
+// ---------- round 6 fixes ----------
+import { clearVenueCache } from '../js/venues.js';
+
+test('a square that vanished in a weekly re-split refreshes the index and tries again', async () => {
+  const cacheImpl = memCache();
+  const c = await cacheImpl.open();
+  // Last week the area was one square; this week it split, so its old file is gone.
+  await c.put(INDEX_URL, new Response(JSON.stringify(index('b1')), { headers: { 'x-leit-fetched': String(10 * DAY) } }));
+  const split = { v: 1, built: 'b2', source: 's', count: 3, squares: ['gcpvj'], cover: ['gcpv'] };
+  const { fetchImpl, calls } = net({
+    [sqUrl('gcpv', 'b1')]: { status: 404 },
+    [INDEX_URL]: split,
+    [sqUrl('gcpvj', 'b2')]: square,
+  });
+  const got = await suggestVenues(SOHO, { fetchImpl, cacheImpl, now: 11 * DAY });
+  assert.equal(got.source, 'squares');
+  assert.deepEqual(got.venues.map((v) => v.name), ['Nearer', 'Near']);
+  assert.equal(calls.filter((x) => x.url === INDEX_URL).length, 1);
+  assert.ok(!calls.some((x) => x.url.startsWith('https://overpass')));
+});
+
+test('an offline miss does not refetch the index', async () => {
+  const cacheImpl = memCache();
+  const c = await cacheImpl.open();
+  await c.put(INDEX_URL, new Response(JSON.stringify(index('b1')), { headers: { 'x-leit-fetched': String(10 * DAY) } }));
+  const { fetchImpl, calls } = net({ overpass: new Error('offline') });
+  await assert.rejects(suggestVenues(SOHO, { fetchImpl, cacheImpl, now: 11 * DAY }));
+  assert.equal(calls.filter((x) => x.url === INDEX_URL).length, 0);
+});
+
+test('clearVenueCache forgets the squares on the phone', async () => {
+  const deleted = [];
+  await clearVenueCache({ delete: async (name) => { deleted.push(name); return true; } });
+  assert.deepEqual(deleted, ['leit-venues-v1']);
+  await clearVenueCache(undefined); // no Cache API: nothing to do, no error
 });

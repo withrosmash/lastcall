@@ -143,7 +143,7 @@ async function getJSON(fetchImpl, url, ms, opts = {}) {
   const timer = setTimeout(() => ctl.abort(), ms);
   try {
     const res = await fetchImpl(url, { ...opts, signal: ctl.signal });
-    if (!res.ok) throw new Error(`${res.status} ${url}`);
+    if (!res.ok) throw Object.assign(new Error(`${res.status} ${url}`), { status: res.status });
     return await res.json();
   } finally {
     clearTimeout(timer);
@@ -154,14 +154,14 @@ async function openCache(cacheImpl) {
   try { return cacheImpl ? await cacheImpl.open(CACHE_NAME) : null; } catch { return null; }
 }
 
-async function loadIndex(fetchImpl, cache, now) {
+async function loadIndex(fetchImpl, cache, now, force = false) {
   let stale = null;
   try {
     const hit = cache && await cache.match(INDEX_URL);
     if (hit) {
       const age = now - Number(hit.headers.get('x-leit-fetched') || 0);
       stale = await hit.json();
-      if (age >= 0 && age < INDEX_MAX_AGE) return stale;
+      if (!force && age >= 0 && age < INDEX_MAX_AGE) return stale;
     }
   } catch { stale = null; }
 
@@ -214,19 +214,39 @@ export async function overpassVenues({ lat, lng }, radiusM = RADIUS_M, fetchImpl
  */
 export async function suggestVenues(here, { fetchImpl = fetch, cacheImpl = globalThis.caches, now = Date.now() } = {}) {
   const cache = await openCache(cacheImpl);
-  const index = await loadIndex(fetchImpl, cache, now);
+  let index = await loadIndex(fetchImpl, cache, now);
+  let got = await fromSquares(here, index, fetchImpl, cache);
+  if (got.gone) {
+    // A square that's gone (404) means the weekly build re-split this area
+    // since the phone's index was fetched. Get the new index once and retry.
+    const fresh = await loadIndex(fetchImpl, cache, now, true);
+    if (fresh && fresh.built !== index.built) { index = fresh; got = await fromSquares(here, index, fetchImpl, cache); }
+  }
+  if (got.venues) return { venues: got.venues, source: 'squares' };
+  return { venues: await overpassVenues(here, RADIUS_M, fetchImpl), source: 'overpass' };
+}
+
+async function fromSquares(here, index, fetchImpl, cache) {
   const keys = index ? squaresFor(new Set(index.squares), here.lat, here.lng, RADIUS_M) : [];
   if (keys.length) {
     // Whatever loaded is worth showing: offline in a busy street, one
     // uncached square mustn't throw away the dozen that are on the phone.
     const settled = await Promise.allSettled(keys.map((k) => loadSquare(k, index, fetchImpl, cache)));
     const loaded = settled.filter((r) => r.status === 'fulfilled').map((r) => r.value);
-    if (loaded.length) return { venues: nearbyFrom(loaded.flat(), here.lat, here.lng, RADIUS_M), source: 'squares' };
-  } else if (index?.cover?.includes(geohash(here.lat, here.lng, 4))) {
+    const gone = settled.some((r) => r.status === 'rejected' && r.reason?.status === 404);
+    if (loaded.length && !gone) return { venues: nearbyFrom(loaded.flat(), here.lat, here.lng, RADIUS_M) };
+    return gone ? { gone: true, venues: loaded.length ? nearbyFrom(loaded.flat(), here.lat, here.lng, RADIUS_M) : null } : {};
+  }
+  if (index?.cover?.includes(geohash(here.lat, here.lng, 4))) {
     // A park or a quiet street inside the covered area has no square because
     // it has no places. That's an answer, not a reason to send Overpass your
     // exact position.
-    return { venues: [], source: 'squares' };
+    return { venues: [] };
   }
-  return { venues: await overpassVenues(here, RADIUS_M, fetchImpl), source: 'overpass' };
+  return {};
+}
+
+/** Forget the venue squares on the phone (after deleting a night or importing). */
+export async function clearVenueCache(cacheImpl = globalThis.caches) {
+  try { await cacheImpl?.delete(CACHE_NAME); } catch { /* nothing cached */ }
 }

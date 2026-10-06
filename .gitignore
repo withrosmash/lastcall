@@ -21,3 +21,7 @@ android/app/src/main/assets/capacitor.plugins.json
 # Plan execution scratch (superpowers)
 .superpowers/
 .impeccable/hook.cache.json
+
+# Local venue square builds (scripts/venues/build.mjs)
+/out/
+/venues-dev/

@@ -10,6 +10,7 @@ import { BADGES } from './badges-data.js';
 import { t } from './words.js';
 import { canMakeFestival } from './festival.js';
 import { testerStats } from './stats.js';
+import { clearVenueCache } from './venues.js';
 import { MODES, MODE_KEYS } from './modes.js';
 
 /* ---------- 11 history ---------- */
@@ -471,6 +472,8 @@ function confirmDelete(ctx, s) {
           ctx.state.sessions = ctx.state.sessions.filter((x) => x.id !== s.id);
           ctx.save();
           store.flush();
+          // The venue squares on the phone mark roughly where you checked in.
+          clearVenueCache();
           close();
           ctx.go('history');
           toast(t('{N} deleted.'));
@@ -510,6 +513,7 @@ function importData(ctx) {
       const next = store.importJSON(await file.text());
       if (!next) throw new Error('write failed');
       ctx.state = next;
+      clearVenueCache();
       toast('Imported.');
       ctx.go('history');
     } catch {

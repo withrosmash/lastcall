@@ -15,6 +15,7 @@ on:
     paths:
       - 'scripts/venues/**'
       - 'js/venues.js'
+      - 'js/state.js'
       - '.github/workflows/venues.yml'
 
 permissions:
@@ -45,7 +46,11 @@ jobs:
           echo "$FILTER"
           osmium tags-filter uk.osm.pbf $FILTER -o venues.osm.pbf
           osmium export venues.osm.pbf -f geojsonseq -o venues.geojsonseq
-          echo "SOURCE=$(osmium fileinfo -g header.option.osmosis_replication_timestamp uk.osm.pbf)" >> "$GITHUB_ENV"
+          # Assigned first so a failing osmium stops the job instead of
+          # publishing an empty source date.
+          SOURCE=$(osmium fileinfo -g header.option.osmosis_replication_timestamp uk.osm.pbf)
+          test -n "$SOURCE"
+          echo "SOURCE=$SOURCE" >> "$GITHUB_ENV"
       - name: Build the squares
         run: |
           node scripts/venues/build.mjs venues.geojsonseq out --source="$SOURCE"
