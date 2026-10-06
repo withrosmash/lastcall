@@ -217,10 +217,16 @@ export async function suggestVenues(here, { fetchImpl = fetch, cacheImpl = globa
   const index = await loadIndex(fetchImpl, cache, now);
   const keys = index ? squaresFor(new Set(index.squares), here.lat, here.lng, RADIUS_M) : [];
   if (keys.length) {
-    try {
-      const lists = await Promise.all(keys.map((k) => loadSquare(k, index, fetchImpl, cache)));
-      return { venues: nearbyFrom(lists.flat(), here.lat, here.lng, RADIUS_M), source: 'squares' };
-    } catch { /* a missing square: ask Overpass */ }
+    // Whatever loaded is worth showing: offline in a busy street, one
+    // uncached square mustn't throw away the dozen that are on the phone.
+    const settled = await Promise.allSettled(keys.map((k) => loadSquare(k, index, fetchImpl, cache)));
+    const loaded = settled.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+    if (loaded.length) return { venues: nearbyFrom(loaded.flat(), here.lat, here.lng, RADIUS_M), source: 'squares' };
+  } else if (index?.cover?.includes(geohash(here.lat, here.lng, 4))) {
+    // A park or a quiet street inside the covered area has no square because
+    // it has no places. That's an answer, not a reason to send Overpass your
+    // exact position.
+    return { venues: [], source: 'squares' };
   }
   return { venues: await overpassVenues(here, RADIUS_M, fetchImpl), source: 'overpass' };
 }

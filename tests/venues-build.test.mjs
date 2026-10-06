@@ -84,3 +84,13 @@ test('main writes the index, the squares and the licence', async () => {
   assert.deepEqual(all.map((r) => r[0]).sort(), ['Greggs', 'Night & Day', 'The Grapes']);
   assert.match(await readFile(join(out, 'LICENSE.md'), 'utf8'), /© OpenStreetMap contributors/);
 });
+
+test('the index lists the covered areas, so an empty patch is not abroad', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'venues-'));
+  const input = join(dir, 'in.geojsonseq');
+  await writeFile(input, [point(-0.1315, 51.5121, { amenity: 'pub', name: 'A' }), point(-2.236, 53.484, { amenity: 'bar', name: 'B' })]
+    .map((f) => JSON.stringify(f)).join('\n'));
+  await main([input, join(dir, 'out')]);
+  const index = JSON.parse(await readFile(join(dir, 'out/v1/index.json'), 'utf8'));
+  assert.deepEqual(index.cover, ['gcpv', 'gcw2']);
+});

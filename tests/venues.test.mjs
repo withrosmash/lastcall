@@ -235,3 +235,25 @@ test('overpassVenues drops repeated names and sorts nearest first', async () => 
   const got = await overpassVenues(SOHO, 150, fetchImpl);
   assert.deepEqual(got.map((v) => v.name), ['A', 'B']);
 });
+
+// ---------- review fixes ----------
+test('one missing square does not throw away the ones on the phone', async () => {
+  const twoSquares = { v: 1, built: 'b1', source: 's', count: 2, squares: ['gcpvj12', 'gcpvj13'], cover: ['gcpv'] };
+  const cacheImpl = memCache();
+  const c = await cacheImpl.open();
+  await c.put(INDEX_URL, new Response(JSON.stringify(twoSquares), { headers: { 'x-leit-fetched': String(10 * DAY) } }));
+  await c.put(sqUrl('gcpvj12', 'b1'), new Response(JSON.stringify(square)));
+  const offline = net({});
+  const got = await suggestVenues(SOHO, { fetchImpl: offline.fetchImpl, cacheImpl, now: 10 * DAY + 1000 });
+  assert.equal(got.source, 'squares');
+  assert.deepEqual(got.venues.map((v) => v.name), ['Nearer', 'Near']);
+});
+
+test('an empty patch inside the covered area is not sent to Overpass', async () => {
+  const idx = { v: 1, built: 'b1', source: 's', count: 1, squares: ['gcpvn'], cover: ['gcpv'] };
+  const { fetchImpl, calls } = net({ [INDEX_URL]: idx, overpass: { elements: [] } });
+  const got = await suggestVenues(SOHO, { fetchImpl, cacheImpl: memCache(), now: 10 * DAY });
+  assert.equal(got.source, 'squares');
+  assert.deepEqual(got.venues, []);
+  assert.ok(!calls.some((x) => x.url.startsWith('https://overpass')));
+});

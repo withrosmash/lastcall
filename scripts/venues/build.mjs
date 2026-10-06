@@ -5,7 +5,7 @@
 // The input is what `osmium export -f geojsonseq` writes for the places
 // `osmium tags-filter` kept (see .github/workflows/venues.yml). The output is
 // static files for GitHub Pages:
-//   v1/index.json      { v, built, source, count, squares: [keys] }
+//   v1/index.json      { v, built, source, count, squares: [keys], cover: [4-char prefixes] }
 //   v1/sq/<key>.json   [[name, lat, lng, kind], ...]
 //   LICENSE.md         ODbL attribution
 // A square is a geohash prefix of 4 to 7 characters that splits into its 32
@@ -135,7 +135,10 @@ export async function main(argv) {
     await writeFile(join(outDir, 'v1', 'sq', `${key}.json`), body);
   }
   const keys = [...squares.keys()].sort();
-  const index = { v: 1, built: new Date().toISOString(), source, count: unique.length, squares: keys };
+  // The areas the build covers, so the app can tell an empty park (no
+  // square, nothing nearby) from abroad (ask Overpass).
+  const cover = [...new Set(keys.map((k) => k.slice(0, 4)))];
+  const index = { v: 1, built: new Date().toISOString(), source, count: unique.length, squares: keys, cover };
   await writeFile(join(outDir, 'v1', 'index.json'), JSON.stringify(index));
   await writeFile(join(outDir, 'LICENSE.md'), LICENSE);
 

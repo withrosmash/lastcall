@@ -209,7 +209,7 @@ function dropPin(ctx, s) {
   sheet((close) => {
     const nameInput = el('input', {
       type: 'text', placeholder: 'The Grapes', autocapitalize: 'words', enterkeyhint: 'done',
-      oninput: (e) => { name = e.target.value; renderChips(); },
+      oninput: (e) => { name = e.target.value; query = e.target.value; renderChips(); },
     });
 
     // A tester missed this section entirely, for two reasons: the heading sat
@@ -226,21 +226,25 @@ function dropPin(ctx, s) {
     // venue squares follow. Typing narrows the chips to names containing
     // what's typed, so a busy street with 200 places is still one tap away.
     let list = [];
+    let query = ''; // what was typed; tapping a chip fills the box but doesn't filter
     let phase = 'loading';
     const own = here ? ownPlaces(ctx.state.sessions, s, here.lat, here.lng, 150) : [];
 
     function renderChips() {
       if (!here) return;
-      const shown = filterByText(list, nameInput.value);
-      const typed = fold(nameInput.value);
+      const shown = filterByText(list, query);
+      const typed = fold(query);
+      const chosen = fold(nameInput.value);
       chips.replaceChildren(...shown.map((v) =>
         el('button', {
           class: 'chip chip--suggest press', type: 'button',
-          'aria-pressed': String(typed !== '' && fold(v.name) === typed),
-          onclick: () => {
+          'aria-pressed': String(chosen !== '' && fold(v.name) === chosen),
+          onclick: (e) => {
+            // Mark it in place: re-rendering would hide the other chips (a
+            // mis-tap shouldn't need the box cleared) and drop focus.
             name = v.name;
             nameInput.value = v.name;
-            renderChips();
+            [...chips.children].forEach((c) => c.setAttribute('aria-pressed', String(c === e.currentTarget)));
           },
         }, v.name)));
       if (phase === 'loading') status.textContent = 'Looking for places nearby…';
