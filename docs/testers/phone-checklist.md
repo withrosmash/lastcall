@@ -114,3 +114,16 @@ New in build 387ae9b. Suggestions now come from Leit’s own list of places, so 
 66. Check in somewhere, turn on flight mode, then check in again at the same spot: the suggestions still appear.
 67. Check in in a park or a quiet residential street: “Nothing found nearby” shows quickly, without a long wait.
 68. If you’re abroad: suggestions still appear, just more slowly.
+
+## Round 7: safety net
+New in build 1eefadb.
+
+69. With an adventure running, Settings › Import history says to end it first.
+70. Importing a file that isn’t a Leit export says so, and nothing changes.
+71. Importing a real export asks “Replace your history?” with both counts. After Replace, tapping the toast puts your own history back.
+72. If the app was closed for a long time mid-adventure, reopening it closes the adventure at the last thing you logged (not at 0 minutes), and “Not finished? Carry on” picks it back up with tracking.
+73. Drinks logged from the notification while the app was closed show up in that adventure, not in the next one.
+74. Check in a while after sitting down somewhere: the stop goes where you are, with nearby places suggested.
+75. Delete an adventure and press Back: you never see it again, and the app doesn’t close.
+76. History › All time shows “Show more” once you have more than 40 adventures.
+77. The badge is called First Challenge.
