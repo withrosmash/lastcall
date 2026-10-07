@@ -217,11 +217,23 @@ export function addPin(s, { lat, lng, name, note, pending = false }, now = Date.
  * A stop named while the GPS was still finding you takes the first position
  * that arrives. One named with location off stays off the map, as promised.
  */
+export const PENDING_MAX_MS = 5 * 60 * 1000;
+
 export function placePending(s, fix) {
   for (const p of s.pins) {
-    if (p.pending && p.lat == null && fix && p.t <= fix.t) { p.lat = fix.lat; p.lng = fix.lng; delete p.pending; }
+    if (!p.pending || p.lat != null || !fix || p.t > fix.t) continue;
+    // A position from long after the stop was named would put it somewhere
+    // you'd since walked to; it stays off the map instead.
+    if (fix.t - p.t <= PENDING_MAX_MS) { p.lat = fix.lat; p.lng = fix.lng; }
+    delete p.pending;
   }
   return s;
+}
+
+/** The last position, if it's recent enough to say where you are now. */
+export function freshFix(s, now = Date.now(), maxAgeMs = 3 * 60 * 1000) {
+  const last = s.trail[s.trail.length - 1];
+  return last && now - last.t <= maxAgeMs ? last : null;
 }
 
 // Returns true when the fix was actually recorded. Points are throttled so a

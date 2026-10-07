@@ -66,3 +66,24 @@ test('stored positions are rounded to about a metre', () => {
   assert.equal(s.trail[0].lat, 51.51235);
   assert.equal(s.trail[0].lng, -0.13149);
 });
+
+test('a fix is only fresh for three minutes', () => {
+  const s = S.newSession(0);
+  S.addFix(s, { lat: 51.5, lng: -0.1, t: 1000 });
+  assert.equal(S.freshFix(s, 1000 + 2 * M).lat, 51.5);
+  assert.equal(S.freshFix(s, 1000 + 10 * M), null);
+  assert.equal(S.freshFix(S.newSession(0), 0), null);
+});
+
+test('a waiting stop only takes a position from within five minutes', () => {
+  const s = S.newSession(0);
+  S.addPin(s, { lat: null, lng: null, name: 'Early', pending: true }, 1000);
+  S.placePending(s, { lat: 51.5, lng: -0.1, t: 1000 + 2 * M });
+  assert.equal(s.pins[0].lat, 51.5);
+  assert.equal(s.pins[0].pending, undefined);
+
+  S.addPin(s, { lat: null, lng: null, name: 'Late', pending: true }, 2000);
+  S.placePending(s, { lat: 52, lng: -1, t: 2000 + 20 * M });
+  assert.equal(s.pins[1].lat, null);
+  assert.equal(s.pins[1].pending, undefined);
+});
