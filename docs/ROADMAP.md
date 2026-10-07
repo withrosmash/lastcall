@@ -4,7 +4,7 @@ What's left before launch, in rough order. Each item becomes its own spec and pl
 
 ## Now
 - **Phone testing:** the owner is working through the checklist on build 387ae9b (docs/testers/phone-checklist.md). Nearby places confirmed on the phone, 2026-10-07.
-- **QA and red team review:** proposed 2026-10-07 (name, brand, function, code, security, privacy, store policy).
+- **QA and red team review:** done 2026-10-07. 48 checked findings in https://claude.ai/artifact/53LTSwVLvRC54MdDd6NxBg (4 critical: import wipes history, full storage deletes adventures silently, auto-close at 0 minutes, no privacy policy). Waiting on the owner's picks and decisions (name, app ID, drink badges, History screen, background location test build, lock-screen label, Android backup).
 
 ## Waiting on the domain
 - **Website:** built ourselves on Cloudflare Pages, not Wix or Squarespace. It needs a landing page, the privacy policy, the sign-up page and Crew invite pages, plus `/.well-known/` files for app links.
