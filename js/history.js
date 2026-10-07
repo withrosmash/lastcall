@@ -1,4 +1,4 @@
-import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon, switchRow,
+import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon, switchRow, sheet,
          hms, hm, clockTime, shortDate, km } from './ui.js';
 import * as S from './state.js';
 import * as store from './storage.js';
@@ -505,26 +505,47 @@ async function exportText(name, mime, text, nativeMsg) {
 }
 
 function importData(ctx) {
+  // Import replaces everything, so it never runs over a live adventure and
+  // always says what it's about to replace. The old history can be put back.
+  if (ctx.state.active) { toast(t('End your {n} before importing.')); return; }
   const input = el('input', { type: 'file', accept: 'application/json,.json', class: 'hidden' });
   input.addEventListener('change', async () => {
     const file = input.files?.[0];
-    if (!file) { input.remove(); return; }
-    try {
-      const next = store.importJSON(await file.text());
-      if (!next) throw new Error('write failed');
-      ctx.state = next;
-      clearVenueCache();
-      toast('Imported.');
-      ctx.go('history');
-    } catch {
-      toast('That file didn’t read as Leit data.');
-    } finally {
-      input.remove();
-    }
+    input.remove();
+    if (!file) return;
+    let text;
+    try { text = await file.text(); } catch { toast('That file couldn’t be read.'); return; }
+    const checked = store.checkImport(text);
+    if (!checked.ok) { toast('That file isn’t a Leit export.'); return; }
+    const mine = ctx.state.sessions.length;
+    sheet((close) => [
+      el('h2', { class: 'title', text: 'Replace your history?' }),
+      el('p', { class: 'body', style: 'margin:0', text: `This replaces your ${countOf(mine)} with the ${countOf(checked.count)} in the file. You can undo it straight after.` }),
+      foot(
+        btn('Replace', 'btn--pri', () => {
+          close();
+          const next = store.importJSON(text);
+          if (!next) { toast('That file isn’t a Leit export.'); return; }
+          ctx.state = next;
+          clearVenueCache();
+          ctx.go('history', null, { replace: true });
+          toast('Imported. Tap to undo.', 0, () => {
+            const back = store.undoImport();
+            if (!back) { toast('Couldn’t undo the import.'); return; }
+            ctx.state = back;
+            ctx.go('history', null, { replace: true });
+            toast('Your history is back.');
+          });
+        }),
+        btn('Keep mine', 'btn--sec', close),
+      ),
+    ]);
   });
   document.body.append(input);
   input.click();
 }
+
+const countOf = (n) => (n === 1 ? t('1 {n}') : t(`${n} {ns}`));
 
 function download(blob, name) {
   const url = URL.createObjectURL(blob);
