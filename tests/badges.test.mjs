@@ -240,3 +240,8 @@ test('Explorer ignores stops made in the night part of a day out', () => {
   });
   assert.ok(!earned([s]).has('explorer'));
 });
+
+test('no badge is named a dare', () => {
+  for (const b of BADGES) assert.ok(!/dare/i.test(b.name), b.name);
+  assert.equal(BADGES.find((b) => b.slug === 'first-dare').name, 'First Challenge');
+});

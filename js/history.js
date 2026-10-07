@@ -15,6 +15,8 @@ import { MODES, MODE_KEYS } from './modes.js';
 
 /* ---------- 11 history ---------- */
 
+const PAGE = 40;
+
 export function historyScreen(ctx) {
   const done = ctx.state.sessions.filter((s) => s.endedAt);
   const back = () => ctx.go(ctx.state.active ? 'live' : 'start');
@@ -80,7 +82,7 @@ export function historyScreen(ctx) {
 
     el('h2', { class: 'eb', style: 'margin:0', text: t('{Ns}') }),
     el('div', { class: 'stack', style: 'gap:6px' },
-      shown.slice(0, 40).map((s) => {
+      shown.slice(0, ctx.historyLimit || PAGE).map((s) => {
         const sum = S.summarise(s);
         return el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', s) },
           el('span', { class: 'listrow__d', text: `${shortDate(s.startedAt)} · ${S.modeLine(s)}` }),
@@ -91,6 +93,13 @@ export function historyScreen(ctx) {
           ),
         );
       })),
+    // Every adventure stays reachable, 40 at a time (kept for this visit).
+    shown.length > (ctx.historyLimit || PAGE)
+      ? btn(`Show more (${shown.length - (ctx.historyLimit || PAGE)} more)`, 'btn--sec', () => {
+        ctx.historyLimit = (ctx.historyLimit || PAGE) + PAGE;
+        ctx.render();
+      })
+      : null,
 
     spacer(),
     foot(

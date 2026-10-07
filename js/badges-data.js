@@ -221,7 +221,7 @@ export const BADGES = [
   },
   {
     "slug": "first-dare",
-    "name": "First Dare",
+    "name": "First Challenge",
     "criteria": "Complete your first challenge",
     "accent": "mint",
     "cat": "Firsts",
