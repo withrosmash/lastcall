@@ -486,7 +486,7 @@ function confirmDelete(ctx, s) {
 
 /* ---------- export / import ---------- */
 
-function exportData() {
+export function exportData() {
   const name = `leit-${new Date().toISOString().slice(0, 10)}.json`;
   exportText(name, 'application/json', store.exportJSON(), 'History saved to Downloads › Leit.');
 }

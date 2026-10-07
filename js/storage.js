@@ -94,15 +94,17 @@ export function flush() {
     lastError = null;
     return true;
   } catch (err) {
+    // Never delete an adventure to make room. Report it once per failure run
+    // so the app can ask for an export; the data stays in memory meanwhile.
+    if (!lastError) errorHandler?.(err);
     lastError = err;
-    // Quota exceeded: shed the oldest finished nights and retry once.
-    if (cache.sessions.length > 1) {
-      cache.sessions = cache.sessions.slice(0, Math.max(1, cache.sessions.length - 3));
-      try { localStorage.setItem(KEY, JSON.stringify(cache)); lastError = null; return true; } catch { /* fall through */ }
-    }
     return false;
   }
 }
+
+let errorHandler = null;
+/** Called when a save fails (storage full or blocked). */
+export function onStorageError(fn) { errorHandler = fn; }
 
 export function storageError() { return lastError; }
 

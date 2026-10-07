@@ -1,6 +1,6 @@
 import * as store from './storage.js';
 import * as S from './state.js';
-import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme, el } from './ui.js';
+import { mount, toast, buzz, dismissSheet, serviceNotice, applyTheme, el, sheet, btn, foot } from './ui.js';
 import { startScreen, liveScreen, recapScreen, primingScreen, react, morningScreen, morningNight, onboardingScreen, needsOnboarding } from './session.js';
 import { setAvatarCalm } from './avatar.js';
 import { avatarScreen } from './avatarscreen.js';
@@ -10,7 +10,7 @@ import { countCard } from './stats.js';
 import { t } from './words.js';
 import * as geo from './geo.js';
 import { mapScreen, teardownMap } from './map.js';
-import { historyScreen, detailScreen, settingsScreen, appearanceScreen, numbersScreen } from './history.js';
+import { historyScreen, detailScreen, settingsScreen, appearanceScreen, numbersScreen, exportData } from './history.js';
 import { cardScreen, shareScreen } from './card.js';
 import * as badges from './badges.js';
 import { atlasScreen } from './map.js';
@@ -601,7 +601,24 @@ function carryOn(s) {
   toast(t('Back on your {n}.'));
 }
 
+// A save that fails (the phone's storage for Leit is full) never deletes
+// anything; it asks for an export, once per launch.
+let fullWarned = false;
+function warnStorageFull() {
+  if (fullWarned) return;
+  fullWarned = true;
+  sheet((close) => [
+    el('h2', { class: 'title', text: 'Leit’s storage is full' }),
+    el('p', { class: 'body', style: 'margin:0', text: 'Your newest changes aren’t saved yet. Export your history now so nothing is lost, then delete some old adventures.' }),
+    foot(
+      btn('Export now', 'btn--pri', () => { close(); exportData(); }),
+      btn('Later', 'btn--sec', close),
+    ),
+  ]);
+}
+
 function boot() {
+  store.onStorageError(warnStorageFull);
   store.installFlushHooks();
   keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
   applyAccessibility();

@@ -227,6 +227,10 @@ export function placePending(s, fix) {
 // Returns true when the fix was actually recorded. Points are throttled so a
 // ten-hour night stays a few hundred entries rather than tens of thousands.
 export function addFix(s, { lat, lng, t = Date.now() }) {
+  // Five decimal places is about a metre, finer than any phone's GPS, and
+  // keeps a long walk's trail a third smaller in storage.
+  lat = Math.round(lat * 1e5) / 1e5;
+  lng = Math.round(lng * 1e5) / 1e5;
   const last = s.trail[s.trail.length - 1];
   // Fixes carry the phone's own timestamps now; never let one run backwards,
   // since everything that reads the trail assumes it's in time order.

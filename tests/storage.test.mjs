@@ -109,3 +109,15 @@ test('saving marks the live adventure as touched', () => {
   store.save(state);
   assert.ok(state.active.touchedAt >= before);
 });
+
+test('a full phone never deletes adventures and reports the failure', () => {
+  globalThis.localStorage = makeStorage(400);
+  const errors = [];
+  store.onStorageError((e) => errors.push(e));
+  const state = store.checkImport(JSON.stringify({ sessions: [session('a', 1), session('b', 2), session('c', 3), session('d', 4), session('e', 5)] })).data;
+  store.save(state);
+  assert.equal(store.flush(), false);
+  assert.equal(state.sessions.length, 5);
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].name, 'QuotaExceededError');
+});

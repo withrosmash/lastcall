@@ -59,3 +59,10 @@ test('only an auto-closed adventure can be carried on', () => {
   const s = S.newSession(0); s.endedAt = 2 * H;
   assert.equal(S.reopen({ active: null, sessions: [s] }, s), false);
 });
+
+test('stored positions are rounded to about a metre', () => {
+  const s = S.newSession(0);
+  S.addFix(s, { lat: 51.512345678, lng: -0.131487654, t: 1000 });
+  assert.equal(s.trail[0].lat, 51.51235);
+  assert.equal(s.trail[0].lng, -0.13149);
+});
