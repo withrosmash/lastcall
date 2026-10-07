@@ -132,3 +132,32 @@ test('errors are logged, keeping the last 20', () => {
   store.logError('a plain string', 'start');
   assert.equal(JSON.parse(localStorage.getItem('lastcall_errors'))[19].msg, 'a plain string');
 });
+
+test('a save that should not count as activity leaves touchedAt alone', () => {
+  const state = store.checkImport(JSON.stringify({ sessions: [], active: { ...session('live', 10), endedAt: null, touchedAt: 123 } })).data;
+  store.save(state, { touch: false });
+  assert.equal(state.active.touchedAt, 123);
+});
+
+test('the import backup goes once the undo is used or dropped', () => {
+  localStorage.setItem('lastcall_v1', JSON.stringify({ v: 1, sessions: [session('mine', 5)] }));
+  store.importJSON(JSON.stringify({ sessions: [session('theirs', 9)] }));
+  assert.ok(localStorage.getItem('lastcall_v1_backup'));
+  store.undoImport();
+  assert.equal(localStorage.getItem('lastcall_v1_backup'), null);
+  store.importJSON(JSON.stringify({ sessions: [session('theirs', 9)] }));
+  store.dropImportBackup();
+  assert.equal(localStorage.getItem('lastcall_v1_backup'), null);
+});
+
+test('an import that cannot be saved leaves your own history in place', () => {
+  const mine = JSON.stringify({ v: 1, sessions: [session('mine', 5)] });
+  store.importJSON(mine); // loads mine into the cache and storage
+  // Now only just enough room for what's there plus a backup copy of it.
+  const stored = localStorage.getItem('lastcall_v1');
+  globalThis.localStorage = makeStorage(stored.length * 2 + 50);
+  localStorage.setItem('lastcall_v1', stored);
+  const big = JSON.stringify({ sessions: Array.from({ length: 40 }, (_, i) => session('big' + i, i + 10)) });
+  assert.equal(store.importJSON(big), null);
+  assert.deepEqual(JSON.parse(store.exportJSON()).sessions.map((s) => s.id), ['mine']);
+});

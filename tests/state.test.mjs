@@ -75,7 +75,7 @@ test('a fix is only fresh for three minutes', () => {
   assert.equal(S.freshFix(S.newSession(0), 0), null);
 });
 
-test('a waiting stop only takes a position from within five minutes', () => {
+test('a waiting stop only takes a position from within half an hour', () => {
   const s = S.newSession(0);
   S.addPin(s, { lat: null, lng: null, name: 'Early', pending: true }, 1000);
   S.placePending(s, { lat: 51.5, lng: -0.1, t: 1000 + 2 * M });
@@ -83,7 +83,34 @@ test('a waiting stop only takes a position from within five minutes', () => {
   assert.equal(s.pins[0].pending, undefined);
 
   S.addPin(s, { lat: null, lng: null, name: 'Late', pending: true }, 2000);
-  S.placePending(s, { lat: 52, lng: -1, t: 2000 + 20 * M });
+  S.placePending(s, { lat: 52, lng: -1, t: 2000 + 45 * M });
   assert.equal(s.pins[1].lat, null);
   assert.equal(s.pins[1].pending, undefined);
+});
+
+test('sitting still with tracking on, the last fix is still where you are', () => {
+  // Tracking only sends a fix after 25 m of movement, so an old fix while
+  // tracking is live means you haven't moved.
+  const s = S.newSession(0);
+  S.addFix(s, { lat: 51.5, lng: -0.1, t: 1000 });
+  assert.equal(S.freshFix(s, 1000 + 20 * M, { live: true }).lat, 51.5);
+  assert.equal(S.freshFix(s, 1000 + 20 * M, { live: false }), null);
+  assert.equal(S.freshFix(s, 1000 + 120 * M, { live: true }), null);
+});
+
+test('Back skips adventures that are gone, keeps festivals and live ones', () => {
+  const kept = S.newSession(5000);
+  const gone = S.newSession(6000);
+  const festival = { id: 'f1', startedAt: 1, sessionIds: ['x'], festivalId: 'f1' };
+  const state = { active: null, sessions: [kept] };
+  const stack = [{ screen: 'start' }, { screen: 'card', arg: festival }, { screen: 'detail', arg: { ...kept } }, { screen: 'detail', arg: gone }];
+  let r = S.backTarget(stack, state);
+  assert.equal(r.entry.screen, 'detail');
+  assert.equal(r.entry.arg, kept);
+  assert.equal(r.skipped, 1);
+  r = S.backTarget(stack, state);
+  assert.equal(r.entry.arg, festival);
+  r = S.backTarget([{ screen: 'morning', arg: gone }], state);
+  assert.equal(r.entry, null);
+  assert.equal(r.skipped, 1);
 });

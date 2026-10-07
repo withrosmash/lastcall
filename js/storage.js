@@ -77,11 +77,12 @@ export function normaliseSession(x) {
 let writeTimer = null;
 let lastError = null;
 
-export function save(state) {
+export function save(state, { touch = true } = {}) {
   cache = state;
   // Fixes and step updates save too, so this is the last moment the app knew
-  // the adventure was still going (see lastActivity).
-  if (state?.active) state.active.touchedAt = Date.now();
+  // the adventure was still going (see lastActivity). Saves that only bring in
+  // what happened while the app was closed pass touch: false.
+  if (touch && state?.active) state.active.touchedAt = Date.now();
   clearTimeout(writeTimer);
   writeTimer = setTimeout(flush, 220);
 }
@@ -156,8 +157,18 @@ export function importJSON(text) {
     const current = localStorage.getItem(KEY);
     if (current) localStorage.setItem(BACKUP_KEY, current);
   } catch { /* no room for a backup: the import still asks first */ }
+  const previous = cache;
   cache = checked.data;
-  return flush() ? cache : null;
+  if (flush()) return cache;
+  // Not saved: keep working on (and exporting) your own history.
+  cache = previous;
+  dropImportBackup();
+  return null;
+}
+
+/** The backup is only for the undo straight after an import. */
+export function dropImportBackup() {
+  try { localStorage.removeItem(BACKUP_KEY); } catch { /* nothing to drop */ }
 }
 
 /** Puts back the history the last import replaced. */
@@ -168,6 +179,7 @@ export function undoImport() {
   try {
     localStorage.setItem(KEY, raw);
     cache = migrate(JSON.parse(raw));
+    dropImportBackup();
     return cache;
   } catch { return null; }
 }

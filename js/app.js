@@ -84,16 +84,11 @@ function go(screen, arg = null, { replace = false } = {}) {
 // Android's back button: close a sheet, else unwind one screen, else leave the
 // app running in the background. Never kills the process — a night may be
 // recording, and exitApp would take the foreground service with it.
-const isAdventure = (a) => !!a && typeof a === 'object' && typeof a.id === 'string' && 'startedAt' in a;
-const findAdventure = (id) => (ctx.state.active?.id === id ? ctx.state.active : ctx.state.sessions.find((x) => x.id === id) || null);
-
 function back() {
   if (document.querySelector('.sheet')) { dismissSheet(); return; }
-  // Skip screens about an adventure that's since been deleted or replaced by
-  // an import; one that still exists is looked up fresh by its id.
-  let prev = ctx.stack.pop();
-  while (prev && isAdventure(prev.arg) && !findAdventure(prev.arg.id)) prev = ctx.stack.pop();
-  if (prev && isAdventure(prev.arg)) prev = { ...prev, arg: findAdventure(prev.arg.id) };
+  const { entry: prev, skipped } = S.backTarget(ctx.stack, ctx.state);
+  // Everything behind was about a deleted adventure: go home, don't minimise.
+  if (!prev && skipped) { go('start', null, { replace: true }); return; }
   if (prev) {
     if (MAP_SCREENS.has(ctx.screen)) teardownMap();
     ctx.screen = prev.screen;
@@ -161,7 +156,7 @@ function applyGlow(mode) {
   node.style.setProperty('--bloom-foot', foot);
 }
 
-function save() { store.save(ctx.state); }
+function save(opts) { store.save(ctx.state, opts); }
 
 /* ---------- session actions ---------- */
 
@@ -321,7 +316,7 @@ window.addEventListener('lc:card-exported', () => {
 
 /* ---------- quick log drain ---------- */
 
-async function drainQuickLogs({ silent = false } = {}) {
+async function drainQuickLogs({ silent = false, touch = true } = {}) {
   const s = ctx.state.active;
   // Taps from before this adventure started (a previous one the app closed)
   // are dropped rather than counted here.
@@ -336,7 +331,9 @@ async function drainQuickLogs({ silent = false } = {}) {
   // Shade taps carry their own timestamps and may interleave with in-app logs.
   s.drinks.sort((a, b) => a.t - b.t);
   s.waters.sort((a, b) => a.t - b.t);
-  save();
+  // At boot these are taps from while the app was closed: they count by their
+  // own times, and mustn't make an abandoned adventure look touched just now.
+  save({ touch });
   if (events.some((e) => e.type === 'water')) { ctx.nudgeDismissed = false; ctx.walkNudged = false; planWater(); }
   if (!silent) {
     render();
@@ -626,9 +623,12 @@ function carryOn(s) {
   if (!S.reopen(ctx.state, s)) return;
   save();
   store.flush();
+  ctx.nudgeDismissed = false;
+  ctx.walkNudged = false;
   keepalive.setSessionActive(true);
   go('live', null, { replace: true });
   startTracking();
+  ensureBatteryExemption();
   toast(t('Back on your {n}.'));
 }
 
@@ -650,6 +650,8 @@ function warnStorageFull() {
 
 function boot() {
   store.onStorageError(warnStorageFull);
+  // An import's undo only lasts while its toast is up.
+  store.dropImportBackup();
   window.addEventListener('error', (e) => store.logError(e.error || e.message, ctx.screen));
   window.addEventListener('unhandledrejection', (e) => store.logError(e.reason, ctx.screen));
   store.installFlushHooks();
@@ -660,7 +662,7 @@ function boot() {
   if (active) {
     // Notification taps made while the app was closed count first, so they
     // land in this adventure and move its last activity before the check.
-    drainQuickLogs({ silent: true }).catch(() => {}).finally(() => resume(active));
+    drainQuickLogs({ silent: true, touch: false }).catch(() => {}).finally(() => resume(active));
   } else {
     keepalive.setSessionActive(false);
     // A new install gets the walkthrough; the first open after a night,

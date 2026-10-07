@@ -537,7 +537,7 @@ function importData(ctx) {
         btn('Replace', 'btn--pri', () => {
           close();
           const next = store.importJSON(text);
-          if (!next) { toast('That file isn’t a Leit export.'); return; }
+          if (!next) { toast('There isn’t room on this phone to import that file.'); return; }
           ctx.state = next;
           clearVenueCache();
           ctx.go('history', null, { replace: true });
@@ -548,6 +548,8 @@ function importData(ctx) {
             ctx.go('history', null, { replace: true });
             toast('Your history is back.');
           });
+          // The undo lasts as long as its toast; then the backup copy goes.
+          setTimeout(() => store.dropImportBackup(), 7000);
         }),
         btn('Keep mine', 'btn--sec', close),
       ),

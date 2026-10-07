@@ -217,7 +217,9 @@ export function addPin(s, { lat, lng, name, note, pending = false }, now = Date.
  * A stop named while the GPS was still finding you takes the first position
  * that arrives. One named with location off stays off the map, as promised.
  */
-export const PENDING_MAX_MS = 5 * 60 * 1000;
+// Long enough for a slow first fix indoors, short enough that a stop isn't
+// placed wherever you'd walked to hours later.
+export const PENDING_MAX_MS = 30 * 60 * 1000;
 
 export function placePending(s, fix) {
   for (const p of s.pins) {
@@ -230,10 +232,35 @@ export function placePending(s, fix) {
   return s;
 }
 
-/** The last position, if it's recent enough to say where you are now. */
-export function freshFix(s, now = Date.now(), maxAgeMs = 3 * 60 * 1000) {
+/**
+ * The last position, if it still says where you are. While tracking is live
+ * a new fix only arrives after 25 m of movement, so an old one means you
+ * haven't moved: it counts for up to 90 minutes. Otherwise only 3 minutes.
+ */
+export function freshFix(s, now = Date.now(), { live = false } = {}) {
   const last = s.trail[s.trail.length - 1];
+  const maxAgeMs = (live ? 90 : 3) * 60 * 1000;
   return last && now - last.t <= maxAgeMs ? last : null;
+}
+
+const isAdventure = (a) => !!a && typeof a === 'object' && typeof a.id === 'string'
+  && 'startedAt' in a && !a.sessionIds && !a.festivalId;
+
+/**
+ * Pops the Back stack to the next screen worth showing: screens about an
+ * adventure that has since been deleted (or replaced by an import) are
+ * skipped, and one that still exists is looked up fresh by its id.
+ */
+export function backTarget(stack, state) {
+  const find = (id) => (state.active?.id === id ? state.active : state.sessions.find((x) => x.id === id) || null);
+  let skipped = 0;
+  for (let e = stack.pop(); e; e = stack.pop()) {
+    if (!isAdventure(e.arg)) return { entry: e, skipped };
+    const fresh = find(e.arg.id);
+    if (fresh) return { entry: { ...e, arg: fresh }, skipped };
+    skipped++;
+  }
+  return { entry: null, skipped };
 }
 
 // Returns true when the fix was actually recorded. Points are throttled so a

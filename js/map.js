@@ -199,7 +199,7 @@ export { dropPin as checkIn };
 function dropPin(ctx, s) {
   // Only a recent fix says where you are. Never the map's centre: before the
   // first fix that's central London, and after a pan it's wherever you looked.
-  const here = S.freshFix(s);
+  const here = S.freshFix(s, Date.now(), { live: ctx.geoStatus === 'live' });
   // Without a position the stop is still named and still counts: it goes on
   // the map when a fix arrives, or stays off the map if location is off.
   const gpsOff = ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported';
