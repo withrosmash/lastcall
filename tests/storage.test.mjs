@@ -121,3 +121,14 @@ test('a full phone never deletes adventures and reports the failure', () => {
   assert.equal(errors.length, 1);
   assert.equal(errors[0].name, 'QuotaExceededError');
 });
+
+test('errors are logged, keeping the last 20', () => {
+  for (let i = 0; i < 25; i++) store.logError(new Error('boom ' + i), 'live');
+  const log = JSON.parse(localStorage.getItem('lastcall_errors'));
+  assert.equal(log.length, 20);
+  assert.equal(log[19].msg, 'boom 24');
+  assert.equal(log[19].screen, 'live');
+  assert.ok(log[19].stack.length <= 500);
+  store.logError('a plain string', 'start');
+  assert.equal(JSON.parse(localStorage.getItem('lastcall_errors'))[19].msg, 'a plain string');
+});

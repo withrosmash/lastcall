@@ -84,9 +84,16 @@ function go(screen, arg = null, { replace = false } = {}) {
 // Android's back button: close a sheet, else unwind one screen, else leave the
 // app running in the background. Never kills the process — a night may be
 // recording, and exitApp would take the foreground service with it.
+const isAdventure = (a) => !!a && typeof a === 'object' && typeof a.id === 'string' && 'startedAt' in a;
+const findAdventure = (id) => (ctx.state.active?.id === id ? ctx.state.active : ctx.state.sessions.find((x) => x.id === id) || null);
+
 function back() {
   if (document.querySelector('.sheet')) { dismissSheet(); return; }
-  const prev = ctx.stack.pop();
+  // Skip screens about an adventure that's since been deleted or replaced by
+  // an import; one that still exists is looked up fresh by its id.
+  let prev = ctx.stack.pop();
+  while (prev && isAdventure(prev.arg) && !findAdventure(prev.arg.id)) prev = ctx.stack.pop();
+  if (prev && isAdventure(prev.arg)) prev = { ...prev, arg: findAdventure(prev.arg.id) };
   if (prev) {
     if (MAP_SCREENS.has(ctx.screen)) teardownMap();
     ctx.screen = prev.screen;
@@ -98,19 +105,43 @@ function back() {
 }
 
 let lastMounted = null;
+let renderSeq = 0;
 
 function render() {
+  const seq = ++renderSeq;
   ctx.tick = null;
   const def = SCREENS[ctx.screen] || SCREENS.start;
-  const tracking = def.tracking && !!ctx.state.active;
-  const fresh = ctx.screen !== lastMounted;
-  lastMounted = ctx.screen;
-  mount(def.build(ctx), {
-    bloom: def.bloom,
-    chrome: tracking ? serviceNotice() : null,
-    focus: fresh,
-  });
-  applyGlow(def.glow?.(ctx));
+  try {
+    const tracking = def.tracking && !!ctx.state.active;
+    const fresh = ctx.screen !== lastMounted;
+    lastMounted = ctx.screen;
+    const nodes = def.build(ctx);
+    // A screen that redirected while it was being built (no adventure any
+    // more, say) has already drawn its replacement; don't cover it up.
+    if (seq !== renderSeq) return;
+    mount(nodes, {
+      bloom: def.bloom,
+      chrome: tracking ? serviceNotice() : null,
+      focus: fresh,
+    });
+    applyGlow(def.glow?.(ctx));
+  } catch (err) {
+    store.logError(err, ctx.screen);
+    if (seq === renderSeq) mountFallback();
+  }
+}
+
+// Whatever went wrong, the data is still stored: offer the way out of it.
+function mountFallback() {
+  lastMounted = null;
+  mount([
+    el('h2', { class: 'title', text: 'Something went wrong' }),
+    el('p', { class: 'body', style: 'margin:0', text: 'Your adventures are safe.' }),
+    foot(
+      btn('Export my data', 'btn--pri', () => exportData()),
+      btn('Back to start', 'btn--sec', () => { ctx.stack.length = 0; go('start', null, { replace: true }); }),
+    ),
+  ], { focus: true });
 }
 
 // A mode's own glow on the screens that belong to an adventure; Night out and
@@ -619,6 +650,8 @@ function warnStorageFull() {
 
 function boot() {
   store.onStorageError(warnStorageFull);
+  window.addEventListener('error', (e) => store.logError(e.error || e.message, ctx.screen));
+  window.addEventListener('unhandledrejection', (e) => store.logError(e.reason, ctx.screen));
   store.installFlushHooks();
   keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
   applyAccessibility();

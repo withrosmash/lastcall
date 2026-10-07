@@ -475,7 +475,10 @@ function confirmDelete(ctx, s) {
           // The venue squares on the phone mark roughly where you checked in.
           clearVenueCache();
           close();
-          ctx.go('history');
+          // Back, not forward: the screen before was the list (or wherever the
+          // adventure was opened from), and nothing should lead back to it.
+          if (ctx.stack.length) ctx.back();
+          else ctx.go('history', null, { replace: true });
           toast(t('{N} deleted.'));
         }),
         btn('Keep it', 'btn--sec', close),

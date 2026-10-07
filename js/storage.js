@@ -108,6 +108,21 @@ export function onStorageError(fn) { errorHandler = fn; }
 
 export function storageError() { return lastError; }
 
+// The last 20 errors, kept on the phone for diagnosing a tester's report (and
+// later the crash feed of the monitoring dashboard). Never sent anywhere.
+const ERRORS_KEY = 'lastcall_errors';
+export function logError(err, screen = '') {
+  try {
+    const log = JSON.parse(localStorage.getItem(ERRORS_KEY) || '[]');
+    log.push({
+      t: Date.now(), screen,
+      msg: String(err?.message ?? err).slice(0, 300),
+      stack: String(err?.stack || '').slice(0, 500),
+    });
+    localStorage.setItem(ERRORS_KEY, JSON.stringify(log.slice(-20)));
+  } catch { /* logging must never throw */ }
+}
+
 // Persist immediately when the app is backgrounded or closed — a debounced
 // write would otherwise be lost when Android freezes the WebView.
 export function installFlushHooks() {
