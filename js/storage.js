@@ -79,6 +79,9 @@ let lastError = null;
 
 export function save(state) {
   cache = state;
+  // Fixes and step updates save too, so this is the last moment the app knew
+  // the adventure was still going (see lastActivity).
+  if (state?.active) state.active.touchedAt = Date.now();
   clearTimeout(writeTimer);
   writeTimer = setTimeout(flush, 220);
 }

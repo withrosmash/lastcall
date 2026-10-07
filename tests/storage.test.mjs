@@ -102,3 +102,10 @@ test('export, import, export gives the same adventures', () => {
   const second = JSON.parse(store.exportJSON());
   assert.deepEqual(second.sessions, first.sessions);
 });
+
+test('saving marks the live adventure as touched', () => {
+  const state = store.checkImport(JSON.stringify({ sessions: [], active: { ...session('live', 10), endedAt: null } })).data;
+  const before = Date.now();
+  store.save(state);
+  assert.ok(state.active.touchedAt >= before);
+});

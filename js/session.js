@@ -618,6 +618,11 @@ export function recapScreen(ctx, session) {
     foot(
       btn('Make a card', 'btn--pri', () => ctx.go('card', s), { lg: true }),
       btn('Just save it', 'btn--sec', () => { toast('Saved to history.'); ctx.go('start'); }),
+      // The app closed this one itself after a long quiet spell; if you're
+      // actually still out, pick it straight back up.
+      s.autoClosed && !ctx.state.active && ctx.state.sessions[0] === s
+        ? btn('Not finished? Carry on', 'btn--sec', () => ctx.carryOn(s))
+        : null,
     ),
   ];
 }

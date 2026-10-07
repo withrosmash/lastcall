@@ -34,7 +34,7 @@ const ctx = {
   tick: null,
   // null until a native status read lands; the web build stays null.
   permissions: null,
-  go, back, render, save, applyAccessibility, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, makeFestival, deleteFestival, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
+  go, back, render, save, applyAccessibility, carryOn, beginNight, startNight, grantThenStart, endNight, switchMode, logSet, makeFestival, deleteFestival, logDrink, logWater, logMeal, logChallenge, openChallenge, addPin,
   fixBattery, checkBattery, checkPermissions, fixPermission, openAppSettings: keepalive.openAppSettings,
   setTheme,
 };
@@ -292,7 +292,10 @@ window.addEventListener('lc:card-exported', () => {
 
 async function drainQuickLogs({ silent = false } = {}) {
   const s = ctx.state.active;
-  const events = await keepalive.drainQuickLogs();
+  // Taps from before this adventure started (a previous one the app closed)
+  // are dropped rather than counted here.
+  const queued = await keepalive.drainQuickLogs();
+  const events = s ? S.eventsFor(s, queued) : [];
   if (!s || !events.length) return;
   for (const e of events) {
     const t = Number(e.t) || Date.now();
@@ -564,28 +567,50 @@ function setTheme(theme) {
   render();
 }
 
+function resume(active) {
+  if (S.isStale(active)) {
+    // Phone died, app was killed, night forgotten. Close it at the last known
+    // activity rather than counting the hours since as time spent out.
+    S.endSession(active, S.lastActivity(active));
+    active.autoClosed = true;
+    ctx.state.sessions.unshift(active);
+    ctx.state.active = null;
+    ctx.lastSession = active;
+    keepalive.hideQuickLog();
+    keepalive.setSessionActive(false);
+    save();
+    store.flush();
+    go('recap', active);
+    toast(t('Your last {n} was left open, so it was closed for you.'));
+  } else {
+    keepalive.setSessionActive(true);
+    go('live');
+    startTracking();
+    ensureBatteryExemption();
+  }
+}
+
+// Picks an auto-closed adventure back up from its recap.
+function carryOn(s) {
+  if (!S.reopen(ctx.state, s)) return;
+  save();
+  store.flush();
+  keepalive.setSessionActive(true);
+  go('live', null, { replace: true });
+  startTracking();
+  toast(t('Back on your {n}.'));
+}
+
 function boot() {
   store.installFlushHooks();
   keepalive.setSystemBars(applyTheme(ctx.state.prefs.theme));
   applyAccessibility();
 
   const active = ctx.state.active;
-  if (active && S.isStale(active)) {
-    // Phone died, app was killed, night forgotten. Close it at the last known
-    // activity rather than counting the hours since as time spent out.
-    S.endSession(active, S.lastActivity(active));
-    ctx.state.sessions.unshift(active);
-    ctx.state.active = null;
-    ctx.lastSession = active;
-    save();
-    store.flush();
-    go('recap', active);
-    toast(t('Your last {n} was left open, so it was closed for you.'));
-  } else if (active) {
-    keepalive.setSessionActive(true);
-    go('live');
-    startTracking();
-    ensureBatteryExemption();
+  if (active) {
+    // Notification taps made while the app was closed count first, so they
+    // land in this adventure and move its last activity before the check.
+    drainQuickLogs({ silent: true }).catch(() => {}).finally(() => resume(active));
   } else {
     keepalive.setSessionActive(false);
     // A new install gets the walkthrough; the first open after a night,

@@ -296,13 +296,31 @@ export function isStale(s, now = Date.now()) {
   return !!s && !s.endedAt && now - lastActivity(s) > AUTO_END_MS;
 }
 
+// Everything that shows the adventure was still going: any log, a stop, a
+// set, a mode switch, or the app saving it (steps and fixes save too).
 export function lastActivity(s) {
-  const times = [s.startedAt];
-  if (s.drinks.length) times.push(s.drinks[s.drinks.length - 1].t);
-  if (s.waters.length) times.push(s.waters[s.waters.length - 1].t);
-  if (s.trail.length) times.push(s.trail[s.trail.length - 1].t);
-  if (s.pins.length) times.push(s.pins[s.pins.length - 1].t);
+  const times = [s.startedAt, s.touchedAt || 0];
+  for (const k of ['drinks', 'waters', 'meals', 'challenges', 'pins', 'trail', 'sets', 'parts']) {
+    for (const e of s[k] || []) if (Number.isFinite(e?.t)) times.push(e.t);
+  }
   return Math.max(...times);
+}
+
+/** Notification taps that belong to this adventure's time. */
+export function eventsFor(s, events) {
+  return events
+    .map((e) => ({ ...e, t: Number(e.t) }))
+    .filter((e) => Number.isFinite(e.t) && e.t >= s.startedAt && (!s.endedAt || e.t <= s.endedAt));
+}
+
+/** Carries on an adventure the app closed for you. */
+export function reopen(state, s) {
+  if (state.active || !s?.autoClosed) return false;
+  state.sessions = state.sessions.filter((x) => x !== s);
+  s.endedAt = null;
+  delete s.autoClosed;
+  state.active = s;
+  return true;
 }
 
 // Stretches where no fix arrived for far longer than the throttle allows —
