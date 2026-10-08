@@ -180,3 +180,13 @@ test('the new name wins when both exist', async () => {
   const fresh = await import('../js/storage.js?both');
   assert.deepEqual(fresh.load().sessions.map((s) => s.id), ['new']);
 });
+
+test('an import straight after the rename can still be undone', async () => {
+  globalThis.localStorage = makeStorage();
+  localStorage.setItem('lastcall_v1', JSON.stringify({ v: 1, sessions: [session('from-leit', 5)] }));
+  const fresh = await import('../js/storage.js?import-first');
+  fresh.load();
+  fresh.importJSON(JSON.stringify({ sessions: [session('theirs', 9)] }));
+  const back = fresh.undoImport();
+  assert.deepEqual(back?.sessions.map((s) => s.id), ['from-leit']);
+});

@@ -21,7 +21,15 @@ let cache = null;
 export function load() {
   if (cache) return cache;
   let raw = null;
-  try { raw = localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY); } catch { /* private mode */ }
+  try {
+    raw = localStorage.getItem(KEY);
+    if (raw == null) {
+      raw = localStorage.getItem(OLD_KEY);
+      // Copy it across straight away, so everything that only knows the new
+      // key (an import's backup and undo, the next save) sees it.
+      if (raw != null) localStorage.setItem(KEY, raw);
+    }
+  } catch { /* private mode, or no room for the copy: raw is still read */ }
   if (!raw) { cache = structuredClone(EMPTY); return cache; }
   try {
     const parsed = JSON.parse(raw);
