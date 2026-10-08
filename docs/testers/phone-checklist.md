@@ -127,3 +127,22 @@ New in build 1eefadb.
 75. Delete an adventure and press Back: you never see it again, and the app doesn’t close.
 76. History › All time shows “Show more” once you have more than 40 adventures.
 77. The badge is called First Challenge.
+
+## Moving to Sprell (do these first)
+Build 9b339c5 is Sprell, with a new app ID, so it installs as a new app.
+
+78. In Leit, export your history: Settings › Export history. It saves to Downloads › Leit.
+79. Install sprell-debug-9b339c5. It arrives as a new app, Sprell, next to Leit.
+80. Open Sprell, go through the walkthrough, then Settings › Import history and pick the file from the step above. Your adventures, badges and look come across.
+81. Once you’ve checked everything is there, uninstall Leit.
+
+## Round 8: Sprell
+New in build 9b339c5.
+
+82. The home screen icon is the white “sprell” on forest green. Check it reads clearly at its real size, and that with themed icons on it shows in one colour.
+83. The splash is the icon on black, then the app opens with “sprell” and “Track the adventure. Relive it later.”
+84. While tracking, the status bar shows a white “s” and the notification says “Sprell is tracking your adventure.”
+85. Quick log from the notification still works, including on the lock screen.
+86. A route card and a photo card show “sprell” in the corner, clear of everything else, in Dark, Light and Halo.
+87. Saved cards go to Pictures › Sprell and exports to Downloads › Sprell, named sprell- and the date.
+88. Restart the phone during an adventure: the “Sprell stopped tracking” notice appears.
