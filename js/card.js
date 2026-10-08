@@ -876,7 +876,7 @@ function draw({ forExport = false, only = null, target = null } = {}) {
   }
   drawFree(g, w, h, forExport || !!only || !live, want, live);
   // The wordmark is the one fixed element on a photo card: mint, bottom right.
-  if (want('wordmark')) drawWordmark(g, w - PAD, h - PAD - 36, 30, { color: C.mint, align: 'right', shadow: theme().shadow });
+  if (want('wordmark')) drawWordmark(g, w - PAD, h - PAD - 37, 40, { color: C.mint, align: 'right', shadow: theme().shadow });
 }
 
 // The card glows in the colour of the mode the adventure ended in.
@@ -986,7 +986,7 @@ function drawRouteCard(g, w, h, want) {
   // A cap height (30px) of clear space between the date and the wordmark.
   if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 79, { size: 30, weight: 400, color: T.date });
   // The wordmark's foot sits where the typed name's baseline did.
-  if (want('wordmark')) drawWordmark(g, M, h - M - 19, 30, { color: T.mark });
+  if (want('wordmark')) drawWordmark(g, M, h - M - 20, 40, { color: T.mark });
   if (want('avatar') && ui.face !== 'none' && ui.look) {
     // With no route the avatar takes the map's place, big, so the card has
     // no empty half; otherwise it stands beside the stats.

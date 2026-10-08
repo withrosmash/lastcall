@@ -61,7 +61,7 @@ export function startScreen(ctx) {
     av ? el('div', { class: 'avatar-home' },
       av.canvas,
       el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')) : null,
-    el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(15)),
+    el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(30)),
     el('h1', { class: 'display', style: 'margin-top:10px' },
       t('Track the {n}.'), el('br'), 'Piece it together later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
@@ -166,7 +166,7 @@ export function onboardingScreen(ctx) {
         icon('chevron-left', { size: 15 }), el('span', { text: 'Back' })) : null),
     el('div', { class: 'onboard__stage' }, av.canvas),
     step.brand
-      ? el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(15))
+      ? el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(30))
       : el('div', { class: 'eb eb--mint-dim', text: step.eyebrow }),
     el('h1', { class: 'display', style: 'margin-top:10px', text: t(step.title) }),
     el('p', { class: 'body', style: 'margin:12px 0 0', text: t(step.body) }),
