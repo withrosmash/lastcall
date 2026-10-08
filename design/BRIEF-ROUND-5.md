@@ -16,7 +16,7 @@ Please keep sentence-case labels, and use no long dashes in any copy.
 - **Watch for:** the double "ll" should read as two letters at small sizes (the home screen icon is about 48px); "sp" at the start shouldn't clump.
 - **Not a drinking app:** nothing in the mark should suggest drinks, glasses, bubbles from a drink or anything boozy.
 - **Where it goes:**
-  - the start screen, above "Track the adventure. Piece it together later.";
+  - the start screen, above the new tagline "Track the adventure. Relive it later.";
   - the share cards (route and photo, dark and light text themes);
   - the walkthrough's first step;
   - the app icon (below) and the Play Store feature graphic (1024 by 500).
