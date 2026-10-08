@@ -21,7 +21,7 @@ Pages serves the repo without running `npm install`.
 
 **Via CI (no local Android toolchain needed).** Push to `main`. The
 `Build Android APK` workflow runs on Ubuntu, where the Android SDK is
-preinstalled, and uploads `lastcall-debug-<sha>.apk` as a build artifact.
+preinstalled, and uploads `sprell-debug-<sha>.apk` as a build artifact.
 Download it from the run's summary page. Free minutes on a public repo.
 
 **Locally**, if you ever install Android Studio:
@@ -79,8 +79,8 @@ between nights. Within a night it is built to not drop out:
 ### Samsung, by hand
 
 The in-app prompt covers most of it. If the warning persists:
-Settings → Apps → Leit → Battery → **Unrestricted**, and
-Settings → Battery → Background usage limits → make sure Leit is **not** in
+Settings → Apps → Sprell → Battery → **Unrestricted**, and
+Settings → Battery → Background usage limits → make sure Sprell is **not** in
 **Sleeping apps** or **Deep sleeping apps**.
 
 ## The test that matters

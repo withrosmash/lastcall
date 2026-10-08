@@ -2,7 +2,7 @@
 // Don't edit by hand: the hand-back is the source of truth for every shape,
 // tone and layer, apart from the owner's tweaks listed in the import script.
 // Style B, 64 x 80, by Claude Design (round 4).
-// Leit avatar, Style B. 64 x 80 pixel chibi, procedural, recoloured at draw time.
+// Sprell avatar, Style B. 64 x 80 pixel chibi, procedural, recoloured at draw time.
 // Shapes are defined in 48-unit space (head centre 24,23.6) and sampled at pixel centres: px = u*1.25 + 2, py = v*1.25.
 // Every pixel stores a slot + tone (or a fixed colour). Each moving part is its own layer.
 const A = (function () {
@@ -36,7 +36,7 @@ const A = (function () {
   const TOPS = ['tee', 'hoodie', 'shirt', 'jacket', 'dress', 'jumpsuit', 'pyjamas'];
   const GLASSES = ['none', 'round', 'square', 'browline', 'sun', 'aviator'];
   const LAYER_Z = { fxBack: -1, hairBack: 0, footL: 1, footR: 1.05, packBack: 1.5, body: 2, mode: 2.3, armL: 2.5, armR: 2.55, head: 3, blush: 3.9, mouth: 4, eyes: 4.1, glitter: 4.2, held: 4.7, grip: 4.75, hairFront: 5, brows: 5.1, glasses: 6, hat: 7, fx: 8 };
-  // Extension points: items, hats and mode touches register here (leit-avatar-items.js).
+  // Extension points: items, hats and mode touches register here (the items section below).
   // Survives the file being evaluated twice, so items registered in between are kept.
   const HOOK = { normalize: [], items: [], mini: [] };
   const ARM_Z = { side: 0, front: 2.1, raised: 3 };
@@ -998,8 +998,8 @@ const A = (function () {
   return { normalize, colourOf, HOOK, ARMDEF: ARMS, SHOULDER, K, OX, W, H, MW, MH, HAIRS, TOPS, GLASSES, EYES: EYE_LIST, BROWS: Object.keys(BROWS), MOUTHS: Object.keys(MOUTHS), ARMS: Object.keys(ARMS), POSES: Object.keys(POSES), PRESETS: Object.keys(PRESETS), LAYERS: ORDER, DEFAULT, TONE, SLOTS, build, compose, render, anchors, draw, drawMini, mini, outlineFixed, LAYER_Z };
 })();
 
-// Leit avatar, Style B: items. Hats, hoods, held items, badge, reaction props, mode touches, walker variants.
-// Registers into LeitAvatar.HOOK. Pixel space is 64 x 80; head centre (31.5, 29.5), face opening centre (32, 34).
+// Sprell avatar, Style B: items. Hats, hoods, held items, badge, reaction props, mode touches, walker variants.
+// Registers into HOOK. Pixel space is 64 x 80; head centre (31.5, 29.5), face opening centre (32, 34).
 (function registerItems(A) {
   const { HOOK, TONE, ARMDEF, SHOULDER, K, OX } = A;
   const ell = (x, y, cx, cy, rx, ry) => { const a = (x - cx) / rx, b = (y - cy) / ry; return a * a + b * b <= 1; };

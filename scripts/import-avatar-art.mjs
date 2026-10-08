@@ -1,5 +1,5 @@
-// Turns Claude Design's round 4 avatar-draw.js (a browser script that sets
-// window.LeitAvatar) into js/avatar-art.js, an ES module node can test. The
+// Turns Claude Design's round 4 avatar-draw.js (a browser script that sets a
+// window global named after the app's old name) into js/avatar-art.js, an ES module node can test. The
 // shapes, tones and layer rules are copied unchanged; only the wrapper
 // changes. The Crew group code is left out until Crew is built.
 //
@@ -12,33 +12,38 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const src = await readFile(resolve(root, 'design/round4/handback/avatar-draw.js'), 'utf8');
 
+// The hand-back was made under the app's old name, and it's kept as
+// delivered, so the text matched in it uses that name. The generated module
+// says Sprell instead.
+const OLD = 'Leit'; // allowed-old-name: matches the delivered round 4 file
+
 const swap = (text, from, to) => {
   const n = text.split(from).length - 1;
   if (n !== 1) throw new Error(`expected one "${from.slice(0, 50)}", found ${n}`);
   return text.replace(from, to);
 };
 
-const cut = src.indexOf('// Leit avatar, Style B: group poses for Crew');
+const cut = src.indexOf(`// ${OLD} avatar, Style B: group poses for Crew`);
 if (cut < 0) throw new Error('group section not found');
 // Its own header names the browser globals, which this module doesn't set.
-let s = src.slice(src.indexOf('// Leit avatar, Style B. 64 x 80'), cut);
+let s = src.slice(src.indexOf(`// ${OLD} avatar, Style B. 64 x 80`), cut);
 
 // The gallery painter (drawAll) opens a MessageChannel at load, which would
 // keep node running, and the app draws its own canvases, so it's left out.
 const gStart = s.indexOf('  const IMG = new Map();');
-const gEnd = s.indexOf('  window.LeitAvatar = Object.assign(');
+const gEnd = s.indexOf(`  window.${OLD}Avatar = Object.assign(`);
 if (gStart < 0 || gEnd < gStart) throw new Error('gallery painter not found');
 s = s.slice(0, gStart) + s.slice(gEnd);
 
 // Part one: the character. The IIFE now returns its API instead of setting a global.
 s = swap(s, '(function () {\n  const W = 64', 'const A = (function () {\n  const W = 64');
-s = swap(s, 'const HOOK = (window.LeitAvatar && window.LeitAvatar.HOOK) || { normalize: [], items: [], mini: [] };',
+s = swap(s, `const HOOK = (window.${OLD}Avatar && window.${OLD}Avatar.HOOK) || { normalize: [], items: [], mini: [] };`,
   'const HOOK = { normalize: [], items: [], mini: [] };');
-s = swap(s, '  window.LeitAvatar = Object.assign(window.LeitAvatar || {}, { colourOf,', '  return { normalize, colourOf,');
+s = swap(s, `  window.${OLD}Avatar = Object.assign(window.${OLD}Avatar || {}, { colourOf,`, '  return { normalize, colourOf,');
 s = swap(s, 'drawMini, mini, drawAll });\n})();', 'drawMini, mini, outlineFixed, LAYER_Z };\n})();');
 
 // Part two: items. Registered once, straight away, instead of polling for the global.
-s = swap(s, "(function boot() {\n  const A = window.LeitAvatar; if (!A) { setTimeout(boot, 20); return; }\n  if (A.HOOK.__items) return; A.HOOK.__items = true;\n",
+s = swap(s, `(function boot() {\n  const A = window.${OLD}Avatar; if (!A) { setTimeout(boot, 20); return; }\n  if (A.HOOK.__items) return; A.HOOK.__items = true;\n`,
   '(function registerItems(A) {\n');
 s = s.replace(/\}\)\(\);\s*$/, '})(A);\n');
 
@@ -71,5 +76,9 @@ export const {
 export const DEFAULT_COLORS = A.DEFAULT;
 export const HELD_ITEMS = [...A.HELD, ...A.PROPS, ...A.PROPS2, 'wand', 'spoon'];
 `;
+// Comments copied from the hand-back name the app; say Sprell in ours.
+s = s.split(`${OLD} avatar`).join('Sprell avatar')
+  .split(`(${OLD.toLowerCase()}-avatar-items.js)`).join('(the items section below)')
+  .split(`Registers into ${OLD}Avatar.HOOK`).join('Registers into HOOK');
 await writeFile(resolve(root, 'js/avatar-art.js'), header + s.trimEnd() + '\n' + footer);
 console.log('js/avatar-art.js written');

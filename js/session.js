@@ -63,7 +63,7 @@ export function startScreen(ctx) {
       el('button', { class: 'chip press', type: 'button', onclick: () => ctx.go('avatar') }, 'Customise')) : null,
     el('div', { class: 'eb eb--mint-dim brandmark' }, wordmarkSvg(30)),
     el('h1', { class: 'display', style: 'margin-top:10px' },
-      t('Track the {n}.'), el('br'), 'Piece it together later.'),
+      t('Track the {n}.'), el('br'), 'Relive it later.'),
     el('p', { class: 'body', style: 'max-width:300px;margin:12px 0 0',
       text: 'Steps, stops, drinks and water, saved on this phone.' }),
     el('div', { style: 'height:20px' }),
@@ -328,7 +328,7 @@ export function liveScreen(ctx) {
     // Samsung will stop the service and the rest of the night goes unrecorded.
     ctx.batteryExempt === false ? el('div', { class: 'warn' },
       el('div', { class: 'warn__h', text: 'Android may stop tracking.' }),
-      el('div', { class: 'cap cap--up', text: 'Battery optimisation is on for Leit, so your phone can put it to sleep while you’re out.' }),
+      el('div', { class: 'cap cap--up', text: 'Battery optimisation is on for Sprell, so your phone can put it to sleep while you’re out.' }),
       btn('Fix it', 'btn--pink', () => ctx.fixBattery()),
     ) : null,
 

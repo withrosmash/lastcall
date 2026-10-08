@@ -1,4 +1,4 @@
-/* Last Call — spacing, shape, tap targets. Base unit 4px. Portrait only, 9:19.5. */
+/* Sprell: spacing, shape, tap targets. Base unit 4px. Portrait only, 9:19.5. */
 :root{
   --u:4px; /* @kind spacing */
   --gap:9px;         /* between stacked blocks */

@@ -1,4 +1,4 @@
-/* Last Call colours, light ("Ice" ground, cobalt bloom).
+/* Sprell colours, light ("Ice" ground, cobalt bloom).
    Same token names as colors.css. Scoped to [data-theme="light"], so the app loads both
    files and sets data-theme on <html>: "light", or unset for dark. Match phone sets it
    from prefers-color-scheme. Every alias is re-declared here because custom properties

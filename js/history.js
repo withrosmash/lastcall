@@ -145,7 +145,7 @@ export function numbersScreen(ctx) {
 
   return [
     head({ eyebrow: 'Settings', title: 'Your numbers', back: () => ctx.back() }),
-    el('p', { class: 'body', style: 'margin:0', text: 'Testing Leit? Screenshot this and send it over. These numbers stay on your phone until you send them.' }),
+    el('p', { class: 'body', style: 'margin:0', text: 'Testing Sprell? Screenshot this and send it over. These numbers stay on your phone until you send them.' }),
     tiles(
       tile(t('{Ns}'), st.adventures),
       tile('Last 30 days', st.last30),
@@ -448,7 +448,7 @@ const escapeXml = (str) => String(str).replace(/[<>&'"]/g, (c) =>
 // Children in the order GPX 1.1 requires (time, name, type), or strict
 // importers reject the file.
 export function toGpx(s) {
-  const name = `Leit, ${shortDate(s.startedAt)}`;
+  const name = `Sprell, ${shortDate(s.startedAt)}`;
   const points = s.trail.map((p) =>
     `<trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`).join('\n');
   const sets = (s.sets || []).filter((x) => x.lat != null).map((x) =>
@@ -456,7 +456,7 @@ export function toGpx(s) {
   const stops = s.pins.filter((p) => p.lat != null).map((p) =>
     `<wpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time><name>${escapeXml(p.name)}</name></wpt>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Leit" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Sprell" xmlns="http://www.topografix.com/GPX/1/1">
 ${stops}
 ${sets}
 <trk><name>${escapeXml(name)}</name><trkseg>
@@ -466,8 +466,8 @@ ${points}
 }
 
 async function exportGpx(s) {
-  const name = `leit-${new Date(s.startedAt).toISOString().slice(0, 10)}.gpx`;
-  await exportText(name, 'application/gpx+xml', toGpx(s), 'Route saved to Downloads › Leit.');
+  const name = `sprell-${new Date(s.startedAt).toISOString().slice(0, 10)}.gpx`;
+  await exportText(name, 'application/gpx+xml', toGpx(s), 'Route saved to Downloads › Sprell.');
 }
 
 function confirmDelete(ctx, s) {
@@ -499,8 +499,8 @@ function confirmDelete(ctx, s) {
 /* ---------- export / import ---------- */
 
 export function exportData() {
-  const name = `leit-${new Date().toISOString().slice(0, 10)}.json`;
-  exportText(name, 'application/json', store.exportJSON(), 'History saved to Downloads › Leit.');
+  const name = `sprell-${new Date().toISOString().slice(0, 10)}.json`;
+  exportText(name, 'application/json', store.exportJSON(), 'History saved to Downloads › Sprell.');
 }
 
 // Native writes through MediaStore — the WebView silently drops <a download>
@@ -528,7 +528,7 @@ function importData(ctx) {
     let text;
     try { text = await file.text(); } catch { toast('That file couldn’t be read.'); return; }
     const checked = store.checkImport(text);
-    if (!checked.ok) { toast('That file isn’t a Leit export.'); return; }
+    if (!checked.ok) { toast('That file isn’t a Sprell export.'); return; }
     const mine = ctx.state.sessions.length;
     sheet((close) => [
       el('h2', { class: 'title', text: 'Replace your history?' }),

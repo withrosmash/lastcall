@@ -7,11 +7,11 @@
   body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui}
   button{font:600 15px system-ui;padding:12px 16px;border-radius:10px;border:1px solid var(--mint);background:transparent;color:var(--mint);margin:0 8px 8px 0}
 </style>
-<!-- Dev only, never shipped: fills this browser's Leit storage with sample
+<!-- Dev only, never shipped: fills this browser's Sprell storage with sample
      adventures in every mode (routes, stops, sets, a festival review), so
      screens can be checked in the browser. The app saves its own state when
      a page closes, so seed from here, then open the app. -->
-<h1>Leit dev seed</h1>
+<h1>Sprell dev seed</h1>
 <p id="out">Seeds this browser’s storage for http://localhost:8010.</p>
 <button id="seed" type="button">Seed sample data</button>
 <button id="fresh" type="button">Fresh install</button>
@@ -82,11 +82,11 @@ function seed() {
     prefs: { ...defaultPrefs() },
     festivals: [{ id: 'fvseed', name: 'Field Day', sessionIds: fest.map((s) => s.id), createdAt: Date.now() }],
   };
-  localStorage.setItem('lastcall_v1', JSON.stringify(state));
+  localStorage.setItem('sprell_v1', JSON.stringify(state));
   return `${sessions.length} adventures and one festival review.`;
 }
 
 const out = document.getElementById('out');
 document.getElementById('seed').onclick = () => { out.textContent = `Seeded: ${seed()}`; };
-document.getElementById('fresh').onclick = () => { localStorage.removeItem('lastcall_v1'); out.textContent = 'Cleared: the app will open as a fresh install.'; };
+document.getElementById('fresh').onclick = () => { localStorage.removeItem('sprell_v1'); localStorage.removeItem('lastcall_v1'); /* allowed-old-name */ out.textContent = 'Cleared: the app will open as a fresh install.'; };
 </script>

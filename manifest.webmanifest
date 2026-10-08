@@ -1,7 +1,7 @@
 {
-  "name": "Leit",
-  "short_name": "Leit",
-  "description": "Track the adventure. Piece it together later.",
+  "name": "Sprell",
+  "short_name": "Sprell",
+  "description": "Track the adventure. Relive it later.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

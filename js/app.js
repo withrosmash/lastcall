@@ -632,14 +632,14 @@ function carryOn(s) {
   toast(t('Back on your {n}.'));
 }
 
-// A save that fails (the phone's storage for Leit is full) never deletes
+// A save that fails (the phone's storage for Sprell is full) never deletes
 // anything; it asks for an export, once per launch.
 let fullWarned = false;
 function warnStorageFull() {
   if (fullWarned) return;
   fullWarned = true;
   sheet((close) => [
-    el('h2', { class: 'title', text: 'Leit’s storage is full' }),
+    el('h2', { class: 'title', text: 'Sprell’s storage is full' }),
     el('p', { class: 'body', style: 'margin:0', text: 'Your newest changes aren’t saved yet. Export your history now so nothing is lost, then delete some old adventures.' }),
     foot(
       btn('Export now', 'btn--pri', () => { close(); exportData(); }),

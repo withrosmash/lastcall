@@ -4,7 +4,7 @@
 
 import { registerPlugin, Capacitor } from '../vendor/capacitor-core.js';
 
-const LastCallNative = registerPlugin('LastCallNative');
+const SprellNative = registerPlugin('SprellNative');
 const App = registerPlugin('App');
 
 export const isNative = () => {
@@ -15,7 +15,7 @@ export const isNative = () => {
 export async function isExempt() {
   if (!isNative()) return null;
   try {
-    const res = await LastCallNative.isIgnoringBatteryOptimizations();
+    const res = await SprellNative.isIgnoringBatteryOptimizations();
     return !!res?.ignoring;
   } catch {
     return null;
@@ -26,7 +26,7 @@ export async function isExempt() {
 export async function requestExempt() {
   if (!isNative()) return null;
   try {
-    const res = await LastCallNative.requestIgnoreBatteryOptimizations();
+    const res = await SprellNative.requestIgnoreBatteryOptimizations();
     return !!res?.ignoring;
   } catch {
     return null;
@@ -35,7 +35,7 @@ export async function requestExempt() {
 
 export async function openAppSettings() {
   if (!isNative()) return false;
-  try { await LastCallNative.openAppSettings(); return true; }
+  try { await SprellNative.openAppSettings(); return true; }
   catch { return false; }
 }
 
@@ -43,7 +43,7 @@ export async function openAppSettings() {
 // still read it after a restart has wiped the WebView.
 export async function setSessionActive(active) {
   if (!isNative()) return;
-  try { await LastCallNative.setSessionActive({ active: !!active }); }
+  try { await SprellNative.setSessionActive({ active: !!active }); }
   catch { /* the flag is a courtesy, never a failure path */ }
 }
 
@@ -52,7 +52,7 @@ export async function setSessionActive(active) {
 // "saved" to nowhere on the phone.
 export async function saveImage(base64, name) {
   if (!isNative()) return false;
-  await LastCallNative.saveToGallery({ data: base64, name });
+  await SprellNative.saveToGallery({ data: base64, name });
   return true;
 }
 
@@ -63,13 +63,13 @@ export async function saveImage(base64, name) {
 // put dark icons on the black app for anyone whose phone is set to light.
 export async function setSystemBars(light) {
   if (!isNative()) return;
-  try { await LastCallNative.setSystemBars({ light: !!light }); } catch { /* older build */ }
+  try { await SprellNative.setSystemBars({ light: !!light }); } catch { /* older build */ }
 }
 
 /** The phone's text size, times `scale` (1, or 1.15 for Bigger text). */
 export async function setTextScale(scale) {
   if (!isNative()) return;
-  try { await LastCallNative.setTextZoom({ scale }); } catch { /* older build */ }
+  try { await SprellNative.setTextZoom({ scale }); } catch { /* older build */ }
 }
 
 /* ---------- hardware back button ---------- */
@@ -93,7 +93,7 @@ export async function minimize() {
 export async function permissionStatus() {
   if (!isNative()) return null;
   try {
-    const res = await LastCallNative.permissionStatus();
+    const res = await SprellNative.permissionStatus();
     return {
       fineLocation: !!res?.fineLocation,
       backgroundLocation: !!res?.backgroundLocation,
@@ -111,7 +111,7 @@ export async function permissionStatus() {
 export async function requestActivityPermission() {
   if (!isNative()) return true;
   try {
-    const res = await LastCallNative.requestActivityPermission();
+    const res = await SprellNative.requestActivityPermission();
     return !!res?.granted;
   } catch {
     return false;
@@ -122,19 +122,19 @@ export async function requestActivityPermission() {
 
 export async function showQuickLog(drinkLabel = 'Drink') {
   if (!isNative()) return;
-  try { await LastCallNative.showQuickLog({ drinkLabel }); } catch { /* cosmetic */ }
+  try { await SprellNative.showQuickLog({ drinkLabel }); } catch { /* cosmetic */ }
 }
 
 export async function hideQuickLog() {
   if (!isNative()) return;
-  try { await LastCallNative.hideQuickLog(); } catch { /* already gone */ }
+  try { await SprellNative.hideQuickLog(); } catch { /* already gone */ }
 }
 
 // Taps recorded while the WebView slept, with the tap's own timestamps.
 export async function drainQuickLogs() {
   if (!isNative()) return [];
   try {
-    const res = await LastCallNative.drainPendingLogs();
+    const res = await SprellNative.drainPendingLogs();
     return Array.isArray(res?.events) ? res.events : [];
   } catch {
     return [];
@@ -143,14 +143,14 @@ export async function drainQuickLogs() {
 
 export async function onQuickLog(cb) {
   if (!isNative()) return null;
-  try { return await LastCallNative.addListener('quicklog', cb); } catch { return null; }
+  try { return await SprellNative.addListener('quicklog', cb); } catch { return null; }
 }
 
 /* ---------- text files to Downloads (GPX, JSON export) ---------- */
 
 export async function saveTextFile(name, mime, data) {
   if (!isNative()) return false;
-  await LastCallNative.saveTextFile({ name, mime, data });
+  await SprellNative.saveTextFile({ name, mime, data });
   return true;
 }
 
@@ -166,10 +166,10 @@ let lastTotal = 0;
 export async function startSteps(onDelta) {
   if (!isNative()) return false;
   try {
-    const res = await LastCallNative.startStepCount();
+    const res = await SprellNative.startStepCount();
     if (!res?.available) return false;
     lastTotal = 0;
-    stepHandle = await LastCallNative.addListener('steps', (e) => {
+    stepHandle = await SprellNative.addListener('steps', (e) => {
       const total = Number(e?.steps) || 0;
       const delta = total - lastTotal;
       lastTotal = total;
@@ -186,5 +186,5 @@ export async function stopSteps() {
   stepHandle = null;
   lastTotal = 0;
   if (!isNative()) return;
-  try { await LastCallNative.stopStepCount(); } catch { /* not counting */ }
+  try { await SprellNative.stopStepCount(); } catch { /* not counting */ }
 }

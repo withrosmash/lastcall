@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'lastcall-v42';
+const CACHE = 'sprell-v43';
 
 const SHELL = [
   './',
@@ -183,9 +183,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      // leit-venues-* is the check-in venue cache (js/venues.js): it outlives
+      // sprell-venues-* is the check-in venue cache (js/venues.js): it outlives
       // app updates on purpose, so a repeat check-in works offline.
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && !k.startsWith('leit-venues')).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && !k.startsWith('sprell-venues')).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });

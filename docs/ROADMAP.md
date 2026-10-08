@@ -1,4 +1,4 @@
-# Leit roadmap
+# Sprell roadmap
 
 What's left before launch, in rough order. Each item becomes its own spec and plan when we start it. Updated 2026-10-07.
 

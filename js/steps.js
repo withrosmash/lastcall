@@ -1,6 +1,6 @@
 // Step counting behind one interface, native-first.
 //
-// Native: the phone's hardware step counter via LastCallNative — counts in
+// Native: the phone's hardware step counter via SprellNative — counts in
 // silicon whether or not the app is awake, which is the only way a night in a
 // pocket records real numbers.
 //

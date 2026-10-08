@@ -4,9 +4,9 @@ A message ready to paste into the group chat. It went through a Humanizer pass. 
 
 ---
 
-Hey, thanks for testing Leit. A few quick questions, and short answers are fine.
+Hey, thanks for testing Sprell. A few quick questions, and short answers are fine.
 
-First, could you open Leit, go to History, then Settings, then Your numbers, take a screenshot and send it to me? It only shows numbers and dates, and they stay on your phone until you send them. If you haven't finished an adventure yet, just say so.
+First, could you open Sprell, go to History, then Settings, then Your numbers, take a screenshot and send it to me? It only shows numbers and dates, and they stay on your phone until you send them. If you haven't finished an adventure yet, just say so.
 
 1. What did you use it for? A night out, a day out, a walk, a festival, something else?
 2. Did you use it more than once? If you stopped, what stopped you?

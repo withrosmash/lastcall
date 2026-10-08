@@ -43,8 +43,8 @@ export async function start({ onFix, onStatus }) {
         {
           // Shown in the permanent Android notification. Not optional: the OS
           // only grants background location to a foreground service.
-          backgroundTitle: 'Leit',
-          backgroundMessage: t('Leit is tracking your {n}.'),
+          backgroundTitle: 'Sprell',
+          backgroundMessage: t('Sprell is tracking your {n}.'),
           requestPermissions: true,
           stale: false,
           distanceFilter: 25,

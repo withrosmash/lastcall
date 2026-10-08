@@ -14,7 +14,7 @@ People in the UK who go out with friends, and sometimes on their own, and want t
 
 ## Product Purpose
 
-Leit records any adventure automatically: a night out, a day out, a walk or a festival day. It keeps the route, stops and steps, alongside a pixel companion that reacts to what you do, challenges to try, badges to earn, and a card to share the next day. Success is people using it again on their second, third and tenth outing, and sharing the cards.
+Sprell records any adventure automatically: a night out, a day out, a walk or a festival day. It keeps the route, stops and steps, alongside a pixel companion that reacts to what you do, challenges to try, badges to earn, and a card to share the next day. Success is people using it again on their second, third and tenth outing, and sharing the cards.
 
 ## Positioning
 
@@ -35,7 +35,7 @@ It's used one-handed, on the move: at 2am in a bar, in daylight on a walk, in a 
 
 ## Brand Commitments
 
-- Name: Leit, pronounced like "late".
+- Name: Sprell (Norwegian for lively antics or a caper), said "sprel", to rhyme with "spell". It was called Leit until 2026-10-08. Tagline: "Track the adventure. Relive it later."
 - Wordmark: "Norr" by Claude Design (`design/round3/wordmark/`).
 - Claude Design's round 2 system (tokens, avatar, badges, screens) is the design authority. `design/README.md` records every place the build knowingly differs.
 - Voice: warm, playful and dry. Short sentences.

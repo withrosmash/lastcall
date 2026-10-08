@@ -1,11 +1,11 @@
 # Phone checklist (build c9a5b64)
 
-Things only a real phone can show. The tickable version is the Leit phone checklist artifact (https://claude.ai/artifact/WmDr4Z74iExSoxxss31sLG); this file mirrors it.
+Things only a real phone can show. The tickable version is the Sprell phone checklist artifact (https://claude.ai/artifact/WmDr4Z74iExSoxxss31sLG); this file mirrors it.
 
 ## First launch
 Step 1 wipes the app. Export your history first: Settings › Export history.
 
-1. Clear the app’s data: phone Settings › Apps › Leit › Storage › Clear storage. Then open Leit.
+1. Clear the app’s data: phone Settings › Apps › Sprell › Storage › Clear storage. Then open Sprell.
 2. The walkthrough has five steps. The second shows four kinds of adventure, and tapping each dresses the avatar: a camera, backpack straps, a wristband with glitter. Night out adds nothing.
 3. The location step opens Android’s settings. Pick “Allow all the time”, then come back.
 4. Steps asks for Physical activity. Notifications asks once.
@@ -13,7 +13,7 @@ Step 1 wipes the app. Export your history first: Settings › Export history.
 
 ## Look
 
-6. The home screen icon is the white LEIT wordmark on forest green, crisp, and inside a circle if your launcher uses round icons.
+6. The home screen icon is the white sprell wordmark on forest green, crisp, and inside a circle if your launcher uses round icons.
 7. Your avatar has the same colours and glasses in its new style. A Quiff is now Short, and a bucket hat is now the sun hat.
 8. On the start screen, the wordmark has clear space above and below.
 9. The gear and badges icons in the top corner open Settings and Badges, before and during an adventure.
@@ -106,7 +106,7 @@ New in build c9a5b64.
 62. A card for an adventure without a route (location off) still shows the big avatar clear of the stop names and badges.
 
 ## Round 6: nearby places
-New in build 387ae9b. Suggestions now come from Leit’s own list of places, so check-in should be much quicker.
+New in build 387ae9b. Suggestions now come from the app’s own list of places, so check-in should be much quicker.
 
 63. Check in at a pub or café in a town: suggestions appear within a second or two, nearest first.
 64. Check in near a stop you’ve named before: your own name for it comes first and shows straight away.
@@ -119,7 +119,7 @@ New in build 387ae9b. Suggestions now come from Leit’s own list of places, so 
 New in build 1eefadb.
 
 69. With an adventure running, Settings › Import history says to end it first.
-70. Importing a file that isn’t a Leit export says so, and nothing changes.
+70. Importing a file that isn’t a Sprell export says so, and nothing changes.
 71. Importing a real export asks “Replace your history?” with both counts. After Replace, tapping the toast puts your own history back.
 72. If the app was closed for a long time mid-adventure, reopening it closes the adventure at the last thing you logged (not at 0 minutes), and “Not finished? Carry on” picks it back up with tracking.
 73. Drinks logged from the notification while the app was closed show up in that adventure, not in the next one.

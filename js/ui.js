@@ -121,7 +121,7 @@ export function mount(nodes, { flush = false, bloom = 'hero', chrome = null, foc
 export const serviceNotice = () =>
   el('div', { class: 'service' },
     icon('circle-dot', { size: 13, color: 'var(--mint)' }),
-    el('span', { text: t('Leit is tracking your {n}.') }));
+    el('span', { text: t('Sprell is tracking your {n}.') }));
 
 /* ---------- bottom sheet ---------- */
 

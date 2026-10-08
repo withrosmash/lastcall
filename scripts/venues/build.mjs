@@ -1,4 +1,4 @@
-// Builds Leit's venue squares from OpenStreetMap.
+// Builds Sprell's venue squares from OpenStreetMap.
 //
 //   node scripts/venues/build.mjs <in.geojsonseq> <outDir> [--source=<ISO date>]
 //
@@ -95,7 +95,7 @@ export function splitSquares(venues, { cap = 300, min = 4, max = 7 } = {}) {
   return out;
 }
 
-const LICENSE = `# Leit venue squares
+const LICENSE = `# Sprell venue squares
 
 Places from OpenStreetMap. © OpenStreetMap contributors.
 

@@ -1,4 +1,7 @@
-const KEY = 'lastcall_v1';
+const KEY = 'sprell_v1';
+// Before the rename the app saved under this key. Read once if there's
+// nothing under the new one, so the web preview keeps its history.
+const OLD_KEY = 'lastcall_v1'; // allowed-old-name
 const SCHEMA = 1;
 
 const EMPTY = { v: SCHEMA, active: null, sessions: [], prefs: defaultPrefs(), badges: [], flags: {}, festivals: [] };
@@ -18,7 +21,7 @@ let cache = null;
 export function load() {
   if (cache) return cache;
   let raw = null;
-  try { raw = localStorage.getItem(KEY); } catch { /* private mode */ }
+  try { raw = localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY); } catch { /* private mode */ }
   if (!raw) { cache = structuredClone(EMPTY); return cache; }
   try {
     const parsed = JSON.parse(raw);
@@ -111,7 +114,7 @@ export function storageError() { return lastError; }
 
 // The last 20 errors, kept on the phone for diagnosing a tester's report (and
 // later the crash feed of the monitoring dashboard). Never sent anywhere.
-const ERRORS_KEY = 'lastcall_errors';
+const ERRORS_KEY = 'sprell_errors';
 export function logError(err, screen = '') {
   try {
     const log = JSON.parse(localStorage.getItem(ERRORS_KEY) || '[]');
@@ -141,7 +144,7 @@ export function exportJSON() {
 export function checkImport(text) {
   let parsed;
   try { parsed = JSON.parse(text); } catch { return { ok: false, reason: 'not-json' }; }
-  if (!isPlain(parsed) || !Array.isArray(parsed.sessions)) return { ok: false, reason: 'not-leit' };
+  if (!isPlain(parsed) || !Array.isArray(parsed.sessions)) return { ok: false, reason: 'not-sprell' };
   const data = migrate(parsed);
   return { ok: true, data, count: data.sessions.length };
 }

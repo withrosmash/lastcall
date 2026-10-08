@@ -1,4 +1,4 @@
-// Nearby places for check-in, from Leit's own venue squares.
+// Nearby places for check-in, from Sprell's own venue squares.
 //
 // A weekly job (scripts/venues/build.mjs) cuts OpenStreetMap's UK food and
 // drink places into geohash squares that split while they hold more than 300,
@@ -130,11 +130,11 @@ export function overpassQuery(lat, lng, radiusM) {
    leaves alone, so a repeat check-in works offline. Anything that goes wrong
    falls back to the Overpass lookup the app used before. */
 
-export const VENUES_BASE = 'https://withrosmash.github.io/lastcall/venues/v1/';
+export const VENUES_BASE = 'https://withrosmash.github.io/lastcall/venues/v1/'; // allowed-old-name: the GitHub repo, until sprell.app hosts it
 export const INDEX_MAX_AGE = 7 * 864e5;
 const RADIUS_M = 150;
 const TIMEOUT_MS = 5000;
-const CACHE_NAME = 'leit-venues-v1';
+const CACHE_NAME = 'sprell-venues-v1';
 const INDEX_URL = VENUES_BASE + 'index.json';
 const OVERPASS = 'https://overpass-api.de/api/interpreter';
 
@@ -159,7 +159,7 @@ async function loadIndex(fetchImpl, cache, now, force = false) {
   try {
     const hit = cache && await cache.match(INDEX_URL);
     if (hit) {
-      const age = now - Number(hit.headers.get('x-leit-fetched') || 0);
+      const age = now - Number(hit.headers.get('x-sprell-fetched') || 0);
       stale = await hit.json();
       if (!force && age >= 0 && age < INDEX_MAX_AGE) return stale;
     }
@@ -170,7 +170,7 @@ async function loadIndex(fetchImpl, cache, now, force = false) {
   if (!fresh || !Array.isArray(fresh.squares)) return stale;
   if (cache) {
     try {
-      await cache.put(INDEX_URL, new Response(JSON.stringify(fresh), { headers: { 'x-leit-fetched': String(now) } }));
+      await cache.put(INDEX_URL, new Response(JSON.stringify(fresh), { headers: { 'x-sprell-fetched': String(now) } }));
       if (stale?.built !== fresh.built) {
         const keep = `?b=${encodeURIComponent(fresh.built)}`;
         for (const req of await cache.keys()) {

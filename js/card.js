@@ -1249,7 +1249,7 @@ function renderOnce() {
 }
 
 const filename = () =>
-  `leit-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
+  `sprell-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
 
 async function shareCard() {
   let blob;
@@ -1277,7 +1277,7 @@ async function saveCard() {
     const base64 = await blobToBase64(blob);
     if (await saveImage(base64, filename())) {
       window.dispatchEvent(new Event('lc:card-exported'));
-      toast('Saved to your gallery, in Pictures › Leit.');
+      toast('Saved to your gallery, in Pictures › Sprell.');
       return;
     }
   } catch {
@@ -1436,7 +1436,7 @@ async function saveLayers(ids, full) {
     }
     window.dispatchEvent(new Event('lc:card-exported'));
     toast(native
-      ? `Saved ${files.length} see-through image${files.length === 1 ? '' : 's'} to Pictures › Leit.`
+      ? `Saved ${files.length} see-through image${files.length === 1 ? '' : 's'} to Pictures › Sprell.`
       : `Downloaded ${files.length} see-through images.`, 4000);
   } catch {
     toast('Saving to the gallery failed partway. Try again.');

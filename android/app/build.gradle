@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.withrosmash.lastcall"
+    namespace = "app.sprell"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.withrosmash.lastcall"
+        applicationId "app.sprell"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

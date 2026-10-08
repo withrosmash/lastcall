@@ -1,4 +1,4 @@
-/* Last Call — depth, blur, motion. */
+/* Sprell: depth, blur, motion. */
 :root{
   /* Shadows. On true black, outer shadow does almost nothing: depth comes from
      glow and hairlines. Reserve real shadow for sheets and floating actions. */

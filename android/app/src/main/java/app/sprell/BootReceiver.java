@@ -1,4 +1,4 @@
-package com.withrosmash.lastcall;
+package app.sprell;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -24,7 +24,7 @@ import androidx.core.app.NotificationCompat;
  */
 public class BootReceiver extends BroadcastReceiver {
 
-    private static final String CHANNEL_ID = "lastcall_resume";
+    private static final String CHANNEL_ID = "sprell_resume";
     private static final int NOTIFICATION_ID = 42;
 
     @Override
@@ -37,8 +37,8 @@ public class BootReceiver extends BroadcastReceiver {
         }
 
         SharedPreferences prefs =
-                context.getSharedPreferences(LastCallNative.PREFS, Context.MODE_PRIVATE);
-        if (!prefs.getBoolean(LastCallNative.KEY_SESSION_ACTIVE, false)) return;
+                context.getSharedPreferences(SprellNative.PREFS, Context.MODE_PRIVATE);
+        if (!prefs.getBoolean(SprellNative.KEY_SESSION_ACTIVE, false)) return;
 
         NotificationManager manager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -58,7 +58,7 @@ public class BootReceiver extends BroadcastReceiver {
 
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_sprell)
-                .setContentTitle("Leit stopped tracking")
+                .setContentTitle("Sprell stopped tracking")
                 .setContentText("Your phone restarted. Tap to pick up where you left off.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pending)

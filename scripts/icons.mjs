@@ -9,8 +9,7 @@
 //   node scripts/icons.mjs    (rerun if the icon files or the colour change)
 
 import { deflateSync } from 'node:zlib';
-import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { svgPolygons, pathToPolygons, fillCoverage } from './raster.mjs';
@@ -199,9 +198,6 @@ await writeFile(`${RES}/drawable/ic_stat_sprell.xml`, `<?xml version="1.0" encod
 </vector>
 `);
 console.log('android/app/src/main/res/drawable/ic_stat_sprell.xml  vector');
-for (const old of [`${RES}/drawable/ic_stat_lastcall.xml`, ...['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'].map((d) => `${RES}/drawable-${d}/ic_stat_lastcall.png`)]) {
-  if (existsSync(old)) await rm(old);
-}
 
 // Themed icon: Android 13 can tint launcher icons to the wallpaper using this
 // one-colour layer, the word placed exactly like the foreground.

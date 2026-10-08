@@ -1,4 +1,4 @@
-package com.withrosmash.lastcall;
+package app.sprell;
 
 import android.os.Bundle;
 
@@ -8,7 +8,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // App-local plugins must be registered before the bridge starts.
-        registerPlugin(LastCallNative.class);
+        registerPlugin(SprellNative.class);
         super.onCreate(savedInstanceState);
     }
 }

@@ -1,4 +1,4 @@
-package com.withrosmash.lastcall;
+package app.sprell;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -61,24 +61,24 @@ import java.nio.charset.StandardCharsets;
  * - A SharedPreferences mirror of "a night is open" for the boot receiver.
  */
 @CapacitorPlugin(
-        name = "LastCallNative",
+        name = "SprellNative",
         permissions = {
                 @Permission(strings = { Manifest.permission.ACTIVITY_RECOGNITION }, alias = "activity")
         })
-public class LastCallNative extends Plugin implements SensorEventListener {
+public class SprellNative extends Plugin implements SensorEventListener {
 
-    public static final String PREFS = "lastcall";
+    public static final String PREFS = "sprell";
     public static final String KEY_SESSION_ACTIVE = "session_active";
     public static final String KEY_PENDING_LOGS = "pending_logs";
 
     private static final int QUICKLOG_NOTIFICATION_ID = 7;
     // v2: Android caches a channel's settings forever once created, so the
     // lock-screen visibility fix needs a fresh channel id to take effect.
-    private static final String QUICKLOG_CHANNEL = "lastcall_quicklog_v2";
+    private static final String QUICKLOG_CHANNEL = "sprell_quicklog";
 
     // The quick-log receiver runs with no bridge of its own; this lets it nudge
     // a live instance so taps land immediately when the WebView is awake.
-    private static WeakReference<LastCallNative> live = new WeakReference<>(null);
+    private static WeakReference<SprellNative> live = new WeakReference<>(null);
 
     @Override
     public void load() {
@@ -86,7 +86,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
     }
 
     static void emitQuickLog() {
-        LastCallNative plugin = live.get();
+        SprellNative plugin = live.get();
         if (plugin != null) plugin.notifyListeners("quicklog", new JSObject());
     }
 
@@ -370,7 +370,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
 
     @PluginMethod
     public void saveTextFile(PluginCall call) {
-        String name = call.getString("name", "leit.txt");
+        String name = call.getString("name", "sprell.txt");
         String mime = call.getString("mime", "text/plain");
         String text = call.getString("data");
         if (text == null) { call.reject("No data"); return; }
@@ -382,7 +382,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Downloads.DISPLAY_NAME, name);
                 values.put(MediaStore.Downloads.MIME_TYPE, mime);
-                values.put(MediaStore.Downloads.RELATIVE_PATH, "Download/Leit");
+                values.put(MediaStore.Downloads.RELATIVE_PATH, "Download/Sprell");
                 Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                 if (uri == null) { call.reject("MediaStore refused the insert"); return; }
                 try (OutputStream out = resolver.openOutputStream(uri)) {
@@ -392,7 +392,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
             } else {
                 File dir = new File(
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                        "Leit");
+                        "Sprell");
                 if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("mkdir failed");
                 try (FileOutputStream out = new FileOutputStream(new File(dir, name))) {
                     out.write(bytes);
@@ -438,7 +438,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
     @PluginMethod
     public void saveToGallery(PluginCall call) {
         String data = call.getString("data");
-        String name = call.getString("name", "leit.png");
+        String name = call.getString("name", "sprell.png");
         if (data == null || data.isEmpty()) {
             call.reject("No image data");
             return;
@@ -458,7 +458,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
             values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
             values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
             if (Build.VERSION.SDK_INT >= 29) {
-                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Leit");
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Sprell");
             }
             Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             if (uri == null) {

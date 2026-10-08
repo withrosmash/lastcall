@@ -36,7 +36,7 @@ export function hydrationNudge(sinceCount) {
       await LocalNotifications.schedule({
         notifications: [{
           id: HYDRATION_ID,
-          title: 'Leit',
+          title: 'Sprell',
           body: 'Time for a water.',
           // Fires a moment later so it doesn't collide with the in-app banner
           // when the phone is actually in the user's hand.
@@ -55,7 +55,7 @@ export function waterAt(when) {
     try {
       await LocalNotifications.cancel({ notifications: [{ id: HYDRATION_ID }] });
       await LocalNotifications.schedule({
-        notifications: [{ id: HYDRATION_ID, title: 'Leit', body: 'Time for a water.', schedule: { at: new Date(Math.max(when, Date.now() + 5000)) } }],
+        notifications: [{ id: HYDRATION_ID, title: 'Sprell', body: 'Time for a water.', schedule: { at: new Date(Math.max(when, Date.now() + 5000)) } }],
       });
     } catch { /* notification is a courtesy, never a failure path */ }
   });

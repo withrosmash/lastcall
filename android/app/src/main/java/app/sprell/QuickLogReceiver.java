@@ -1,4 +1,4 @@
-package com.withrosmash.lastcall;
+package app.sprell;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,7 +17,7 @@ import org.json.JSONObject;
  */
 public class QuickLogReceiver extends BroadcastReceiver {
 
-    public static final String ACTION = "com.withrosmash.lastcall.QUICK_LOG";
+    public static final String ACTION = "app.sprell.QUICK_LOG";
     public static final String EXTRA_TYPE = "type";
 
     @Override
@@ -27,19 +27,19 @@ public class QuickLogReceiver extends BroadcastReceiver {
         if (!"drink".equals(type) && !"water".equals(type)) return;
 
         SharedPreferences prefs =
-                context.getSharedPreferences(LastCallNative.PREFS, Context.MODE_PRIVATE);
+                context.getSharedPreferences(SprellNative.PREFS, Context.MODE_PRIVATE);
         try {
-            JSONArray queue = new JSONArray(prefs.getString(LastCallNative.KEY_PENDING_LOGS, "[]"));
+            JSONArray queue = new JSONArray(prefs.getString(SprellNative.KEY_PENDING_LOGS, "[]"));
             JSONObject event = new JSONObject();
             event.put("type", type);
             event.put("t", System.currentTimeMillis());
             queue.put(event);
-            prefs.edit().putString(LastCallNative.KEY_PENDING_LOGS, queue.toString()).apply();
+            prefs.edit().putString(SprellNative.KEY_PENDING_LOGS, queue.toString()).apply();
         } catch (JSONException ignored) {
             return;
         }
 
         // If the WebView happens to be awake, land the tap immediately.
-        LastCallNative.emitQuickLog();
+        SprellNative.emitQuickLog();
     }
 }

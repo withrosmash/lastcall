@@ -1,6 +1,6 @@
 {
-  "appId": "com.withrosmash.lastcall",
-  "appName": "Leit",
+  "appId": "app.sprell",
+  "appName": "Sprell",
   "webDir": "www",
   "android": {
     "backgroundColor": "#000000",

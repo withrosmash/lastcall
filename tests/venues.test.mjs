@@ -242,7 +242,7 @@ test('one missing square does not throw away the ones on the phone', async () =>
   const twoSquares = { v: 1, built: 'b1', source: 's', count: 2, squares: ['gcpvj12', 'gcpvj13'], cover: ['gcpv'] };
   const cacheImpl = memCache();
   const c = await cacheImpl.open();
-  await c.put(INDEX_URL, new Response(JSON.stringify(twoSquares), { headers: { 'x-leit-fetched': String(10 * DAY) } }));
+  await c.put(INDEX_URL, new Response(JSON.stringify(twoSquares), { headers: { 'x-sprell-fetched': String(10 * DAY) } }));
   await c.put(sqUrl('gcpvj12', 'b1'), new Response(JSON.stringify(square)));
   const offline = net({});
   const got = await suggestVenues(SOHO, { fetchImpl: offline.fetchImpl, cacheImpl, now: 10 * DAY + 1000 });
@@ -266,7 +266,7 @@ test('a square that vanished in a weekly re-split refreshes the index and tries 
   const cacheImpl = memCache();
   const c = await cacheImpl.open();
   // Last week the area was one square; this week it split, so its old file is gone.
-  await c.put(INDEX_URL, new Response(JSON.stringify(index('b1')), { headers: { 'x-leit-fetched': String(10 * DAY) } }));
+  await c.put(INDEX_URL, new Response(JSON.stringify(index('b1')), { headers: { 'x-sprell-fetched': String(10 * DAY) } }));
   const split = { v: 1, built: 'b2', source: 's', count: 3, squares: ['gcpvj'], cover: ['gcpv'] };
   const { fetchImpl, calls } = net({
     [sqUrl('gcpv', 'b1')]: { status: 404 },
@@ -283,7 +283,7 @@ test('a square that vanished in a weekly re-split refreshes the index and tries 
 test('an offline miss does not refetch the index', async () => {
   const cacheImpl = memCache();
   const c = await cacheImpl.open();
-  await c.put(INDEX_URL, new Response(JSON.stringify(index('b1')), { headers: { 'x-leit-fetched': String(10 * DAY) } }));
+  await c.put(INDEX_URL, new Response(JSON.stringify(index('b1')), { headers: { 'x-sprell-fetched': String(10 * DAY) } }));
   const { fetchImpl, calls } = net({ overpass: new Error('offline') });
   await assert.rejects(suggestVenues(SOHO, { fetchImpl, cacheImpl, now: 11 * DAY }));
   assert.equal(calls.filter((x) => x.url === INDEX_URL).length, 0);
@@ -292,6 +292,6 @@ test('an offline miss does not refetch the index', async () => {
 test('clearVenueCache forgets the squares on the phone', async () => {
   const deleted = [];
   await clearVenueCache({ delete: async (name) => { deleted.push(name); return true; } });
-  assert.deepEqual(deleted, ['leit-venues-v1']);
+  assert.deepEqual(deleted, ['sprell-venues-v1']);
   await clearVenueCache(undefined); // no Cache API: nothing to do, no error
 });

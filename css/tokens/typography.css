@@ -1,4 +1,4 @@
-/* Last Call — type.
+/* Sprell: type.
    System sans only: the app boots offline from a service worker, so a webfont
    that fails to load would silently break every layout. Character comes from
    weight, tracking and scale. tabular-nums on anything that counts. */

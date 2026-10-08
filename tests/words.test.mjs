@@ -24,7 +24,7 @@ test('noun and plural fill in place', () => {
 });
 
 test('a string with no tokens comes back unchanged', () => {
-  assert.equal(t('Piece it together later.', 'quest'), 'Piece it together later.');
+  assert.equal(t('Relive it later.', 'quest'), 'Relive it later.');
 });
 
 test('end title: night keeps its idiom, the rest are generic', () => {

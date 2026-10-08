@@ -1,8 +1,8 @@
 {
-  "name": "lastcall",
+  "name": "sprell",
   "version": "1.0.0",
   "private": true,
-  "description": "Track the adventure. Piece it together later.",
+  "description": "Track the adventure. Relive it later.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",

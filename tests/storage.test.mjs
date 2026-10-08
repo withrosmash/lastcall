@@ -25,11 +25,11 @@ const session = (id, startedAt, extra = {}) => ({ id, startedAt, endedAt: starte
 
 beforeEach(() => { globalThis.localStorage = makeStorage(); });
 
-test('files that are not Leit exports are refused', () => {
+test('files that are not Sprell exports are refused', () => {
   assert.deepEqual(store.checkImport('not json'), { ok: false, reason: 'not-json' });
   for (const text of ['[]', '{}', '"hello"', '{"name":"x"}', 'null']) {
     assert.equal(store.checkImport(text).ok, false, text);
-    assert.equal(store.checkImport(text).reason, 'not-leit', text);
+    assert.equal(store.checkImport(text).reason, 'not-sprell', text);
   }
 });
 
@@ -87,12 +87,12 @@ test('an invalid live adventure is dropped, a valid one kept', () => {
 
 test('an import can be undone', () => {
   const mine = JSON.stringify({ v: 1, sessions: [session('mine', 5)] });
-  localStorage.setItem('lastcall_v1', mine);
+  localStorage.setItem('sprell_v1', mine);
   store.importJSON(JSON.stringify({ sessions: [session('theirs', 9)] }));
   assert.deepEqual(store.load().sessions.map((s) => s.id), ['theirs']);
   const back = store.undoImport();
   assert.deepEqual(back.sessions.map((s) => s.id), ['mine']);
-  assert.equal(localStorage.getItem('lastcall_v1'), mine);
+  assert.equal(localStorage.getItem('sprell_v1'), mine);
 });
 
 test('export, import, export gives the same adventures', () => {
@@ -124,13 +124,13 @@ test('a full phone never deletes adventures and reports the failure', () => {
 
 test('errors are logged, keeping the last 20', () => {
   for (let i = 0; i < 25; i++) store.logError(new Error('boom ' + i), 'live');
-  const log = JSON.parse(localStorage.getItem('lastcall_errors'));
+  const log = JSON.parse(localStorage.getItem('sprell_errors'));
   assert.equal(log.length, 20);
   assert.equal(log[19].msg, 'boom 24');
   assert.equal(log[19].screen, 'live');
   assert.ok(log[19].stack.length <= 500);
   store.logError('a plain string', 'start');
-  assert.equal(JSON.parse(localStorage.getItem('lastcall_errors'))[19].msg, 'a plain string');
+  assert.equal(JSON.parse(localStorage.getItem('sprell_errors'))[19].msg, 'a plain string');
 });
 
 test('a save that should not count as activity leaves touchedAt alone', () => {
@@ -140,24 +140,43 @@ test('a save that should not count as activity leaves touchedAt alone', () => {
 });
 
 test('the import backup goes once the undo is used or dropped', () => {
-  localStorage.setItem('lastcall_v1', JSON.stringify({ v: 1, sessions: [session('mine', 5)] }));
+  localStorage.setItem('sprell_v1', JSON.stringify({ v: 1, sessions: [session('mine', 5)] }));
   store.importJSON(JSON.stringify({ sessions: [session('theirs', 9)] }));
-  assert.ok(localStorage.getItem('lastcall_v1_backup'));
+  assert.ok(localStorage.getItem('sprell_v1_backup'));
   store.undoImport();
-  assert.equal(localStorage.getItem('lastcall_v1_backup'), null);
+  assert.equal(localStorage.getItem('sprell_v1_backup'), null);
   store.importJSON(JSON.stringify({ sessions: [session('theirs', 9)] }));
   store.dropImportBackup();
-  assert.equal(localStorage.getItem('lastcall_v1_backup'), null);
+  assert.equal(localStorage.getItem('sprell_v1_backup'), null);
 });
 
 test('an import that cannot be saved leaves your own history in place', () => {
   const mine = JSON.stringify({ v: 1, sessions: [session('mine', 5)] });
   store.importJSON(mine); // loads mine into the cache and storage
   // Now only just enough room for what's there plus a backup copy of it.
-  const stored = localStorage.getItem('lastcall_v1');
+  const stored = localStorage.getItem('sprell_v1');
   globalThis.localStorage = makeStorage(stored.length * 2 + 50);
-  localStorage.setItem('lastcall_v1', stored);
+  localStorage.setItem('sprell_v1', stored);
   const big = JSON.stringify({ sessions: Array.from({ length: 40 }, (_, i) => session('big' + i, i + 10)) });
   assert.equal(store.importJSON(big), null);
   assert.deepEqual(JSON.parse(store.exportJSON()).sessions.map((s) => s.id), ['mine']);
+});
+
+test('history saved under the old name is read once, then saved under the new one', async () => {
+  globalThis.localStorage = makeStorage();
+  const old = JSON.stringify({ v: 1, sessions: [session('from-leit', 5)] });
+  localStorage.setItem('lastcall_v1', old);
+  const fresh = await import('../js/storage.js?fallback');
+  assert.deepEqual(fresh.load().sessions.map((s) => s.id), ['from-leit']);
+  fresh.save(fresh.load());
+  fresh.flush();
+  assert.deepEqual(JSON.parse(localStorage.getItem('sprell_v1')).sessions.map((s) => s.id), ['from-leit']);
+});
+
+test('the new name wins when both exist', async () => {
+  globalThis.localStorage = makeStorage();
+  localStorage.setItem('lastcall_v1', JSON.stringify({ v: 1, sessions: [session('old', 5)] }));
+  localStorage.setItem('sprell_v1', JSON.stringify({ v: 1, sessions: [session('new', 6)] }));
+  const fresh = await import('../js/storage.js?both');
+  assert.deepEqual(fresh.load().sessions.map((s) => s.id), ['new']);
 });
