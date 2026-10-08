@@ -57,7 +57,7 @@ public class BootReceiver extends BroadcastReceiver {
                 context, 0, launch, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_stat_lastcall)
+                .setSmallIcon(R.drawable.ic_stat_sprell)
                 .setContentTitle("Leit stopped tracking")
                 .setContentText("Your phone restarted. Tap to pick up where you left off.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

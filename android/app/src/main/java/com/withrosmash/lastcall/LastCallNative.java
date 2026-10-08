@@ -317,7 +317,7 @@ public class LastCallNative extends Plugin implements SensorEventListener {
         PendingIntent water = quickLogIntent(ctx, "water", 2);
 
         Notification notification = new NotificationCompat.Builder(ctx, QUICKLOG_CHANNEL)
-                .setSmallIcon(R.drawable.ic_stat_lastcall)
+                .setSmallIcon(R.drawable.ic_stat_sprell)
                 .setContentTitle("Quick log")
                 .setContentText("Log without opening the app.")
                 .setOngoing(true)

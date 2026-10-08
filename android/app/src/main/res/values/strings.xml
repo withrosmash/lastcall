@@ -7,5 +7,5 @@
     <!-- The location plugin's tracking notification uses this as its small icon.
          Without it, it falls back to the full-colour launcher icon, which
          Android draws as a plain white blob. -->
-    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_lastcall</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_sprell</string>
 </resources>

@@ -1,32 +1,39 @@
 // Draws every icon and splash image the app ships, with a tiny
 // self-contained PNG encoder. No ImageMagick, no rsvg, no npm image deps.
 //
-// The owner's choice (2026-10-01): the white Leit wordmark on forest green,
-// darkened to #114530 on 2026-10-03. The wordmark is all right angles, so it
-// fills as rectangles, supersampled at the edges. The status bar icon stays
-// the avatar's mono face: a wordmark is unreadable at 24dp.
+// The owner's choice (2026-10-08): the full white "sprell" wordmark on forest
+// green #114530, drawn from Claude Design's round 5 icon files
+// (design/round5/icon-word-*.svg) so every size matches the delivery. The
+// status bar icon is their "s" mark: a word is unreadable at 24dp.
 //
-//   node scripts/icons.mjs    (rerun if the wordmark or the colour changes)
+//   node scripts/icons.mjs    (rerun if the icon files or the colour change)
 
 import { deflateSync } from 'node:zlib';
-import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rects as wordmarkRects, wordmarkWidth, WORDMARK } from '../js/wordmark.js';
+import { svgPolygons, pathToPolygons, fillCoverage } from './raster.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RES = resolve(root, 'android/app/src/main/res');
+const ROUND5 = resolve(root, 'design/round5');
 
-/* ---------- colour ---------- */
+/* ---------- colour and shapes ---------- */
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 const FOREST = hex('#114530');
 const WHITE = [255, 255, 255];
-const STOPS = [[0, hex('#35A26F')], [0.45, hex('#17553B')], [1, hex('#061710')]];
 
-// Coverage of a mask at a pixel, 4 x 4 supersampled so curved edges are smooth.
+const wordSvg = await readFile(`${ROUND5}/icon-word-foreground.svg`, 'utf8');
+const WORD = svgPolygons(wordSvg);
+// Icons are drawn on the adaptive icon's 108dp canvas. A flat icon shows the
+// visible 72dp middle; the adaptive foreground and maskable icon use all 108.
+const VISIBLE = [18, 18, 72];
+const WHOLE = [0, 0, 108];
+
+// Coverage of a clip mask at a pixel, 4 x 4 supersampled so curved edges are smooth.
 function coverage(mask, P, x, y) {
   if (mask === 'none') return 1;
   let n = 0;
@@ -41,29 +48,14 @@ function coverage(mask, P, x, y) {
   return n / 16;
 }
 
-/** The wordmark's coverage over a W x H area, `width` px wide, centred. */
-function markCoverage(W, H, width) {
-  const cov = new Float32Array(W * H);
-  const height = (width * WORDMARK.h) / WORDMARK.w;
-  const x0 = (W - width) / 2, y0 = (H - height) / 2;
-  for (const r of wordmarkRects(height)) {
-    const ax = x0 + r.x, ay = y0 + r.y, bx = ax + r.w, by = ay + r.h;
-    for (let y = Math.floor(ay); y < Math.ceil(by); y++) for (let x = Math.floor(ax); x < Math.ceil(bx); x++) {
-      const c = Math.max(0, Math.min(x + 1, bx) - Math.max(x, ax)) * Math.max(0, Math.min(y + 1, by) - Math.max(y, ay));
-      cov[y * W + x] = Math.min(1, cov[y * W + x] + c);
-    }
-  }
-  return cov;
-}
-
 /**
- * One square icon: the wordmark `width` of the way across, white, on forest
- * (`bg`), clipped by `mask` (none, circle, round). Without bg it's the
+ * One square icon: the white word on forest (`bg`), clipped by `mask` (none,
+ * circle, round), showing the `box` of the 108dp canvas. Without bg it's the
  * adaptive foreground: white on transparent.
  */
-function iconPixels(P, { bg = true, mark = true, mask = 'none', width = 0.48 } = {}) {
+function iconPixels(P, { bg = true, mark = true, mask = 'none', box = VISIBLE } = {}) {
   const out = Buffer.alloc(P * P * 4);
-  const cov = mark ? markCoverage(P, P, P * width) : new Float32Array(P * P);
+  const cov = mark ? fillCoverage(WORD, P, box) : new Float32Array(P * P);
   for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
     const k = (y * P + x) * 4, m = cov[y * P + x], clip = coverage(mask, P, x, y);
     const c = bg ? lerp(FOREST, WHITE, m) : WHITE;
@@ -78,7 +70,7 @@ function iconPixels(P, { bg = true, mark = true, mask = 'none', width = 0.48 } =
 function splashPixels(w, h) {
   const out = Buffer.alloc(w * h * 4);
   const P = Math.round(Math.min(w, h) / 2);
-  const disc = iconPixels(P, { mask: 'circle', width: 0.44 });
+  const disc = iconPixels(P, { mask: 'circle' });
   const x0 = Math.round((w - P) / 2), y0 = Math.round((h - P) / 2);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const k = (y * w + x) * 4;
@@ -145,58 +137,22 @@ const square = (path, P, opts) => png(path, P, P, iconPixels(P, opts));
 
 await square(resolve(root, 'icons/icon-192.png'), 192, {});
 await square(resolve(root, 'icons/icon-512.png'), 512, {});
-// Maskable icons can be cropped to a circle 80% across, so the wordmark sits further in.
-await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { width: 0.4 });
+// Maskable icons can be cropped to a circle 80% across, so the word sits further in.
+await square(resolve(root, 'icons/icon-512-maskable.png'), 512, { box: WHOLE });
 await square(resolve(root, 'icons/apple-touch-icon.png'), 180, {});
-// For the Play listing.
-await png(resolve(root, 'design/round4/icon-1024.png'), 1024, 1024, iconPixels(1024, {}), { opaque: true });
-
-/* ---------- store images ----------
-   With the wordmark as the icon, the lockup is the wordmark on its own. */
-
-function paintMark(out, W, H, width) {
-  const cov = markCoverage(W, H, width);
-  for (let i = 0; i < W * H; i++) for (let c = 0; c < 3; c++) out[i * 4 + c] = Math.round(out[i * 4 + c] * (1 - cov[i]) + 255 * cov[i]);
-}
-
-// Lockup: the white wordmark on black.
-function lockup(W, H) {
-  const out = Buffer.alloc(W * H * 4);
-  for (let k = 3; k < out.length; k += 4) out[k] = 255;
-  paintMark(out, W, H, wordmarkWidth(H * 0.4));
-  return out;
-}
-
-// Google Play's feature graphic: the forest bloom from the top, then the
-// wordmark. No tagline: there's no font renderer here, and Play lays its own
-// text over the listing anyway.
-function featureGraphic(W, H) {
-  const out = Buffer.alloc(W * H * 4);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const d = Math.hypot((x + 0.5 - W / 2) / W, (y + 0.5) / H * 0.9) / 0.95;
-    const t = Math.min(1, d);
-    let c = STOPS[STOPS.length - 1][1];
-    for (let i = 1; i < STOPS.length; i++) if (t <= STOPS[i][0]) { c = lerp(STOPS[i - 1][1], STOPS[i][1], (t - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0])); break; }
-    const k = (y * W + x) * 4;
-    out[k] = Math.round(c[0]); out[k + 1] = Math.round(c[1]); out[k + 2] = Math.round(c[2]); out[k + 3] = 255;
-  }
-  paintMark(out, W, H, wordmarkWidth(H * 0.28));
-  return out;
-}
-
-await png(resolve(root, 'design/round3/store-lockup.png'), 1024, 300, lockup(1024, 300));
-await png(resolve(root, 'design/round3/feature-graphic.png'), 1024, 500, featureGraphic(1024, 500), { opaque: true });
+// For the Play listing (the feature graphic is design/round5/feature-graphic-1024x500.jpg).
+await png(`${ROUND5}/play-icon-512.png`, 512, 512, iconPixels(512, {}), { opaque: true });
 
 /* ---------- Android launcher ---------- */
 
 const LAUNCHER = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
 for (const [density, size] of Object.entries(LAUNCHER)) {
   await square(`${RES}/mipmap-${density}/ic_launcher.png`, size, { mask: 'round' });
-  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle', width: 0.44 });
-  // Adaptive layers are 108dp and launchers may crop to a 66dp circle, so
-  // the wordmark is 44% of the layer, well inside that circle (owner, 2026-10-04).
+  await square(`${RES}/mipmap-${density}/ic_launcher_round.png`, size, { mask: 'circle' });
+  // Adaptive layers are 108dp; the word sits where Claude Design placed it,
+  // inside the 66dp circle any launcher may crop to.
   const A = Math.round(size * 2.25);
-  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, width: 0.44 });
+  await square(`${RES}/mipmap-${density}/ic_launcher_foreground.png`, A, { bg: false, box: WHOLE });
   await square(`${RES}/mipmap-${density}/ic_launcher_background.png`, A, { mark: false });
 }
 
@@ -211,47 +167,55 @@ const SPLASH = {
 };
 for (const [dir, [w, h]] of Object.entries(SPLASH)) await png(`${RES}/${dir}/splash.png`, w, h, splashPixels(w, h));
 
-/* ---------- notification icon ----------
-   Android keeps only the alpha of a status bar icon, so it's a flat white
-   12 x 12 pixel face (the design's mono face), as a vector so every density
-   gets the same crisp pixels. */
+/* ---------- vectors ----------
+   The status bar and themed icons are vectors of the delivered paths, placed
+   with the same translate and scale the SVG files use. */
 
-const MONO = ['....HHHH....', '..HHHHHHHH..', '.HHHHHHHHHH.', '.HHHHHHHHHH.', '.HH.HHHH.HH.', '.HH.HHHH.HH.',
-  '.HHHHHHHHHH.', '.HHHH..HHHH.', '..HHHHHHHH..', '...HHHHHH...', '............', '............'];
-let d = '';
-MONO.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'H') d += `M${x},${y + 1}h1v1h-1z`; }));
-const vector = `<?xml version="1.0" encoding="utf-8"?>
-<!-- Generated by scripts/icons.mjs: the avatar's face, one colour, 12 x 12. -->
+function pathTag(svg) {
+  const tag = svg.replace(/<metadata>[\s\S]*?<\/metadata>/g, '').match(/<path\b[^>]*>/)[0];
+  const t = tag.match(/transform="translate\(([-\d.]+)[ ,]+([-\d.]+)\)\s*scale\(([-\d.]+)\)"/);
+  return { d: tag.match(/ d="([^"]+)"/)[1], tx: +t[1], ty: +t[2], s: +t[3] };
+}
+const f2 = (v) => +v.toFixed(2);
+
+// Status bar: Android keeps only the alpha, so it's the white "s" mark,
+// cropped to the letter with 15% space round it.
+const mark = pathTag(await readFile(`${ROUND5}/icon-mark-monochrome.svg`, 'utf8'));
+const markPts = pathToPolygons(mark.d).flat().map(([x, y]) => [mark.tx + x * mark.s, mark.ty + y * mark.s]);
+const mx0 = Math.min(...markPts.map((p) => p[0])), mx1 = Math.max(...markPts.map((p) => p[0]));
+const my0 = Math.min(...markPts.map((p) => p[1])), my1 = Math.max(...markPts.map((p) => p[1]));
+const side = Math.max(mx1 - mx0, my1 - my0) * 1.3;
+const ox = (mx0 + mx1) / 2 - side / 2, oy = (my0 + my1) / 2 - side / 2;
+await writeFile(`${RES}/drawable/ic_stat_sprell.xml`, `<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated by scripts/icons.mjs: the Sprell "s" mark, one colour. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="12"
-    android:viewportHeight="12">
-    <path android:fillColor="#FFFFFFFF" android:pathData="${d}"/>
+    android:viewportWidth="${f2(side)}"
+    android:viewportHeight="${f2(side)}">
+    <group android:translateX="${f2(mark.tx - ox)}" android:translateY="${f2(mark.ty - oy)}" android:scaleX="${mark.s}" android:scaleY="${mark.s}">
+        <path android:fillColor="#FFFFFFFF" android:pathData="${mark.d}"/>
+    </group>
 </vector>
-`;
-await writeFile(`${RES}/drawable/ic_stat_lastcall.xml`, vector);
-console.log('android/app/src/main/res/drawable/ic_stat_lastcall.xml  vector');
-for (const density of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
-  const old = `${RES}/drawable-${density}/ic_stat_lastcall.png`;
+`);
+console.log('android/app/src/main/res/drawable/ic_stat_sprell.xml  vector');
+for (const old of [`${RES}/drawable/ic_stat_lastcall.xml`, ...['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'].map((d) => `${RES}/drawable-${d}/ic_stat_lastcall.png`)]) {
   if (existsSync(old)) await rm(old);
 }
 
-/* ---------- themed icon ----------
-   Android 13 can tint launcher icons to the wallpaper; it uses this one-colour
-   layer: the wordmark, 44% across the 108dp canvas like the foreground. */
-
-const mw = 108 * 0.44, mh = (mw * WORDMARK.h) / WORDMARK.w;
-const f2 = (v) => +v.toFixed(2);
-const m = wordmarkRects(mh).map((r) => `M${f2((108 - mw) / 2 + r.x)},${f2((108 - mh) / 2 + r.y)}h${f2(r.w)}v${f2(r.h)}h${f2(-r.w)}z`).join('');
+// Themed icon: Android 13 can tint launcher icons to the wallpaper using this
+// one-colour layer, the word placed exactly like the foreground.
+const mono = pathTag(await readFile(`${ROUND5}/icon-word-monochrome.svg`, 'utf8'));
 await writeFile(`${RES}/drawable/ic_launcher_monochrome.xml`, `<?xml version="1.0" encoding="utf-8"?>
-<!-- Generated by scripts/icons.mjs: the themed-icon layer, the Leit wordmark. -->
+<!-- Generated by scripts/icons.mjs: the themed-icon layer, the Sprell wordmark. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FF000000" android:pathData="${m}"/>
+    <group android:translateX="${mono.tx}" android:translateY="${mono.ty}" android:scaleX="${mono.s}" android:scaleY="${mono.s}">
+        <path android:fillColor="#FF000000" android:pathData="${mono.d}"/>
+    </group>
 </vector>
 `);
 console.log('android/app/src/main/res/drawable/ic_launcher_monochrome.xml  vector');
