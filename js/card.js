@@ -255,7 +255,7 @@ function makeState(s, allBadges = [], prefs = {}) {
       // Time out is labelled now, 34px taller, so it sits that much higher.
       // The numbers and the date stack from the bottom (photoStack) until
       // one is moved or resized, which sets `placed` and leaves it there.
-      ...Object.fromEntries(NUMBERS.map((n) => [n.key, { on: !['water', 'food'].includes(n.key), x: PAD, y: 0, scale: 1, placed: false }])),
+      ...Object.fromEntries(NUMBERS.map((n) => [n.key, { on: !OFF_BY_DEFAULT.includes(n.key), x: PAD, y: 0, scale: 1, placed: false }])),
       date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1, placed: false },
       places: { on: false, x: PAD, y: 200, scale: 1 },
       badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1 },
@@ -277,7 +277,17 @@ export const avatarCell = (e) => Math.min(9, Math.max(3, Math.round(5 * (e.scale
 const snapScale = (key, node) => { if (key === 'avatar') node.scale = avatarCell(node) / 5; };
 
 /** Top of the avatar standing beside the stats on the route card (scale 5). */
-export const AVATAR_CORNER_TOP = (h) => h - PAD - 440;
+export const AVATAR_CORNER_TOP = (h) => h - PAD - 490;
+
+// The counts start off: a card shares only what the person adds (owner,
+// 2026-10-08), and the drinks count in particular stays private by default.
+export const OFF_BY_DEFAULT = ['stops', 'drinks', 'water', 'food'];
+
+// The wordmark sits bottom right on every card, the same size and place.
+export const wordmarkSpot = (w, h) => ({ x: w - PAD, y: h - PAD - 37, height: 40, align: 'right' });
+
+// The route card's date line sits on the wordmark's baseline, bottom left.
+export const routeDateY = (h) => h - PAD - 29;
 /** Where the route card's map has faded out: level with that avatar's head. */
 export const routeMapBottom = (h) => AVATAR_CORNER_TOP(h) + 140;
 
@@ -840,10 +850,14 @@ export function photoStack(keys, h, scales = {}, widths = {}) {
   };
   const hero = ['time', 'pace'].filter((key) => keys.includes(key));
   if (hero.length) row(hero, 420, 134, 18);
-  const small = NUMBERS.filter((n) => n.group !== 'C' && keys.includes(n.key)).map((n) => n.key);
+  // The counts (stops, drinks, water, food, acts) four to a row; distance and
+  // steps on their own row above them.
+  const counts = NUMBERS.filter((n) => n.group === 'B' && keys.includes(n.key)).map((n) => n.key);
   const rows = [];
-  for (let i = 0; i < small.length; i += 3) rows.push(small.slice(i, i + 3));
-  for (let r = rows.length - 1; r >= 0; r--) row(rows[r], 205, 96, 14);
+  for (let i = 0; i < counts.length; i += 4) rows.push(counts.slice(i, i + 4));
+  for (let r = rows.length - 1; r >= 0; r--) row(rows[r], 150, 96, 14);
+  const longer = NUMBERS.filter((n) => n.group === 'A' && keys.includes(n.key)).map((n) => n.key);
+  if (longer.length) row(longer, 205, 96, 14);
   return at;
 }
 
@@ -876,7 +890,10 @@ function draw({ forExport = false, only = null, target = null } = {}) {
   }
   drawFree(g, w, h, forExport || !!only || !live, want, live);
   // The wordmark is the one fixed element on a photo card: mint, bottom right.
-  if (want('wordmark')) drawWordmark(g, w - PAD, h - PAD - 37, 40, { color: C.mint, align: 'right', shadow: theme().shadow });
+  if (want('wordmark')) {
+    const spot = wordmarkSpot(w, h);
+    drawWordmark(g, spot.x, spot.y, spot.height, { color: C.mint, align: spot.align, shadow: theme().shadow });
+  }
 }
 
 // The card glows in the colour of the mode the adventure ended in.
@@ -921,7 +938,7 @@ function drawRouteCard(g, w, h, want) {
   // date (lower without it) and each row above is 130 higher. Badges and stop
   // names sit on top of the numbers, so everything moves down together.
   const rows = numberRows(ui.offered.filter((k) => on[k].on));
-  const bottom = on.date.on ? h - M - 240 : h - M - 190;
+  const bottom = on.date.on ? h - M - 190 : h - M - 140;
   const rowY = (i) => bottom - (rows.length - 1 - i) * 130;
   const numbersTop = rows.length ? rowY(0) : bottom + 130;
 
@@ -983,10 +1000,12 @@ function drawRouteCard(g, w, h, want) {
       drawText(g, c.value, xs[j], rowY(i) + 36, { ...VALUE, color: T.text });
     });
   });
-  // A cap height (30px) of clear space between the date and the wordmark.
-  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, h - M - 79, { size: 30, weight: 400, color: T.date });
-  // The wordmark's foot sits where the typed name's baseline did.
-  if (want('wordmark')) drawWordmark(g, M, h - M - 20, 40, { color: T.mark });
+  // The date bottom left, on the same baseline as the wordmark bottom right.
+  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, routeDateY(h), { size: 30, weight: 400, color: T.date });
+  if (want('wordmark')) {
+    const spot = wordmarkSpot(w, h);
+    drawWordmark(g, spot.x, spot.y, spot.height, { color: T.mark, align: spot.align });
+  }
   if (want('avatar') && ui.face !== 'none' && ui.look) {
     // With no route the avatar takes the map's place, big, so the card has
     // no empty half; otherwise it stands beside the stats.

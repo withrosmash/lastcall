@@ -183,3 +183,35 @@ test('with no route the space keeps clear of everything stacked below it, for th
     assert.equal(routeFrameH(h, args), routeRegionH(h, args), `${h}: no fixed frame without a route`);
   }
 });
+
+test('the four counts share one row on the photo card, under distance and steps', async () => {
+  const { photoStack } = await import('../js/card.js');
+  const p = photoStack(['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'], 1350);
+  assert.ok(['drinks', 'water', 'food'].every((k) => p[k].y === p.stops.y), 'stops, drinks, water and food on one row');
+  assert.ok(p.stops.x < p.drinks.x && p.drinks.x < p.water.x && p.water.x < p.food.x);
+  // Spaced like the route card's counts, so the row stays clear of the avatar.
+  assert.equal(p.drinks.x - p.stops.x, 150);
+  assert.ok(p.food.x <= 64 + 3 * 150, `food at ${p.food.x}`);
+  assert.equal(p.distance.y, p.steps.y);
+  assert.ok(p.distance.y < p.stops.y, 'distance and steps on their own row above');
+});
+
+test('drinks, stops, water and food start switched off', async () => {
+  const { OFF_BY_DEFAULT } = await import('../js/card.js');
+  assert.deepEqual([...OFF_BY_DEFAULT].sort(), ['drinks', 'food', 'stops', 'water']);
+});
+
+test('the wordmark is bottom right on every card, clear of the avatar, level with the date', async () => {
+  const { wordmarkSpot, AVATAR_CORNER_TOP, routeDateY } = await import('../js/card.js');
+  const { WORDMARK } = await import('../js/wordmark.js');
+  for (const h of [1350, 1920]) {
+    const spot = wordmarkSpot(1080, h);
+    assert.equal(spot.x, 1080 - 64);
+    assert.equal(spot.align, 'right');
+    const avatarFeet = AVATAR_CORNER_TOP(h) + 80 * 5;
+    assert.ok(avatarFeet <= spot.y - 40, `avatar feet ${avatarFeet} clear of the wordmark at ${spot.y}`);
+    const markBaseline = spot.y + (-WORDMARK.y / WORDMARK.h) * spot.height;
+    const dateBaseline = routeDateY(h) + 0.77 * 30;
+    assert.ok(Math.abs(markBaseline - dateBaseline) <= 3, `baselines ${markBaseline} and ${dateBaseline}`);
+  }
+});

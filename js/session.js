@@ -99,7 +99,7 @@ export function startScreen(ctx) {
 const ONBOARD = [
   {
     brand: true, title: 'This is you, roughly.',
-    body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like.',
+    body: 'It lives on this phone and keeps you company on your {ns}. You can change how it looks whenever you like, or turn it off in Settings.',
     note: 'No account needed. What you record is saved on this phone.',
     primary: 'Hello', secondary: 'Change the look first', face: null,
   },
