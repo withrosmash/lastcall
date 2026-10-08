@@ -146,3 +146,12 @@ New in build 9b339c5.
 86. A route card and a photo card show “sprell” in the corner, clear of everything else, in Dark, Light and Halo.
 87. Saved cards go to Pictures › Sprell and exports to Downloads › Sprell, named sprell- and the date.
 88. Restart the phone during an adventure: the “Sprell stopped tracking” notice appears.
+
+## Round 9: cards and location test
+New in build eba4ffc.
+
+89. The walkthrough’s first screen ends “or turn it off in Settings.” (Settings › Apps › Sprell › Storage › Clear storage to see it again, after exporting.)
+90. A new card starts with stops, drinks, water and food switched off. Switch them on: they sit on one row on both the route and photo cards, clear of the avatar.
+91. “sprell” is bottom right on every card (route, photo, and a night with no route), level with the date on the left.
+92. Location test: set Settings › Apps › Sprell › Permissions › Location to “Allow only while using the app”, then go out with the phone in your pocket and the screen off. Does the route record as fully as usual?
+93. Check in a while after sitting down somewhere: the stop lands where you are, with places suggested.
