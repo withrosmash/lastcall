@@ -146,23 +146,23 @@ function applyGlow(mode) {
   const glow = mode && mode !== 'night' ? MODES[mode]?.glow : null;
   if (glow) document.documentElement.dataset.glow = mode;
   else delete document.documentElement.dataset.glow;
+  // The strip behind the status bar paints the same glow, so it matches.
+  const nodes = [node, document.getElementById('topbar')].filter(Boolean);
   if (!glow) {
-    node.style.removeProperty('--bloom-hero');
-    node.style.removeProperty('--bloom-foot');
+    for (const n of nodes) { n.style.removeProperty('--bloom-hero'); n.style.removeProperty('--bloom-foot'); }
     return;
   }
   const { hero, foot } = bloomCss(glow, ctx.state.prefs.theme === 'light' ? 'light' : 'dark');
-  node.style.setProperty('--bloom-hero', hero);
-  node.style.setProperty('--bloom-foot', foot);
+  for (const n of nodes) { n.style.setProperty('--bloom-hero', hero); n.style.setProperty('--bloom-foot', foot); }
 }
 
 function save(opts) { store.save(ctx.state, opts); }
 
 /* ---------- session actions ---------- */
 
-// Android makes background location a separate trip to system settings, so the
-// priming screen runs first — otherwise people deny it and the app silently
-// fails at its one job.
+// The priming screen runs before the first adventure, so the location prompt
+// comes with a reason — otherwise people deny it and the app silently fails at
+// its one job.
 // The picker's choice rides through the location priming screen, which
 // starts the adventure itself once permission is sorted.
 function beginNight(choice = {}) {
@@ -174,9 +174,8 @@ function beginNight(choice = {}) {
 async function grantThenStart() {
   ctx.state.prefs.locationPrimed = true;
   save();
-  // Send them straight to the settings page Android insists on for "Allow all
-  // the time", rather than leaving them to find it.
-  await geo.openSettings();
+  // The ordinary prompt, then start: "While using the app" is enough.
+  await geo.requestLocation();
   startNight();
 }
 

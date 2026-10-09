@@ -113,12 +113,12 @@ const ONBOARD = [
   },
   {
     eyebrow: 'Location', title: 'Your phone will be in your pocket',
-    body: 'Your phone will ask about location. Choose the option that allows it all the time, so the map keeps drawing with the screen off.',
+    body: 'Your phone will ask about location. “While using the app” is enough: Sprell keeps tracking with the screen off while its notification shows.',
     note: 'Your route is saved on this phone. Without location there’s no map, but drinks, water and time still work.',
     primary: 'Allow location', secondary: 'Skip, track without the map', face: { eyes: 'up', mouth: 'ooh' },
-    // The settings route rather than the plugin's own prompt: "Allow all the
-    // time" lives there on Android, and it's the path proven in the field.
-    ask: async (ctx) => { ctx.state.prefs.locationPrimed = true; ctx.save(); await geo.openSettings(); },
+    // The ordinary prompt: "While using the app" keeps tracking going in a
+    // pocket. "All the time" is optional, in Settings.
+    ask: async (ctx) => { ctx.state.prefs.locationPrimed = true; ctx.save(); await geo.requestLocation(); },
   },
   {
     eyebrow: 'Steps', title: 'Counting steps',
@@ -256,12 +256,12 @@ export function primingScreen(ctx) {
     el('h1', { class: 'display', style: 'margin-top:14px' },
       'Your phone will be in your pocket'),
     el('p', { class: 'body', style: 'margin:12px 0 0' },
-      'Android opens its settings screen for this one. Pick “Allow all the time”, then come back.'),
+      'Your phone asks about location next. “While using the app” is enough: Sprell keeps tracking with the screen off while its notification shows.'),
     el('p', { class: 'cap', style: 'color:var(--mint);margin:10px 0 0',
       text: 'Your route is saved on this phone.' }),
     spacer(),
     foot(
-      btn('Open settings', 'btn--pri', () => ctx.grantThenStart(), { lg: true }),
+      btn('Allow location', 'btn--pri', () => ctx.grantThenStart(), { lg: true }),
       btn('Skip, track without the map', 'btn--sec', () => ctx.startNight({ skipLocation: true })),
     ),
   ];

@@ -94,8 +94,17 @@ export async function stop() {
 
 export function running() { return watchId != null; }
 
-// Android makes background location a separate trip to system settings, so the
-// priming screen sends people straight there rather than leaving them hunting.
+// The ordinary location prompt. "While using the app" is enough: the tracking
+// runs as a foreground service with its notification showing, which Android
+// counts as in use (owner's field test, 2026-10-09). Resolves either way.
+export async function requestLocation() {
+  if (!isNative()) return false;
+  try { await BackgroundGeolocation.requestPermissions({ permissions: ['location'] }); return true; }
+  catch { return false; }
+}
+
+// "Allow all the time" is a separate trip to system settings on Android. It's
+// optional now, offered from Settings for anyone who wants it.
 export async function openSettings() {
   if (!isNative()) return false;
   try { await BackgroundGeolocation.openSettings(); return true; }

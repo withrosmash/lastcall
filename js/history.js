@@ -186,7 +186,8 @@ const THRESHOLDS = [3, 4, 5, 6, 8];
 // it says why the item matters.
 const PERMISSIONS = [
   { key: 'fineLocation', name: 'Location', why: 'Without it there is no map and no route on your card.' },
-  { key: 'backgroundLocation', name: 'Location all the time', why: 'Lets the route keep drawing with the phone in your pocket.' },
+  // Optional: "While using the app" keeps tracking going in a pocket.
+  { key: 'backgroundLocation', name: 'Location all the time (optional)', why: 'Helps if Android restarts Sprell partway through an adventure.', optional: true },
   { key: 'activity', name: 'Physical activity', why: 'The step count comes from the phone’s own step sensor.' },
   { key: 'notifications', name: 'Notifications', why: 'Carries the tracking notice, quick log and water nudge.' },
   { key: 'battery', name: 'Unrestricted battery', why: 'Stops Android putting the app to sleep while you’re out.' },
@@ -195,18 +196,19 @@ const PERMISSIONS = [
 export function permissionRows(ctx) {
   const status = ctx.permissions;
   if (!status) return null;
-  const missing = PERMISSIONS.filter((p) => !status[p.key]);
+  const missing = PERMISSIONS.filter((p) => !status[p.key] && !p.optional);
+  const needed = PERMISSIONS.filter((p) => !p.optional).length;
 
   return el('div', { class: 'stack', style: 'gap:7px' },
     el('div', { class: 'eb', text: 'Permissions' }),
     el('p', { class: 'cap cap--up', style: 'margin:0',
       text: missing.length
-        ? `${missing.length} of ${PERMISSIONS.length} still needed. Tracking works best with all of them.`
+        ? `${missing.length} of ${needed} still needed. Tracking works best with all of them.`
         : t('All set. Your {ns} can record with the screen off.') }),
     ...PERMISSIONS.map((p) => {
       const ok = status[p.key];
       return el('div', { class: 'tile', style: 'display:flex;gap:10px;align-items:flex-start' },
-        el('span', { style: `color:${ok ? 'var(--mint)' : 'var(--amber)'};font-weight:700;font-size:13px;line-height:1.5`, text: ok ? '✓' : '!' }),
+        el('span', { style: `color:${ok ? 'var(--mint)' : p.optional ? 'var(--faint)' : 'var(--amber)'};font-weight:700;font-size:13px;line-height:1.5`, text: ok ? '✓' : p.optional ? '○' : '!' }),
         el('div', { style: 'flex:1;min-width:0' },
           el('div', { style: 'font-size:13px;font-weight:600', text: p.name }),
           el('div', { class: 'cap', style: 'line-height:1.4', text: p.why }),
