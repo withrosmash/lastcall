@@ -232,6 +232,8 @@ function makeState(s, allBadges = [], prefs = {}) {
   return {
     session: s,
     sum,
+    // Transport on a walk: drawn faint on the route card, mint elsewhere.
+    excluded: S.excludedSegments(s, s.endedAt ?? Date.now()),
     offered: offeredNumbers(s, sum),
     badgeImgs,
     mode: 'preset',
@@ -660,11 +662,13 @@ const ROUTE_THEMES = {
   dark: {
     bg: '#000000', rgb: '0,0,0', text: '#FFFFFF', label: '#A3A3A3', date: '#8A8A8A', pink: '#F06C9B',
     mark: '#7EE0C0', route: '#7EE0C0', under: 'rgba(0,0,0,.55)', underW: 10, ring: '#000000',
+    faint: 'rgba(255,255,255,.3)', underFaint: 'rgba(0,0,0,.55)',
     credit: 'rgba(255,255,255,.45)',
   },
   light: {
     bg: '#EEF2F8', rgb: '238,242,248', text: '#0B1526', label: '#626E81', date: '#4A576B', pink: '#C92F68',
     mark: '#0B6E55', route: '#7EE0C0', under: '#0B6E55', underW: 7, ring: '#FFFFFF',
+    faint: 'rgba(11,21,38,.26)', underFaint: 'rgba(255,255,255,.75)',
     credit: 'rgba(11,21,38,.45)',
   },
 };
@@ -976,8 +980,8 @@ function drawRouteCard(g, w, h, want) {
   if (want('title') && title) drawText(g, title, M, M + 6, { size: 64, weight: 700, color: T.text, spacing: -1 });
   const noRoute = trail.length < 2;
   if (want('route') && on.route.on && !noRoute) {
-    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.filter((p) => p.lat != null).map((p) => SM.toCard(frame, p.lat, p.lng)), T);
-    else outlineRoute(g, region, T);
+    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.filter((p) => p.lat != null).map((p) => SM.toCard(frame, p.lat, p.lng)), T, 11, ui.excluded);
+    else outlineRoute(g, region, T, ui.excluded);
   }
 
   let y = stackTop;
@@ -1057,21 +1061,50 @@ function drawRouteMap(g, w, f, mapH, T) {
   return true;
 }
 
+/**
+ * The route as runs of counted and left-out stretches. `excluded[i]` is for the
+ * segment from point i-1 to point i; neighbouring runs share their join.
+ */
+export function routeRuns(pts, excluded) {
+  const runs = [];
+  for (let i = 1; i < pts.length; i++) {
+    const counted = !excluded?.[i];
+    const last = runs.at(-1);
+    if (last && last.counted === counted) last.pts.push(pts[i]);
+    else runs.push({ counted, pts: [pts[i - 1], pts[i]] });
+  }
+  return runs;
+}
+
+const pathOf = (g, pts) => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y))); };
+
 // Mint on an under-stroke (dark on black, deep teal on the light card), pink
-// stops with a ring.
-function strokeRoute(g, pts, stops, T, lw = 11) {
+// stops with a ring. On a walk with transport left out, the whole line goes
+// down faint first and only the counted stretches are mint (owner, 2026-10-09).
+function strokeRoute(g, pts, stops, T, lw = 11, excluded = null) {
   if (pts.length < 2) return;
   g.save();
   g.lineCap = 'round';
   g.lineJoin = 'round';
-  g.beginPath();
-  pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
-  g.strokeStyle = T.under;
-  g.lineWidth = lw + T.underW;
-  g.stroke();
-  g.strokeStyle = T.route;
-  g.lineWidth = lw;
-  g.stroke();
+  const runs = excluded?.some(Boolean) ? routeRuns(pts, excluded) : [{ counted: true, pts }];
+  if (runs.some((r) => !r.counted)) {
+    pathOf(g, pts);
+    g.strokeStyle = T.underFaint || T.under;
+    g.lineWidth = lw + T.underW;
+    g.stroke();
+    g.strokeStyle = T.faint;
+    g.lineWidth = lw;
+    g.stroke();
+  }
+  for (const run of runs.filter((r) => r.counted)) {
+    pathOf(g, run.pts);
+    g.strokeStyle = T.under;
+    g.lineWidth = lw + T.underW;
+    g.stroke();
+    g.strokeStyle = T.route;
+    g.lineWidth = lw;
+    g.stroke();
+  }
   for (const p of stops) {
     g.beginPath();
     g.arc(p.x, p.y, lw * 1.6, 0, Math.PI * 2);
@@ -1085,7 +1118,7 @@ function strokeRoute(g, pts, stops, T, lw = 11) {
 }
 
 // No map (off, offline or a very short night): the route's shape alone.
-function outlineRoute(g, region, T) {
+function outlineRoute(g, region, T, excluded = null) {
   const pts = ui.session.trail;
   if (pts.length < 2 || region.w < 40 || region.h < 40) return;
   const fitted = fitPoints(pts, region.w, region.h, 20).map((p) => ({ x: p.x + region.x, y: p.y + region.y }));
@@ -1094,7 +1127,7 @@ function outlineRoute(g, region, T) {
     for (let i = 1; i < pts.length; i++) if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
     return fitted[best];
   });
-  strokeRoute(g, fitted, stops, T);
+  strokeRoute(g, fitted, stops, T, 11, excluded);
 }
 
 /* ---------- the photo card ---------- */

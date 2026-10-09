@@ -215,3 +215,18 @@ test('the wordmark is bottom right on every card, clear of the avatar, level wit
     assert.ok(Math.abs(markBaseline - dateBaseline) <= 3, `baselines ${markBaseline} and ${dateBaseline}`);
   }
 });
+
+test('route runs split where counting changes, sharing their joins', async () => {
+  const { routeRuns } = await import('../js/card.js');
+  const p = [0, 1, 2, 3, 4].map((x) => ({ x, y: 0 }));
+  const runs = routeRuns(p, [false, false, true, true, false]);
+  assert.deepEqual(runs.map((r) => r.counted), [true, false, true]);
+  assert.deepEqual(runs.map((r) => r.pts.map((q) => q.x)), [[0, 1], [1, 2, 3], [3, 4]]);
+});
+
+test('with nothing left out the route is one counted run', async () => {
+  const { routeRuns } = await import('../js/card.js');
+  const p = [0, 1, 2].map((x) => ({ x, y: 0 }));
+  assert.deepEqual(routeRuns(p, [false, false, false]).map((r) => [r.counted, r.pts.length]), [[true, 3]]);
+  assert.deepEqual(routeRuns(p, undefined).map((r) => [r.counted, r.pts.length]), [[true, 3]]);
+});
