@@ -155,3 +155,16 @@ New in build eba4ffc.
 91. “sprell” is bottom right on every card (route, photo, and a night with no route), level with the date on the left.
 92. Location test: set Settings › Apps › Sprell › Permissions › Location to “Allow only while using the app”, then go out with the phone in your pocket and the screen off. Does the route record as fully as usual?
 93. Check in a while after sitting down somewhere: the stop lands where you are, with places suggested.
+
+## Round 10: maps, walks and cards
+New in build 70de4cb.
+
+94. Finish an adventure: the recap shows your route over a map. With no signal it shows the line on its own.
+95. A walk where you take a train or bus: the recap says how many km on transport aren’t counted, and distance and pace count only the walking. On the recap and the route card the whole line is faint with the walked parts in mint; the photo card’s line stays plain.
+96. A long spell indoors or underground no longer shows “Tracking dropped”. It only appears if you turn up somewhere else.
+97. History shows a map of the routes from the period you pick (8 weeks, 6 months, Year, All time). Explore opens the big map for the same period.
+98. Card editor: Hide start and end starts off. Switch it on and the first and last 200 m leave the route and photo cards, and stops near the start and end leave the stop names too.
+99. Switch from Route to Your photo: everything starts where it was on the route card, every number the same size. Drag something and Tidy appears; Tidy puts it back.
+100. Fresh install (export first): the location step asks once; choose “While using the app”. Settings lists “Location all the time (optional)”, and Start doesn’t say setup needs attention. Also try “Don’t allow” once: the app carries on without a map.
+101. Scroll the recap or History: nothing shows behind the clock and battery icons.
+102. Swipe the tracking notification away, or long-press it and choose Silent. Does tracking carry on? Check the route afterwards.
