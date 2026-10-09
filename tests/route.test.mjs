@@ -141,3 +141,17 @@ test('a route that starts and ends at home still loses both ends', () => {
   assert.ok(kept.length > 2);
   assert.ok(kept.every((p) => S.haversineM(home.lat, home.lng, p.lat, p.lng) >= 199));
 });
+
+test('the History map shows only routes from the chosen period', () => {
+  const now = Date.UTC(2026, 9, 9);
+  const at = (daysAgo, withRoute) => {
+    const s = S.newSession(now - daysAgo * 86400e3);
+    if (withRoute) { S.addFix(s, { t: s.startedAt, lat: 51.5, lng: -0.1 }); S.addFix(s, { t: s.startedAt + 120e3, lat: 51.51, lng: -0.1 }); }
+    s.endedAt = s.startedAt + 3600e3;
+    return s;
+  };
+  const recent = at(10, true), noRoute = at(12, false), old = at(200, true), open = S.newSession(now);
+  const all = [recent, noRoute, old, open];
+  assert.deepEqual(S.routesInRange(all, '8w', now), [recent]);
+  assert.deepEqual(S.routesInRange(all, 'all', now), [recent, old]);
+});

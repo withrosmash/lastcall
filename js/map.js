@@ -305,21 +305,23 @@ function dropPin(ctx, s) {
   });
 }
 
-/* ---------- everywhere you've been ----------
-   Every stored trail on one map. Reuses the same Leaflet lifecycle as the
+/* ---------- explore ----------
+   Every trail from the History period on one big map. Reuses the same Leaflet lifecycle as the
    night map, so navigating away tears it down identically. */
 
 export function atlasScreen(ctx) {
-  const done = ctx.state.sessions.filter((s) => s.endedAt && s.trail.length > 1);
+  const range = ctx.state.prefs.historyRange || '8w';
+  const done = S.routesInRange(ctx.state.sessions, range);
   if (!done.length) { ctx.go('history'); return []; }
+  const label = S.RANGES.find((r) => r.key === range)?.label || '8 weeks';
 
-  const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Every route you have recorded' });
+  const host = el('div', { id: 'map', role: 'application', 'aria-label': `Your routes, ${label.toLowerCase()}` });
   queueMicrotask(() => initAtlas(host, done));
 
   const totalKm = km(done.reduce((n, s) => n + S.countedDistance(s), 0));
 
   return [
-    head({ title: 'Everywhere you’ve been', back: () => ctx.back() }),
+    head({ eyebrow: 'Explore', title: label, back: () => ctx.back() }),
     el('div', { class: 'map-wrap' },
       host,
       el('div', { class: 'map-foot' },

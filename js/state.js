@@ -530,6 +530,11 @@ export function inRange(s, sessions, range, now = Date.now()) {
   return !!s.endedAt && s.startedAt >= rangeStart(sessions, range, now);
 }
 
+/** Finished adventures with a route, from the chosen History period. */
+export function routesInRange(sessions, range, now = Date.now()) {
+  return sessions.filter((s) => s.endedAt && s.trail.length > 1 && inRange(s, sessions, range, now));
+}
+
 // Buckets for the chart, newest last: weekly for the short range, monthly for
 // the longer ones. Returns [{ label, value }] so the axis labels itself.
 export function chartBuckets(sessions, range = '8w', now = Date.now()) {

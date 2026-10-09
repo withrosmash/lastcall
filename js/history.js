@@ -1,6 +1,7 @@
 import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon, switchRow, sheet,
          hms, hm, clockTime, shortDate, km } from './ui.js';
 import * as S from './state.js';
+import { routeMap } from './routemap.js';
 import * as store from './storage.js';
 import { nightMap } from './map.js';
 import { avatarLook } from './wardrobe.js';
@@ -52,6 +53,8 @@ export function historyScreen(ctx) {
         onclick: () => { ctx.state.prefs.historyRange = r.key; ctx.save(); ctx.render(); },
       }, r.label))),
 
+    ...periodMap(ctx, done, range),
+
     tiles(
       tile(t('{Ns}'), shown.length),
       tile('Drinks', totalDrinks, { tone: 'drinks' }),
@@ -70,12 +73,6 @@ export function historyScreen(ctx) {
       el('span', { class: 'listrow__d', text: 'Badges' }),
       el('span', { class: 'listrow__m' }, el('span', { text: `${ctx.state.badges.length} of ${BADGES.length}` })),
     ),
-    done.some((s) => s.trail.length > 1)
-      ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('atlas') },
-          el('span', { class: 'listrow__d', text: 'Everywhere you’ve been' }),
-          el('span', { class: 'listrow__m' }, el('span', { text: `${km(done.reduce((n, s) => n + S.countedDistance(s), 0))} km` })),
-        )
-      : null,
 
     ...festivalRows(ctx),
 
@@ -105,6 +102,21 @@ export function historyScreen(ctx) {
       btn('Export history', 'btn--sec', () => exportData(), { iconName: 'download' }),
       btn('Settings', 'btn--sec', () => ctx.go('settings')),
     ),
+  ];
+}
+
+// Every route from the period on one map, drawn as the screen opens, with
+// Explore under it for the big map you can move around (owner, 2026-10-09).
+// Nothing at all when the period has no routes.
+function periodMap(ctx, done, range) {
+  const routes = S.routesInRange(done, range);
+  if (!routes.length) return [];
+  const total = routes.reduce((n, s) => n + S.countedDistance(s), 0);
+  return [
+    routeMap(routes.map((s) => ({ trail: s.trail })), { height: 200, alpha: 0.8, label: 'Map of your routes from this period' }),
+    el('div', { style: 'display:flex;align-items:center;gap:12px' },
+      el('p', { class: 'cap', style: 'margin:0;flex:1', text: `${routes.length} ${routes.length === 1 ? t('{n}') : t('{ns}')} · ${km(total)} km` }),
+      btn('Explore', 'btn--sec', () => ctx.go('atlas'), { iconName: 'map-pin' })),
   ];
 }
 
