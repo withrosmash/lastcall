@@ -105,11 +105,11 @@ export function routeMap(routes, { height = 190, end = false, alpha = 1, label =
     }
     // The tiles' terms require a credit on anything that shows them.
     if (drawn) {
-      g.font = `400 9px system-ui, sans-serif`;
+      g.font = `400 10px system-ui, sans-serif`;
       g.textAlign = 'right';
       g.textBaseline = 'bottom';
       g.fillStyle = ink.credit;
-      g.fillText('© Esri · OpenStreetMap', w - 8, height - 6);
+      g.fillText('Map © Esri · OpenStreetMap contributors', w - 8, height - 6);
     }
   };
   // Tiles land one by one; redraw once per frame however many arrive.

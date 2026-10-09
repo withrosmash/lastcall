@@ -155,3 +155,29 @@ test('the History map shows only routes from the chosen period', () => {
   assert.deepEqual(S.routesInRange(all, '8w', now), [recent]);
   assert.deepEqual(S.routesInRange(all, 'all', now), [recent, old]);
 });
+
+test('walk pace after a gap at the pub still reads the walk home', () => {
+  const s = S.newSession(0, { mode: 'night' });
+  walk1k(s);
+  const leave = s.trail.at(-1).t + 120 * M;
+  s.parts.push({ t: leave, mode: 'walk', company: 'group' });
+  jump(s, 300, 120 * M + 30e3);
+  go(s, 75, 27.78, 20); // 25 minutes at 5 km/h
+  s.endedAt = s.trail.at(-1).t;
+  assert.match(S.walkPace(s, s.endedAt) || 'null', /^1[1-3]:\d\d$/);
+});
+
+test('walk distance for a badge leaves the train out', () => {
+  const s = S.newSession(0, { mode: 'walk' });
+  walk1k(s); walk1k(s); walk1k(s);
+  go(s, 60, 333.3, 20); // 20 km of train
+  s.endedAt = s.trail.at(-1).t;
+  assert.ok(S.trailDistance(s.trail) > 15_000);
+  assert.ok(S.walkDistance(s) < 4_000, `walk ${S.walkDistance(s)}`);
+});
+
+test('all the time is optional: it never counts as missing', () => {
+  const all = { fineLocation: true, backgroundLocation: false, activity: true, notifications: true, battery: true };
+  assert.deepEqual(S.missingPermissions(all), []);
+  assert.deepEqual(S.missingPermissions({ ...all, activity: false }), ['activity']);
+});

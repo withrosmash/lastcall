@@ -291,3 +291,32 @@ test('the four counts share one row on the photo card, under distance and steps'
   assert.equal(e.distance.y, e.steps.y);
   assert.ok(e.distance.y < e.stops.y);
 });
+
+test('hidden ends take their stops off the stop names list too', async () => {
+  const card = await import('../js/card.js');
+  const S = await import('../js/state.js');
+  const s = S.newSession(0, { mode: 'walk' });
+  for (let i = 0; i <= 20; i++) S.addFix(s, { t: i * 40e3, lat: 51.5 + (i * 50) / 111195, lng: -0.1 });
+  s.pins = [{ t: 0, lat: 51.5, lng: -0.1, name: 'Home' }, { t: 400e3, lat: 51.5 + 500 / 111195, lng: -0.1, name: 'Pub' }, { t: 500e3, lat: null, lng: null, name: 'Somewhere' }];
+  s.endedAt = 20 * 40e3;
+  const ui = card.__initialStateForTest(s);
+  card.__useStateForTest(ui);
+  assert.deepEqual(card.stopNames(ui), ['Home', 'Pub', 'Somewhere']);
+  ui.elements.trim.on = true;
+  assert.deepEqual(card.stopNames(ui), ['Pub', 'Somewhere']);
+});
+
+test('Tidy only shows once something has been moved or resized', async () => {
+  const card = await import('../js/card.js');
+  const S = await import('../js/state.js');
+  const s = S.newSession(0, { mode: 'night' });
+  s.endedAt = 3600e3;
+  const ui = card.__initialStateForTest(s);
+  ui.mode = 'photo';
+  card.__useStateForTest(ui);
+  const g = { fonts: [], font: '', save() {}, restore() {}, fillText() {}, measureText(ch) { return { width: 20 * ch.length }; } };
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  assert.equal(card.photoMoved(), false, 'the big no-route avatar is not a move');
+  ui.elements.time.placed = true;
+  assert.equal(card.photoMoved(), true);
+});

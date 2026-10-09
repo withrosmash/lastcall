@@ -35,3 +35,32 @@ test('high-density screens fetch the next zoom down at half size, landing on the
     assert.ok(Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6);
   }
 });
+
+test('every map waiting on a tile hears when it lands', async () => {
+  const made = [];
+  globalThis.Image = class { constructor() { made.push(this); } set src(v) { this._src = v; } };
+  const SM = await import('../js/staticmap.js');
+  let a = 0, b = 0;
+  SM.tile('https://example.test/t/1', () => a++);
+  SM.tile('https://example.test/t/1', () => b++);
+  made.at(-1).onload();
+  assert.equal(a, 1);
+  assert.equal(b, 1);
+});
+
+test('a history of 200,000 fixes still frames', () => {
+  const pts = Array.from({ length: 200_000 }, (_, i) => ({ lat: 51.5 + (i % 1000) * 1e-5, lng: -0.1 + (i % 777) * 1e-5 }));
+  assert.ok(Number.isFinite(fitFrame(pts, 360, 200).k));
+});
+
+test('the small maps credit OpenStreetMap contributors', async () => {
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync(new URL('../js/routemap.js', import.meta.url), 'utf8'), /Map © Esri · OpenStreetMap contributors/);
+});
+
+test('the plugin’s requestPermissions is never called: it re-asks forever on a denial', async () => {
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['geo.js', 'app.js', 'session.js']) {
+    assert.doesNotMatch(readFileSync(new URL(`../js/${f}`, import.meta.url), 'utf8'), /BackgroundGeolocation\.requestPermissions|requestLocation\(/, f);
+  }
+});

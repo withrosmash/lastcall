@@ -140,7 +140,8 @@ const WALK_CHECKS = {
     const first = S.partsOf(s).findIndex((p) => p.mode === 'walk');
     return h >= 4 && h < 8 && !S.partsOf(s).slice(0, first).some((p) => p.mode === 'night');
   },
-  'trailblazer': (w) => S.trailDistance(w.trail) >= 15_000,
+  // Walked metres only: a train in the middle doesn't make it a long walk.
+  'trailblazer': (w, s) => S.walkDistance(s) >= 15_000,
   'tea-break': (w) => w.drinks.some((d) => COFFEE.test(d.kind) || /\btea\b/i.test(d.kind)),
 };
 

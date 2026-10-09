@@ -27,10 +27,16 @@ export function project(lat, lng, z) {
 
 /** Choose a zoom and scale so the trail fits `region` (card pixels). */
 export function frame(trail, region, pad = 60) {
-  const pts0 = trail.map((p) => project(p.lat, p.lng, 0));
-  const xs = pts0.map((p) => p.x), ys = pts0.map((p) => p.y);
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  // A loop rather than Math.min(...xs): a year of History can hold more fixes
+  // than a spread argument list allows.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const q of trail) {
+    const p = project(q.lat, q.lng, 0);
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
   const fit = Math.min(
     (region.w - pad * 2) / Math.max(maxX - minX, 1e-9),
     (region.h - pad * 2) / Math.max(maxY - minY, 1e-9),
@@ -85,12 +91,15 @@ export function tile(url, onReady) {
   if (!entry) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    entry = { img, state: 'loading' };
-    img.onload = () => { entry.state = 'ok'; onReady?.(); };
-    img.onerror = () => { entry.state = 'err'; onReady?.(); };
+    // Every map that asked while it loaded hears when it lands, not just the first.
+    entry = { img, state: 'loading', waiting: new Set() };
+    const done = (state) => { entry.state = state; for (const f of entry.waiting) f(); entry.waiting.clear(); };
+    img.onload = () => done('ok');
+    img.onerror = () => done('err');
     img.src = url;
     cache.set(url, entry);
   }
+  if (entry.state === 'loading' && onReady) entry.waiting.add(onReady);
   return entry.state === 'ok' ? entry.img : null;
 }
 

@@ -100,9 +100,38 @@ export function modeSpans(s, mode, now = Date.now()) {
 
 /** Pace over the walk part only, so a night out with a walk home reads true. */
 export function walkPace(s, now = Date.now()) {
-  const left = s.trail.length > 1 ? excludedTotals(s) : { m: 0, ms: 0 };
-  const ms = modeSpans(s, 'walk', now).reduce((n, [a, b]) => n + (b - a), 0) - left.ms;
-  return pace(ms, trailDistance(sliceTo(s, 'walk').trail) - left.m);
+  const ms = modeSpans(s, 'walk', now).reduce((n, [a, b]) => n + (b - a), 0) - walkLeftOut(s, now).ms;
+  return pace(ms, walkDistance(s, now));
+}
+
+/** Metres walked in the walk parts: their own route, less any transport in it. */
+export function walkDistance(s, now = s.endedAt ?? Date.now()) {
+  return Math.max(0, trailDistance(sliceTo(s, 'walk').trail) - walkLeftOut(s, now).m);
+}
+
+// What a walk itself leaves out: the metres of rides wholly inside a walk part
+// (the only ones its own route contains) and the walk's own time spent on any
+// ride. A gap that began at the pub before the walk costs the walk nothing.
+const walkCache = new WeakMap();
+function walkLeftOut(s, now) {
+  if (s.trail.length < 2) return { m: 0, ms: 0 };
+  const key = `${s.trail.length}|${s.parts?.length || 0}|${s.endedAt}|${s.distanceM}`;
+  const hit = walkCache.get(s);
+  if (hit?.key === key) return hit;
+  const spans = modeSpans(s, 'walk', now);
+  const inside = (t) => spans.some(([a, b]) => t >= a && t <= b);
+  let m = 0, ms = 0;
+  if (spans.length) {
+    rideSegments(s.trail).forEach((r, i) => {
+      if (!r) return;
+      const a = s.trail[i - 1], b = s.trail[i];
+      for (const [x, y] of spans) ms += Math.max(0, Math.min(b.t, y) - Math.max(a.t, x));
+      if (inside(a.t) && inside(b.t)) m += haversineM(a.lat, a.lng, b.lat, b.lng);
+    });
+  }
+  const out = { key, m, ms };
+  walkCache.set(s, out);
+  return out;
 }
 
 export const onlyMode = (s, mode) => partsOf(s).every((p) => p.mode === mode);
@@ -443,6 +472,16 @@ function excludedTotals(s) {
   const out = { key, m, ms };
   excludedCache.set(s, out);
   return out;
+}
+
+/* ---------- permissions ----------
+   "Allow all the time" is optional: "While using the app" keeps tracking going
+   in a pocket (owner's field test, 2026-10-09). */
+export const OPTIONAL_PERMISSIONS = ['backgroundLocation'];
+
+/** The permissions still to grant, leaving out the optional ones. */
+export function missingPermissions(status) {
+  return Object.entries(status || {}).filter(([k, v]) => !v && !OPTIONAL_PERMISSIONS.includes(k)).map(([k]) => k);
 }
 
 /* ---------- hide start and end ----------

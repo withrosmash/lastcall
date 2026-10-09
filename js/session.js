@@ -69,11 +69,11 @@ export function startScreen(ctx) {
       text: 'Steps, stops, drinks and water, saved on this phone.' }),
     el('div', { style: 'height:20px' }),
     // Caught before a night rather than discovered after one went unrecorded.
-    ctx.permissions && Object.values(ctx.permissions).some((v) => !v)
+    ctx.permissions && S.missingPermissions(ctx.permissions).length
       ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('settings') },
           el('span', { class: 'listrow__d', style: 'color:var(--amber)', text: 'Setup needs attention' }),
           el('span', { class: 'listrow__m' },
-            el('span', { text: `${Object.values(ctx.permissions).filter((v) => !v).length} to grant` })),
+            el('span', { text: `${S.missingPermissions(ctx.permissions).length} to grant` })),
         )
       : null,
     last ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('detail', last) },
@@ -118,7 +118,9 @@ const ONBOARD = [
     primary: 'Allow location', secondary: 'Skip, track without the map', face: { eyes: 'up', mouth: 'ooh' },
     // The ordinary prompt: "While using the app" keeps tracking going in a
     // pocket. "All the time" is optional, in Settings.
-    ask: async (ctx) => { ctx.state.prefs.locationPrimed = true; ctx.save(); await geo.requestLocation(); },
+    // A one-off position: the system's own prompt, asked once. (The tracking
+    // plugin's requestPermissions re-asks forever after a denial.)
+    ask: async (ctx) => { ctx.state.prefs.locationPrimed = true; ctx.save(); await geo.current(); },
   },
   {
     eyebrow: 'Steps', title: 'Counting steps',

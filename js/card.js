@@ -388,8 +388,8 @@ function elementToggles() {
         draw();
       },
     }, t.label));
-  // On a photo, Tidy puts moved numbers back into the stack.
-  if (ui.mode === 'photo' && photoOrder().some((k) => ui.elements[k].placed || (ui.elements[k].scale || 1) !== 1)) {
+  // On a photo, Tidy puts moved or resized pieces back where the route card has them.
+  if (ui.mode === 'photo' && photoMoved()) {
     chips.push(el('button', {
       class: 'chip press', type: 'button',
       onclick: () => {
@@ -925,10 +925,11 @@ function routeLayout(g, w, h, { clock = false } = {}) {
   const rowY = (i) => bottom - (rows.length - 1 - i) * 130;
   const numbersTop = rows.length ? rowY(0) : bottom + 130;
 
-  const placesOn = on.places.on && ui.session.pins.length;
+  const names = stopNames(ui);
+  const placesOn = on.places.on && names.length;
   const badgeRows = badgeRowsFor(h, rows.length + (placesOn ? 1 : 0));
   const stack = [];
-  if (placesOn) stack.push({ id: 'places', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
+  if (placesOn) stack.push({ id: 'places', h: 36 + Math.min(names.length, 5) * 44 + 30 });
   // The badges' own height plus the same clear space below them as before.
   if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: badgesLayout(g, badgeRows).h + 57 });
   const above = stack.reduce((n, b) => n + b.h, 0);
@@ -1056,6 +1057,17 @@ function drawRouteMap(g, w, f, mapH, T) {
 }
 
 /**
+ * The stop names a card lists. With hide start and end on, a stop within
+ * 200 m of either real end goes, so the list can't name a front door either.
+ */
+export function stopNames(state) {
+  const s = state.session;
+  if (!state.elements.trim?.on || s.trail.length < 2) return s.pins.map((p) => p.name);
+  const ends = [s.trail[0], s.trail.at(-1)];
+  return s.pins.filter((p) => p.lat == null || ends.every((e) => S.haversineM(e.lat, e.lng, p.lat, p.lng) >= S.TRIM_M)).map((p) => p.name);
+}
+
+/**
  * What the card draws of the route: the whole trail, or with hide start and
  * end on, the trail less its ends, the left-out flags cut to match, and no
  * stop within 200 m of either real end.
@@ -1150,6 +1162,11 @@ function photoDefaults(g, w, h) {
     const e = ui.elements[key];
     if (e && !e.placed && spot[key]) Object.assign(e, spot[key]);
   }
+}
+
+/** Whether any photo piece has been moved or resized (both set `placed`). */
+export function photoMoved() {
+  return photoOrder().some((k) => ui.elements[k]?.placed);
 }
 
 /** Tidy: every photo piece back to where the route card has it. */
@@ -1275,7 +1292,7 @@ const DRAW = {
   },
 
   places(g, x, y) {
-    const names = ui.session.pins.map((p) => p.name).slice(0, 5);
+    const names = stopNames(ui).slice(0, 5);
     if (!names.length) {
       const w = drawText(g, 'No stops pinned', x, y, { size: 26, weight: 600, color: labelInk() });
       return { w, h: 30 };

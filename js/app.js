@@ -174,8 +174,8 @@ function beginNight(choice = {}) {
 async function grantThenStart() {
   ctx.state.prefs.locationPrimed = true;
   save();
-  // The ordinary prompt, then start: "While using the app" is enough.
-  await geo.requestLocation();
+  // Starting asks for location once, with the system's own prompt; "While
+  // using the app" is enough.
   startNight();
 }
 
@@ -229,7 +229,7 @@ async function checkPermissions({ toastResult = false } = {}) {
   ctx.permissions = await keepalive.permissionStatus();
   if (ctx.screen === 'settings' || ctx.screen === 'start') render();
   if (toastResult && ctx.permissions) {
-    const missing = Object.values(ctx.permissions).filter((v) => !v).length;
+    const missing = S.missingPermissions(ctx.permissions).length;
     toast(missing ? `${missing} still to grant.` : 'All permissions granted.');
   }
 }

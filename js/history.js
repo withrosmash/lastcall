@@ -196,7 +196,7 @@ const PERMISSIONS = [
 export function permissionRows(ctx) {
   const status = ctx.permissions;
   if (!status) return null;
-  const missing = PERMISSIONS.filter((p) => !status[p.key] && !p.optional);
+  const missing = S.missingPermissions(status);
   const needed = PERMISSIONS.filter((p) => !p.optional).length;
 
   return el('div', { class: 'stack', style: 'gap:7px' },
