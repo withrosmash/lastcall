@@ -50,21 +50,6 @@ test('route card numbers stack from the bottom in their rows', async () => {
   assert.deepEqual(numberRows([]), []);
 });
 
-test('photo card numbers stack up from the date, and switching one off closes the gap', async () => {
-  const { photoStack } = await import('../js/card.js');
-  const all = ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'];
-  const p = photoStack(all, 1350);
-  assert.equal(p.date.y, 1350 - 64 - 90);
-  assert.ok(p.time.y < p.date.y && p.pace.y === p.time.y && p.pace.x > p.time.x, 'time and pace side by side above the date');
-  assert.ok(p.food.y < p.time.y && p.distance.y < p.food.y, 'counts above them, distance and steps on top');
-  const noCounts = photoStack(['distance', 'steps', 'time', 'pace', 'date'], 1350);
-  assert.equal(noCounts.time.y, p.time.y);
-  assert.ok(noCounts.distance.y > p.distance.y, 'distance drops into the gap');
-  const noDate = photoStack(['time', 'pace'], 1350);
-  assert.ok(noDate.time.y > p.time.y, 'with no date the bottom row sits lower');
-  assert.equal(photoStack(all, 1920).date.y, 1920 - 64 - 90, '9:16 builds from its own bottom');
-});
-
 test('only measured numbers are offered', async () => {
   const { offeredNumbers } = await import('../js/card.js');
   const { newSession, summarise } = await import('../js/state.js');
@@ -73,17 +58,6 @@ test('only measured numbers are offered', async () => {
   const walk = Object.assign(newSession(0, { mode: 'walk' }), { endedAt: 12 * 60e3, steps: 900 });
   walk.trail = [{ t: 0, lat: 51.5, lng: -0.1 }, { t: 12 * 60e3, lat: 51.509, lng: -0.1 }];
   assert.deepEqual(offeredNumbers(walk, summarise(walk)), ['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace']);
-});
-
-test('a resized number stays in the stack, and the stack makes room for it', async () => {
-  const { photoStack } = await import('../js/card.js');
-  const keys = ['drinks', 'water', 'time', 'pace', 'date'];
-  const plain = photoStack(keys, 1350);
-  const big = photoStack(keys, 1350, { time: 1.5, drinks: 1.4 });
-  assert.ok(big.pace.x >= plain.pace.x + 200, 'pace moves right of the larger time');
-  assert.equal(big.pace.y, big.time.y);
-  assert.ok(big.time.y < plain.time.y, 'the taller row rises from the date');
-  assert.ok(big.water.x > plain.water.x, 'water moves right of the larger drinks');
 });
 
 test('on 4:5 the route is framed above the avatar, whatever is switched off', async () => {
@@ -114,20 +88,6 @@ test('a wide number always leaves a gap before the next one', async () => {
   assert.deepEqual(rowXs([200, 180], [0, 2]), [64, 364], 'room to spare: the column wins');
   assert.deepEqual(rowXs([300, 180], [0, 2]), [64, 412], '15.5 km pushes Steps along by the gap');
   assert.deepEqual(rowXs([90, 90, 90, 90], [0, 1, 2, 3]), [64, 214, 364, 514]);
-});
-
-test('the photo stack leaves a gap after a wide number too', async () => {
-  const { photoStack } = await import('../js/card.js');
-  const p = photoStack(['distance', 'steps', 'date'], 1350, {}, { distance: 260 });
-  assert.ok(p.steps.x >= p.distance.x + 260 + 48);
-});
-
-test('every number is a photo-card piece that stacks and draws', async () => {
-  const { NUMBERS, photoOrder, photoStacked } = await import('../js/card.js');
-  for (const { key } of NUMBERS) {
-    assert.ok(photoOrder().includes(key), `${key} draws on the photo card`);
-    assert.ok(photoStacked().includes(key), `${key} stacks on the photo card`);
-  }
 });
 
 test('9:16 keeps its route frame whatever is stacked; 4:5 zooms out no further than four rows', async () => {
@@ -182,18 +142,6 @@ test('with no route the space keeps clear of everything stacked below it, for th
     const args = { top: 150, stackTop: h === 1350 ? 287 : 719, above: 400, title: true, route: false, bottom: h - 64 - 240 };
     assert.equal(routeFrameH(h, args), routeRegionH(h, args), `${h}: no fixed frame without a route`);
   }
-});
-
-test('the four counts share one row on the photo card, under distance and steps', async () => {
-  const { photoStack } = await import('../js/card.js');
-  const p = photoStack(['distance', 'steps', 'stops', 'drinks', 'water', 'food', 'time', 'pace', 'date'], 1350);
-  assert.ok(['drinks', 'water', 'food'].every((k) => p[k].y === p.stops.y), 'stops, drinks, water and food on one row');
-  assert.ok(p.stops.x < p.drinks.x && p.drinks.x < p.water.x && p.water.x < p.food.x);
-  // Spaced like the route card's counts, so the row stays clear of the avatar.
-  assert.equal(p.drinks.x - p.stops.x, 150);
-  assert.ok(p.food.x <= 64 + 3 * 150, `food at ${p.food.x}`);
-  assert.equal(p.distance.y, p.steps.y);
-  assert.ok(p.distance.y < p.stops.y, 'distance and steps on their own row above');
 });
 
 test('drinks, stops, water and food start switched off', async () => {
@@ -256,4 +204,90 @@ test('hidden ends take the stops near them off the card', async () => {
   const ui = card.__initialStateForTest(s);
   ui.elements.trim.on = true;
   assert.deepEqual(card.shownRoute(ui).pins.map((p) => p.name), ['Pub']);
+});
+
+// A canvas stand-in: text is 0.55 of its font size per character wide, and
+// every glyph drawn records the font it was drawn in.
+function fakeG() {
+  return {
+    fonts: [], font: '', save() {}, restore() {}, fillText() { this.fonts.push(this.font); },
+    measureText(ch) { return { width: Number(/(\d+)px/.exec(this.font)[1]) * 0.55 * ch.length }; },
+  };
+}
+
+async function photoCard() {
+  const card = await import('../js/card.js');
+  const S = await import('../js/state.js');
+  const s = S.newSession(0, { mode: 'walk' });
+  for (let i = 0; i <= 20; i++) S.addFix(s, { t: i * 40e3, lat: 51.5 + (i * 50) / 111195, lng: -0.1 });
+  s.steps = 1400;
+  s.endedAt = 20 * 40e3;
+  const ui = card.__initialStateForTest(s);
+  ui.mode = 'photo';
+  ui.title = 'Leaving do';
+  card.__useStateForTest(ui);
+  return { card, ui };
+}
+
+test('photo pieces start where the route card puts them, on both sizes', async () => {
+  const { card, ui } = await photoCard();
+  for (const h of [1350, 1920]) {
+    const g = fakeG();
+    const L = card.__routeLayoutForTest(g, 1080, h, { clock: true });
+    card.__photoDefaultsForTest(g, 1080, h);
+    const e = ui.elements;
+    for (const key of Object.keys(L.numbers)) assert.deepEqual([e[key].x, e[key].y], [L.numbers[key].x, L.numbers[key].y], `${key} at ${h}`);
+    assert.deepEqual([e.title.x, e.title.y], [L.title.x, L.title.y]);
+    assert.deepEqual([e.date.x, e.date.y], [L.date.x, L.date.y]);
+    assert.deepEqual([e.route.x, e.route.y, e.route.box.w, e.route.box.h], [L.region.x, L.region.y, L.region.w, L.region.h]);
+    assert.deepEqual([e.avatar.x, e.avatar.y], [L.avatar.x, L.avatar.y]);
+    assert.equal(card.avatarCell(e.avatar), L.avatar.cell);
+  }
+});
+
+test('every photo value is the route card size', async () => {
+  const { card } = await photoCard();
+  for (const key of ['distance', 'steps', 'time', 'pace']) {
+    const g = fakeG();
+    card.__drawPieceForTest(key, g);
+    assert.ok(g.fonts.some((f) => f.startsWith('700 76px')), `${key} value at 76px`);
+    assert.ok(g.fonts.some((f) => f.startsWith('600 28px')), `${key} label at 28px`);
+    assert.ok(!g.fonts.some((f) => /(96|52)px/.test(f)), `${key} not at the old sizes`);
+  }
+});
+
+test('switching a number off closes the gap on the photo card too', async () => {
+  const { card, ui } = await photoCard();
+  const g = fakeG();
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  const before = ui.elements.distance.y;
+  ui.elements.time.on = false;
+  ui.elements.pace.on = false;
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  assert.ok(ui.elements.distance.y > before, 'distance drops into the empty row');
+});
+
+test('a moved piece stays put and Tidy brings it back', async () => {
+  const { card, ui } = await photoCard();
+  const g = fakeG();
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  const home = { x: ui.elements.steps.x, y: ui.elements.steps.y };
+  Object.assign(ui.elements.steps, { x: 500, y: 400, placed: true });
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  assert.deepEqual([ui.elements.steps.x, ui.elements.steps.y], [500, 400]);
+  card.tidyPhoto();
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  assert.deepEqual([ui.elements.steps.x, ui.elements.steps.y], [home.x, home.y]);
+});
+
+test('the four counts share one row on the photo card, under distance and steps', async () => {
+  const { card, ui } = await photoCard();
+  for (const k of ['stops', 'drinks', 'water', 'food']) ui.elements[k].on = true;
+  const g = fakeG();
+  card.__photoDefaultsForTest(g, 1080, 1350);
+  const e = ui.elements;
+  assert.ok(['drinks', 'water', 'food'].every((k) => e[k].y === e.stops.y));
+  assert.ok(e.stops.x < e.drinks.x && e.drinks.x < e.water.x && e.water.x < e.food.x);
+  assert.equal(e.distance.y, e.steps.y);
+  assert.ok(e.distance.y < e.stops.y);
 });

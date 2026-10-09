@@ -199,8 +199,6 @@ const TYPES = [
 // Photo cards draw in this order, so later ones sit on top and win a tap.
 // Both lists come from NUMBERS, so a new number can't be left off the card.
 export const photoOrder = () => ['route', 'avatar', 'title', ...NUMBER_KEYS, 'date', 'places', 'badges'];
-// What the photo card stacks from the bottom until it's moved.
-export const photoStacked = () => [...NUMBER_KEYS, 'date'];
 
 function makeState(s, allBadges = [], prefs = {}) {
   // Badges the night itself earned, art preloaded for the canvas. The SVGs are
@@ -254,17 +252,15 @@ function makeState(s, allBadges = [], prefs = {}) {
       // Leaves the first and last 200 m off the card. Off until asked for
       // (owner, 2026-10-09); the recap and History always show it all.
       trim: { on: false },
-      // Starts below the badges, which take a second row past four.
-      route: { on: s.trail.length > 1, x: PAD, y: 300 + (badgeGrid(sessionBadges.length).rows > 1 ? BADGE_ROW_STEP : 0), scale: 1 },
-      title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
-      avatar: { on: true, x: 1080 - PAD - 300, y: 1350 - PAD - 520, scale: 1 },
-      // Time out is labelled now, 34px taller, so it sits that much higher.
-      // The numbers and the date stack from the bottom (photoStack) until
-      // one is moved or resized, which sets `placed` and leaves it there.
+      // Every photo piece starts where the route card has it (photoDefaults)
+      // until it's moved or resized, which sets `placed` and leaves it there.
+      route: { on: s.trail.length > 1, x: PAD, y: 150, scale: 1, placed: false },
+      title: { on: true, x: PAD, y: PAD + 6, scale: 1, placed: false },
+      avatar: { on: true, x: 1080 - PAD - 290, y: AVATAR_CORNER_TOP(1350), scale: 1, placed: false },
       ...Object.fromEntries(NUMBERS.map((n) => [n.key, { on: !OFF_BY_DEFAULT.includes(n.key), x: PAD, y: 0, scale: 1, placed: false }])),
-      date: { on: true, x: PAD, y: 1350 - PAD - 90, scale: 1, placed: false },
-      places: { on: false, x: PAD, y: 200, scale: 1 },
-      badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1 },
+      date: { on: true, x: PAD, y: routeDateY(1350), scale: 1, placed: false },
+      places: { on: false, x: PAD, y: 200, scale: 1, placed: false },
+      badges: { on: badgeImgs.length > 0, x: PAD, y: 180, scale: 1, placed: false },
     },
     bounds: new Map(),
   };
@@ -343,9 +339,6 @@ export const badgeRowsFor = (h, otherRows) => (h >= 1500 ? 2 : Math.min(4, Math.
 // Disc and label sizes. With more than one row the discs shrink a little
 // (labels keep their width, so they stay on one line) and rows close up.
 const BADGE_STYLES = { full: { size: 120, gap: 34, label: 20 }, compact: { size: 104, gap: 50, label: 20 } };
-// A second row of badges at its tallest (two-line labels), for placing the
-// photo card's route clear below it.
-const BADGE_ROW_STEP = 200;
 
 /** Badge rows stacked tight: each as tall as its disc and its own labels need. */
 export function badgeRowsLayout(labelHs, size) {
@@ -393,11 +386,11 @@ function elementToggles() {
       },
     }, t.label));
   // On a photo, Tidy puts moved numbers back into the stack.
-  if (ui.mode === 'photo' && photoStacked().some((k) => ui.elements[k].placed || (ui.elements[k].scale || 1) !== 1)) {
+  if (ui.mode === 'photo' && photoOrder().some((k) => ui.elements[k].placed || (ui.elements[k].scale || 1) !== 1)) {
     chips.push(el('button', {
       class: 'chip press', type: 'button',
       onclick: () => {
-        for (const k of photoStacked()) Object.assign(ui.elements[k], { placed: false, scale: 1 });
+        tidyPhoto();
         ui.refreshChrome();
         draw();
       },
@@ -550,6 +543,8 @@ function attachDrag(canvas) {
       const pn = ui.pinch, node = ui.elements[pn.key];
       node.scale = clampScale(pn.baseScale * (dist(a, b) / pn.baseDist));
       snapScale(pn.key, node);
+      // A resized piece keeps its spot rather than following the layout.
+      node.placed = true;
       if (pn.cx != null) {
         const k = node.scale / pn.baseScale;
         node.x = pn.cx - (pn.bw * k) / 2;
@@ -565,6 +560,7 @@ function attachDrag(canvas) {
       const b = ui.bounds.get(ui.resize.key);
       el2.scale = clampScale(ui.resize.baseScale * (dist(p, { x: b.x, y: b.y }) / ui.resize.baseDist));
       snapScale(ui.resize.key, el2);
+      el2.placed = true;
       draw();
       return;
     }
@@ -838,38 +834,6 @@ export function numberRows(keys) {
   return rows;
 }
 
-/**
- * Where the photo card's numbers and date sit until they're moved: built up
- * from the bottom. The date, then time out and pace large and side by side,
- * then the other numbers three to a row. A resized piece keeps its place and
- * the stack makes room for its size (`scales`). Returns { key: { x, y } }.
- */
-export function photoStack(keys, h, scales = {}, widths = {}) {
-  const at = {};
-  const k = (key) => scales[key] || 1;
-  let floor = h - PAD - 40;
-  if (keys.includes('date')) { at.date = { x: PAD, y: h - PAD - 90 }; floor = at.date.y - 4; }
-  // Lay a row left to right at its pitch, standing on the floor; return its top.
-  const row = (list, pitch, height, gap) => {
-    const y = floor - height * Math.max(...list.map(k));
-    let x = PAD;
-    // Each piece's pitch, or its measured width plus a gap if that's wider.
-    for (const key of list) { at[key] = { x, y }; x += Math.max(pitch * k(key), (widths[key] || 0) + 48); }
-    floor = y - gap;
-  };
-  const hero = ['time', 'pace'].filter((key) => keys.includes(key));
-  if (hero.length) row(hero, 420, 134, 18);
-  // The counts (stops, drinks, water, food, acts) four to a row; distance and
-  // steps on their own row above them.
-  const counts = NUMBERS.filter((n) => n.group === 'B' && keys.includes(n.key)).map((n) => n.key);
-  const rows = [];
-  for (let i = 0; i < counts.length; i += 4) rows.push(counts.slice(i, i + 4));
-  for (let r = rows.length - 1; r >= 0; r--) row(rows[r], 150, 96, 14);
-  const longer = NUMBERS.filter((n) => n.group === 'A' && keys.includes(n.key)).map((n) => n.key);
-  if (longer.length) row(longer, 205, 96, 14);
-  return at;
-}
-
 /* ---------- draw ----------
    `only` draws a single layer on a clear ground, for Save for video; `target`
    draws onto another canvas at the card's size. */
@@ -938,35 +902,76 @@ function queueDraw() {
    avatar standing to their right. Badges and stops, when on, stack above the
    stats and the map gives up the room. */
 
-function drawRouteCard(g, w, h, want) {
-  const T = routeTheme();
+// The numbers' type on both cards (owner, 2026-10-09: one size for every value).
+const NUM_LABEL = { size: 28, weight: 600 };
+const NUM_VALUE = { size: 76, weight: 700, spacing: -2 };
+
+/**
+ * Where everything sits on the route card, which is also where the photo
+ * card's pieces start. The numbers stack up from the bottom: the bottom row
+ * sits just above the date (lower without it) and each row above is 130
+ * higher. Badges and stop names sit on top of the numbers, so everything
+ * moves down together. `clock` measures time out as the photo card writes it.
+ */
+function routeLayout(g, w, h, { clock = false } = {}) {
   const on = ui.elements;
   const M = PAD;
   const title = ui.title.trim();
-  // The numbers stack up from the bottom: the bottom row sits just above the
-  // date (lower without it) and each row above is 130 higher. Badges and stop
-  // names sit on top of the numbers, so everything moves down together.
   const rows = numberRows(ui.offered.filter((k) => on[k].on));
   const bottom = on.date.on ? h - M - 190 : h - M - 140;
   const rowY = (i) => bottom - (rows.length - 1 - i) * 130;
   const numbersTop = rows.length ? rowY(0) : bottom + 130;
 
-  const stack = [];
-  if (on.places.on && ui.session.pins.length) stack.push({ id: 'places', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
   const placesOn = on.places.on && ui.session.pins.length;
   const badgeRows = badgeRowsFor(h, rows.length + (placesOn ? 1 : 0));
+  const stack = [];
+  if (placesOn) stack.push({ id: 'places', h: 36 + Math.min(ui.session.pins.length, 5) * 44 + 30 });
   // The badges' own height plus the same clear space below them as before.
   if (on.badges.on && ui.badgeImgs.length) stack.push({ id: 'badges', h: badgesLayout(g, badgeRows).h + 57 });
   const above = stack.reduce((n, b) => n + b.h, 0);
   const stackTop = numbersTop - above;
-  // The map runs down behind the badges, stop names and numbers and fades out
-  // level with the avatar's head.
-  const mapH = routeMapBottom(h);
+  let y = stackTop;
+  for (const b of stack) { b.y = y; y += b.h; }
+
   // The route is framed in the space above the badges and stats. On 4:5 that
   // space runs down to the badges, so the route sits larger; 9:16 keeps its frame.
   const regionY = title ? 150 : 90;
   const regionH = routeFrameH(h, { top: regionY, stackTop, above, title, route: ui.session.trail.length > 1, bottom });
   const region = { x: M, y: regionY, w: w - M * 2, h: regionH };
+
+  // Measured, so a long value (15.5 km) never runs into the next number.
+  const numbers = {};
+  rows.forEach((row, i) => {
+    const widths = row.map(({ key }) => Math.max(
+      textWidth(g, NUMBERS.find((n) => n.key === key).label, NUM_LABEL),
+      textWidth(g, numberValue(key, ui.session, ui.sum, { clock }), NUM_VALUE)));
+    const xs = rowXs(widths, row.map((c) => c.col), { left: M });
+    row.forEach(({ key }, j) => { numbers[key] = { x: xs[j], y: rowY(i) }; });
+  });
+
+  // With no route the avatar takes the map's place, big, so the card has no
+  // empty half, when there's room for it at a readable size; otherwise it
+  // stands beside the stats.
+  const big = ui.session.trail.length < 2 ? cardAvatarScale(region.h) : 0;
+  const avatar = big
+    ? { x: Math.round(w / 2 - (AW * big) / 2), y: Math.round(region.y + (region.h - AH * big) / 2), cell: big }
+    : { x: w - M - 290, y: AVATAR_CORNER_TOP(h), cell: 5 };
+
+  return {
+    title: { x: M, y: M + 6 }, region, stack, badgeRows, numbers,
+    date: { x: M, y: routeDateY(h) }, avatar,
+    // The map runs down behind the badges, stop names and numbers and fades
+    // out level with the avatar's head.
+    mapH: routeMapBottom(h),
+  };
+}
+
+function drawRouteCard(g, w, h, want) {
+  const T = routeTheme();
+  const on = ui.elements;
+  const title = ui.title.trim();
+  const L = routeLayout(g, w, h);
+  const { region, mapH } = L;
   const shown = shownRoute(ui);
   const trail = shown.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
@@ -983,48 +988,28 @@ function drawRouteCard(g, w, h, want) {
     frame = null;
   }
 
-  if (want('title') && title) drawText(g, title, M, M + 6, { size: 64, weight: 700, color: T.text, spacing: -1 });
-  const noRoute = ui.session.trail.length < 2;
+  if (want('title') && title) drawText(g, title, L.title.x, L.title.y, { size: 64, weight: 700, color: T.text, spacing: -1 });
   if (want('route') && on.route.on && trail.length > 1) {
     if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), shown.pins.map((p) => SM.toCard(frame, p.lat, p.lng)), T, 11, shown.excluded);
     else outlineRoute(g, region, T, shown.excluded);
   }
 
-  let y = stackTop;
-  for (const b of stack) {
-    if (want(b.id)) DRAW[b.id](g, M, y, w, { maxRows: badgeRows });
-    y += b.h;
-  }
+  for (const b of L.stack) if (want(b.id)) DRAW[b.id](g, PAD, b.y, w, { maxRows: L.badgeRows });
 
   // Each number is its own layer for Save for video, and only measured ones
   // are ever offered, so nothing reads as a zero it didn't count.
-  const LABEL = { size: 28, weight: 600 }, VALUE = { size: 76, weight: 700, spacing: -2 };
-  rows.forEach((row, i) => {
-    const cells = row.map(({ key }) => ({ key, label: NUMBERS.find((n) => n.key === key).label, value: numberValue(key, ui.session, ui.sum) }));
-    // Measured, so a long value (15.5 km) never runs into the next number.
-    const widths = cells.map((c) => Math.max(textWidth(g, c.label, LABEL), textWidth(g, c.value, VALUE)));
-    const xs = rowXs(widths, row.map((c) => c.col), { left: M });
-    cells.forEach((c, j) => {
-      if (!want(c.key)) return;
-      drawText(g, c.label, xs[j], rowY(i), { ...LABEL, color: T.label });
-      drawText(g, c.value, xs[j], rowY(i) + 36, { ...VALUE, color: T.text });
-    });
-  });
+  for (const [key, at] of Object.entries(L.numbers)) {
+    if (!want(key)) continue;
+    drawText(g, NUMBERS.find((n) => n.key === key).label, at.x, at.y, { ...NUM_LABEL, color: T.label });
+    drawText(g, numberValue(key, ui.session, ui.sum), at.x, at.y + 36, { ...NUM_VALUE, color: T.text });
+  }
   // The date bottom left, on the same baseline as the wordmark bottom right.
-  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), M, routeDateY(h), { size: 30, weight: 400, color: T.date });
+  if (want('date') && on.date.on) drawText(g, placeLine(ui.session), L.date.x, L.date.y, { size: 30, weight: 400, color: T.date });
   if (want('wordmark')) {
     const spot = wordmarkSpot(w, h);
     drawWordmark(g, spot.x, spot.y, spot.height, { color: T.mark, align: spot.align });
   }
-  if (want('avatar') && ui.face !== 'none' && ui.look) {
-    // With no route the avatar takes the map's place, big, so the card has
-    // no empty half; otherwise it stands beside the stats.
-    // Only when there's room for it at a readable size; otherwise it stands
-    // beside the stats as usual, clear of the title.
-    const s = noRoute ? cardAvatarScale(region.h) : 0;
-    if (s) paintAvatar(g, ui.look, Math.round(w / 2 - (AW * s) / 2), Math.round(region.y + (region.h - AH * s) / 2), s, FACE_STATE[ui.face]);
-    else paintAvatar(g, ui.look, w - M - 290, AVATAR_CORNER_TOP(h), 5, FACE_STATE[ui.face]);
-  }
+  if (want('avatar') && ui.face !== 'none' && ui.look) paintAvatar(g, ui.look, L.avatar.x, L.avatar.y, L.avatar.cell, FACE_STATE[ui.face]);
 }
 
 /* Map tiles for the top of the card, fading into the ground. Returns false
@@ -1160,15 +1145,33 @@ function outlineRoute(g, region, T, excluded = null) {
 
 /* ---------- the photo card ---------- */
 
+/**
+ * Every photo piece that hasn't been moved or resized sits where the route
+ * card has it (owner, 2026-10-09), so switching over keeps the layout and
+ * switching a number off closes its gap. Moved pieces stay where they were put.
+ */
+function photoDefaults(g, w, h) {
+  const L = routeLayout(g, w, h, { clock: true });
+  const spot = {
+    title: L.title, date: L.date, ...L.numbers,
+    route: { x: L.region.x, y: L.region.y, box: { w: L.region.w, h: L.region.h } },
+    avatar: { x: L.avatar.x, y: L.avatar.y, scale: L.avatar.cell / 5 },
+  };
+  for (const b of L.stack) spot[b.id] = { x: PAD, y: b.y, maxRows: L.badgeRows };
+  for (const key of photoOrder()) {
+    const e = ui.elements[key];
+    if (e && !e.placed && spot[key]) Object.assign(e, spot[key]);
+  }
+}
+
+/** Tidy: every photo piece back to where the route card has it. */
+export function tidyPhoto() {
+  for (const k of photoOrder()) if (ui.elements[k]) Object.assign(ui.elements[k], { placed: false, scale: 1 });
+}
+
 function drawFree(g, w, h, forExport, want, live) {
   const setBounds = (key, b) => { if (live) ui.bounds.set(key, b); };
-  // Unmoved numbers and the date take their place in the stack, so switching
-  // one off closes the gap; moved ones stay where they were put.
-  const shown = (k) => ui.elements[k].on && (k === 'date' || ui.offered.includes(k));
-  const stacked = photoStacked().filter((k) => shown(k) && !ui.elements[k].placed);
-  const auto = photoStack(stacked, h, Object.fromEntries(stacked.map((k) => [k, ui.elements[k].scale || 1])),
-    Object.fromEntries(stacked.map((k) => [k, pieceWidth(g, k) * (ui.elements[k].scale || 1)])));
-  for (const k of photoStacked()) if (!ui.elements[k].placed && auto[k]) Object.assign(ui.elements[k], auto[k]);
+  photoDefaults(g, w, h);
   for (const key of photoOrder()) {
     const e = ui.elements[key];
     if (!e?.on || !want(key)) continue;
@@ -1187,7 +1190,7 @@ function drawFree(g, w, h, forExport, want, live) {
     g.save();
     g.translate(e.x, e.y);
     g.scale(scale, scale);
-    const box = DRAW[key](g, 0, 0, w);
+    const box = DRAW[key](g, 0, 0, w, { maxRows: e.maxRows || 2 });
     g.restore();
     setBounds(key, { x: e.x, y: e.y, w: box.w * scale, h: box.h * scale });
   }
@@ -1224,44 +1227,34 @@ function drawFree(g, w, h, forExport, want, live) {
 
 const handleCentre = (b) => ({ x: b.x + b.w + 16, y: b.y + b.h + 16 });
 
-// A stacked piece's width, measured as numberStat draws it, so the stack can
-// leave a gap after a long value (15.5 km) on this draw, not the next.
-function pieceWidth(g, key) {
-  if (key === 'date') return textWidth(g, placeLine(ui.session), { size: 28, weight: 400 });
-  const n = NUMBERS.find((m) => m.key === key);
-  const value = numberValue(key, ui.session, ui.sum, { clock: true });
-  const big = n.group === 'C' ? { size: 96, weight: 700, spacing: -4 } : { size: 52, weight: 700, spacing: -2 };
-  return Math.max(textWidth(g, n.label, { size: 26, weight: 600 }), textWidth(g, value, big), 90);
-}
-
-// One labelled figure. Time out and pace are the large pair; the rest are
-// the smaller size water and food always had. Labels are sentence case.
+// One labelled figure, the same size as on the route card. Labels are
+// sentence case.
 function numberStat(key) {
   const n = NUMBERS.find((m) => m.key === key);
-  const hero = n.group === 'C';
   return (g, x, y) => {
-    const lw = drawText(g, n.label, x, y, { size: 26, weight: 600, color: labelInk() });
-    const vw = drawText(g, numberValue(key, ui.session, ui.sum, { clock: true }), x, y + 34,
-      hero ? { size: 96, weight: 700, spacing: -4 } : { size: 52, weight: 700, spacing: -2 });
-    return { w: Math.max(lw, vw, 90), h: hero ? 134 : 96 };
+    const lw = drawText(g, n.label, x, y, { ...NUM_LABEL, color: labelInk() });
+    const vw = drawText(g, numberValue(key, ui.session, ui.sum, { clock: true }), x, y + 36, NUM_VALUE);
+    return { w: Math.max(lw, vw, 90), h: 118 };
   };
 }
 
 const DRAW = {
   route(g, x, y, w) {
-    const rw = Math.min(w - x - PAD, 620);
-    const rh = 420;
+    // The route card's frame, until it's resized.
+    const box = ui.elements.route.box;
+    const rw = box ? box.w : Math.min(w - x - PAD, 620);
+    const rh = box ? box.h : 420;
     outlineRoute(g, { x, y, w: rw, h: rh }, { ...ROUTE_THEMES.dark, under: 'rgba(0,0,0,.35)', underW: 6 });
     return { w: rw, h: rh };
   },
   title(g, x, y) {
-    const w = drawText(g, ui.title.trim(), x, y, { size: 72, weight: 700, spacing: -1 });
-    return { w, h: 84 };
+    const w = drawText(g, ui.title.trim(), x, y, { size: 64, weight: 700, spacing: -1 });
+    return { w, h: 76 };
   },
   ...Object.fromEntries(NUMBERS.map((n) => [n.key, numberStat(n.key)])),
   date(g, x, y) {
-    const w = drawText(g, placeLine(ui.session), x, y, { size: 28, weight: 400, color: mutedInk() });
-    return { w, h: 34 };
+    const w = drawText(g, placeLine(ui.session), x, y, { size: 30, weight: 400, color: mutedInk() });
+    return { w, h: 36 };
   },
   badges(g, x, y, w, { maxRows = 2 } = {}) {
     const items = ui.badgeImgs;
@@ -1529,5 +1522,9 @@ async function saveLayers(ids, full) {
 export function __renderForTest() { return render(); }
 export function __stateForTest() { return ui; }
 export const __initialStateForTest = (s) => makeState(s);
+export function __useStateForTest(state) { ui = state; }
+export const __routeLayoutForTest = (g, w, h, opts) => routeLayout(g, w, h, opts);
+export const __photoDefaultsForTest = (g, w, h) => photoDefaults(g, w, h);
+export const __drawPieceForTest = (key, g) => DRAW[key](g, 0, 0, 1080);
 export function __layersForTest(full = true) { return buildLayers(layerIds(), full); }
 export { icon, km };
