@@ -445,3 +445,9 @@ canvas.avatar{
   text-shadow:0 0 3px var(--map-ground),0 0 3px var(--map-ground),0 0 6px var(--map-ground)}
 .map-label--stop{color:var(--pink)}
 .map-label--set{color:var(--amber)}
+
+/* The recap and History maps: the card's frame, edge to edge, no padding. */
+.routemap{
+  border:var(--hairline) solid var(--glass-line);border-radius:var(--r-card);
+  overflow:hidden;background:var(--bg);
+}

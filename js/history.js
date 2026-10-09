@@ -2,7 +2,6 @@ import { el, btn, tile, tiles, glass, spacer, foot, head, toast, icon, switchRow
          hms, hm, clockTime, shortDate, km } from './ui.js';
 import * as S from './state.js';
 import * as store from './storage.js';
-import { routeSvg } from './session.js';
 import { nightMap } from './map.js';
 import { avatarLook } from './wardrobe.js';
 import { saveTextFile } from './keepalive.js';

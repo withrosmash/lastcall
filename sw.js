@@ -2,7 +2,7 @@
 // AND bumping CACHE. Miss either and phones serve a stale mix of old and new
 // modules, which fails in ways that look nothing like a caching bug.
 
-const CACHE = 'sprell-v43';
+const CACHE = 'sprell-v44';
 
 const SHELL = [
   './',
@@ -27,6 +27,7 @@ const SHELL = [
   './js/badges-data.js',
   './js/challenges.js',
   './js/staticmap.js',
+  './js/routemap.js',
   './js/avatar.js',
   './js/avatar-art.js',
   './js/items-data.js',

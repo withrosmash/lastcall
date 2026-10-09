@@ -4,6 +4,9 @@ import { fitPoints } from './session.js';
 import { saveImage } from './keepalive.js';
 import { badgeSrc, BADGES } from './badges.js';
 import * as SM from './staticmap.js';
+import { routeRuns } from './routemap.js';
+
+export { routeRuns };
 import { paintAvatar, W as AW, H as AH } from './avatar.js';
 import { avatarLook, dressedFor } from './wardrobe.js';
 import { MODES } from './modes.js';
@@ -1071,21 +1074,6 @@ export function shownRoute(state) {
     trail, excluded,
     pins: pins.filter((p) => ends.every((e) => S.haversineM(e.lat, e.lng, p.lat, p.lng) >= S.TRIM_M)),
   };
-}
-
-/**
- * The route as runs of counted and left-out stretches. `excluded[i]` is for the
- * segment from point i-1 to point i; neighbouring runs share their join.
- */
-export function routeRuns(pts, excluded) {
-  const runs = [];
-  for (let i = 1; i < pts.length; i++) {
-    const counted = !excluded?.[i];
-    const last = runs.at(-1);
-    if (last && last.counted === counted) last.pts.push(pts[i]);
-    else runs.push({ counted, pts: [pts[i - 1], pts[i]] });
-  }
-  return runs;
 }
 
 const pathOf = (g, pts) => { g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y))); };

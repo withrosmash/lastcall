@@ -26,12 +26,11 @@ export function project(lat, lng, z) {
 }
 
 /** Choose a zoom and scale so the trail fits `region` (card pixels). */
-export function frame(trail, region) {
+export function frame(trail, region, pad = 60) {
   const pts0 = trail.map((p) => project(p.lat, p.lng, 0));
   const xs = pts0.map((p) => p.x), ys = pts0.map((p) => p.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minY = Math.min(...ys), maxY = Math.max(...ys);
-  const pad = 60;
   const fit = Math.min(
     (region.w - pad * 2) / Math.max(maxX - minX, 1e-9),
     (region.h - pad * 2) / Math.max(maxY - minY, 1e-9),

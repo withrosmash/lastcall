@@ -6,6 +6,7 @@ import { MODES, MODE_KEYS, recentFor } from './modes.js';
 import { modePicker, modeChip, HINT } from './modepick.js';
 import { bloomCss } from './glow.js';
 import { wordmarkSvg } from './wordmark.js';
+import { routeMap } from './routemap.js';
 import { badgeChip, BADGES } from './badges.js';
 import { checkIn } from './map.js';
 import * as geo from './geo.js';
@@ -599,7 +600,7 @@ export function recapScreen(ctx, session) {
       ),
       av?.canvas),
 
-    glass(routeSvg(s, 190)),
+    recapRoute(s),
 
     // Walk tiles only for a walk from start to finish; a night out with a
     // walk home keeps its drinks.
@@ -667,41 +668,18 @@ function rideNote(s) {
 }
 
 /* ---------- route ----------
-   An SVG polyline rather than a map screenshot: cross-origin tiles would taint
-   any canvas export, and the share card has to be exportable. */
+   The route over the same map tiles as the share card (owner, 2026-10-09).
+   On a walk the stretches on transport are faint, the walked ones mint. */
 
-export function routeSvg(s, height = 190) {
-  const pts = s.trail;
-  // Built as markup on a plain div: document.createElement('svg') produces an
-  // HTML unknown element, not an SVG one, so it parses but never paints.
-  // innerHTML on an HTML parent puts <svg> into the right namespace.
-  const wrap = el('div', { style: `height:${height}px`, 'aria-hidden': 'true' });
-  const open = `<svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">`;
-
-  if (pts.length < 2) {
-    wrap.innerHTML = `${open}<text x="50" y="32" text-anchor="middle" style="fill:var(--faint)" font-size="4.5" font-family="system-ui">No route recorded</text></svg>`;
-    return wrap;
+function recapRoute(s) {
+  if (s.trail.length < 2) {
+    return glass(el('div', { class: 'cap', style: 'height:150px;display:grid;place-items:center', text: 'No route recorded' }));
   }
-
-  const fitted = fitPoints(pts, 100, 60, 9);
-  const line = fitted.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-
-  // Stops land on whichever recorded fix they were closest to in time.
-  const stops = s.pins.map((pin) => {
-    let best = 0;
-    for (let i = 1; i < pts.length; i++) {
-      if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
-    }
-    return fitted[best];
-  });
-  const last = fitted[fitted.length - 1];
-
-  wrap.innerHTML = open +
-    `<polyline points="${line}" fill="none" style="stroke:var(--mint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>` +
-    stops.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="1.9" style="fill:var(--pink)"/>`).join('') +
-    `<circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="2.2" style="fill:var(--text)"/>` +
-    `</svg>`;
-  return wrap;
+  return routeMap([{
+    trail: s.trail,
+    excluded: S.excludedSegments(s, s.endedAt ?? Date.now()),
+    pins: s.pins.filter((p) => p.lat != null),
+  }], { height: 190, end: true });
 }
 
 // Project lat/lng into a box, preserving aspect so the route isn't stretched.

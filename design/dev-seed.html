@@ -14,6 +14,7 @@
 <h1>Sprell dev seed</h1>
 <p id="out">Seeds this browser’s storage for http://localhost:8010.</p>
 <button id="seed" type="button">Seed sample data</button>
+<button id="walking" type="button">Seed, with a walk to finish</button>
 <button id="fresh" type="button">Fresh install</button>
 <p><a href="/" style="color:var(--mint)">Open the app</a></p>
 <script type="module">
@@ -33,6 +34,12 @@ function walkFrom(s, lat, lng, n, t) {
   return [lat, lng];
 }
 
+// A train: due east at about 70 km/h, a fix every 20 seconds.
+function trainFrom(s, lat, lng, n, t) {
+  for (let i = 1; i <= n; i++) S.addFix(s, { lat, lng: lng + i * 0.0056, t: t + i * 20e3 });
+  return [lat, lng + n * 0.0056];
+}
+
 function adventure(daysAgo, hour, hours, mode, company = 'group', fill = () => {}) {
   const t0 = at(daysAgo, hour);
   const s = S.newSession(t0, { mode, company });
@@ -41,7 +48,7 @@ function adventure(daysAgo, hour, hours, mode, company = 'group', fill = () => {
   return s;
 }
 
-function seed() {
+function seed({ walking = false } = {}) {
   const sessions = [
     adventure(12, 19, 5, 'night', 'group', (s, t) => {
       walkFrom(s, 51.515, -0.13, 40, t);
@@ -61,6 +68,13 @@ function seed() {
       walkFrom(s, 51.53, -0.15, 60, t);
       s.waters.push({ t: t + 40 * 60e3 });
       s.steps = 9800;
+    }),
+    // A walk with a train in the middle: the train is left out of the walk.
+    adventure(4, 10, 3, 'walk', 'solo', (s, t) => {
+      let [lat, lng] = walkFrom(s, 51.52, -0.2, 25, t);
+      [lat, lng] = trainFrom(s, lat, lng, 30, t + 25 * 60e3);
+      walkFrom(s, lat, lng, 25, t + 36 * 60e3);
+      s.steps = 7200;
     }),
     adventure(3, 13, 9, 'festival', 'group', (s, t) => {
       walkFrom(s, 51.47, -0.2, 30, t);
@@ -82,11 +96,23 @@ function seed() {
     prefs: { ...defaultPrefs() },
     festivals: [{ id: 'fvseed', name: 'Field Day', sessionIds: fest.map((s) => s.id), createdAt: Date.now() }],
   };
+  // A walk under way, with a train in the middle, ending in the app opens its
+  // recap: the way to see the recap map and the walked stretches.
+  if (walking) {
+    const t = Date.now() - 70 * 60e3;
+    const s = S.newSession(t, { mode: 'walk', company: 'solo' });
+    let [lat, lng] = walkFrom(s, 51.52, -0.2, 25, t);
+    [lat, lng] = trainFrom(s, lat, lng, 30, t + 25 * 60e3);
+    walkFrom(s, lat, lng, 25, t + 36 * 60e3);
+    s.steps = 7200;
+    state.active = s;
+  }
   localStorage.setItem('sprell_v1', JSON.stringify(state));
   return `${sessions.length} adventures and one festival review.`;
 }
 
 const out = document.getElementById('out');
 document.getElementById('seed').onclick = () => { out.textContent = `Seeded: ${seed()}`; };
+document.getElementById('walking').onclick = () => { out.textContent = `Seeded: ${seed({ walking: true })} A walk is under way.`; };
 document.getElementById('fresh').onclick = () => { localStorage.removeItem('sprell_v1'); localStorage.removeItem('lastcall_v1'); /* allowed-old-name */ out.textContent = 'Cleared: the app will open as a fresh install.'; };
 </script>
