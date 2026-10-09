@@ -190,6 +190,7 @@ const tab = (label, onclick, on) =>
 const TYPES = [
   { key: 'map', label: 'Map', presetOnly: true },
   { key: 'route', label: 'Route' },
+  { key: 'trim', label: 'Hide start and end', needsTrim: true },
   { key: 'numbers' },
   { key: 'date', label: 'Date' },
   { key: 'places', label: 'Stop names' },
@@ -250,6 +251,9 @@ function makeState(s, allBadges = [], prefs = {}) {
     // Photo-card positions. The route card lays itself out.
     elements: {
       map: { on: s.trail.length > 1 },
+      // Leaves the first and last 200 m off the card. Off until asked for
+      // (owner, 2026-10-09); the recap and History always show it all.
+      trim: { on: false },
       // Starts below the badges, which take a second row past four.
       route: { on: s.trail.length > 1, x: PAD, y: 300 + (badgeGrid(sessionBadges.length).rows > 1 ? BADGE_ROW_STEP : 0), scale: 1 },
       title: { on: true, x: PAD, y: PAD + 20, scale: 1 },
@@ -375,7 +379,8 @@ function elementToggles() {
     (t.key !== 'badges' || ui.badgeImgs.length)
     && (t.key !== 'places' || ui.session.pins.length)
     && (!t.presetOnly || ui.mode === 'preset')
-    && (!['map', 'route'].includes(t.key) || ui.session.trail.length > 1));
+    && (!['map', 'route'].includes(t.key) || ui.session.trail.length > 1)
+    && (!t.needsTrim || S.trimEnds(ui.session.trail).length > 1));
   const chips = types.map((t) =>
     el('button', {
       class: 'chip press', type: 'button',
@@ -962,7 +967,8 @@ function drawRouteCard(g, w, h, want) {
   const regionY = title ? 150 : 90;
   const regionH = routeFrameH(h, { top: regionY, stackTop, above, title, route: ui.session.trail.length > 1, bottom });
   const region = { x: M, y: regionY, w: w - M * 2, h: regionH };
-  const trail = ui.session.trail;
+  const shown = shownRoute(ui);
+  const trail = shown.trail;
   let frame = on.map.on && trail.length > 1 && !ui.mapBlocked && region.h >= 120 ? SM.frame(trail, region) : null;
 
   if (want('map')) {
@@ -978,10 +984,10 @@ function drawRouteCard(g, w, h, want) {
   }
 
   if (want('title') && title) drawText(g, title, M, M + 6, { size: 64, weight: 700, color: T.text, spacing: -1 });
-  const noRoute = trail.length < 2;
-  if (want('route') && on.route.on && !noRoute) {
-    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), ui.session.pins.filter((p) => p.lat != null).map((p) => SM.toCard(frame, p.lat, p.lng)), T, 11, ui.excluded);
-    else outlineRoute(g, region, T, ui.excluded);
+  const noRoute = ui.session.trail.length < 2;
+  if (want('route') && on.route.on && trail.length > 1) {
+    if (frame) strokeRoute(g, trail.map((p) => SM.toCard(frame, p.lat, p.lng)), shown.pins.map((p) => SM.toCard(frame, p.lat, p.lng)), T, 11, shown.excluded);
+    else outlineRoute(g, region, T, shown.excluded);
   }
 
   let y = stackTop;
@@ -1062,6 +1068,27 @@ function drawRouteMap(g, w, f, mapH, T) {
 }
 
 /**
+ * What the card draws of the route: the whole trail, or with hide start and
+ * end on, the trail less its ends, the left-out flags cut to match, and no
+ * stop within 200 m of either real end.
+ */
+export function shownRoute(state) {
+  const s = state.session;
+  const pins = s.pins.filter((p) => p.lat != null);
+  if (!state.elements.trim?.on) return { trail: s.trail, excluded: state.excluded, pins };
+  const trail = S.trimEnds(s.trail);
+  if (!trail.length) return { trail, excluded: [], pins: [] };
+  const at = s.trail.indexOf(trail[0]);
+  const excluded = (state.excluded || []).slice(at, at + trail.length);
+  excluded[0] = false;
+  const ends = [s.trail[0], s.trail.at(-1)];
+  return {
+    trail, excluded,
+    pins: pins.filter((p) => ends.every((e) => S.haversineM(e.lat, e.lng, p.lat, p.lng) >= S.TRIM_M)),
+  };
+}
+
+/**
  * The route as runs of counted and left-out stretches. `excluded[i]` is for the
  * segment from point i-1 to point i; neighbouring runs share their join.
  */
@@ -1119,10 +1146,11 @@ function strokeRoute(g, pts, stops, T, lw = 11, excluded = null) {
 
 // No map (off, offline or a very short night): the route's shape alone.
 function outlineRoute(g, region, T, excluded = null) {
-  const pts = ui.session.trail;
+  const shown = shownRoute(ui);
+  const pts = shown.trail;
   if (pts.length < 2 || region.w < 40 || region.h < 40) return;
   const fitted = fitPoints(pts, region.w, region.h, 20).map((p) => ({ x: p.x + region.x, y: p.y + region.y }));
-  const stops = ui.session.pins.map((pin) => {
+  const stops = shown.pins.map((pin) => {
     let best = 0;
     for (let i = 1; i < pts.length; i++) if (Math.abs(pts[i].t - pin.t) < Math.abs(pts[best].t - pin.t)) best = i;
     return fitted[best];
@@ -1500,5 +1528,6 @@ async function saveLayers(ids, full) {
 // element geometry the pointer gestures mutate.
 export function __renderForTest() { return render(); }
 export function __stateForTest() { return ui; }
+export const __initialStateForTest = (s) => makeState(s);
 export function __layersForTest(full = true) { return buildLayers(layerIds(), full); }
 export { icon, km };

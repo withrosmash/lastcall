@@ -115,3 +115,29 @@ test('the counted distance follows a growing trail', () => {
   walk1k(s);
   assert.ok(S.countedDistance(s) > before + 900);
 });
+
+test('trimEnds drops 200 m at each end', () => {
+  const s = S.newSession(0, { mode: 'walk' });
+  go(s, 20, 50, 40); // 1 km, 21 fixes
+  const kept = S.trimEnds(s.trail);
+  const d = (a, b) => S.haversineM(a.lat, a.lng, b.lat, b.lng);
+  assert.ok(Math.abs(d(s.trail[0], kept[0]) - 200) < 1);
+  assert.ok(Math.abs(d(s.trail.at(-1), kept.at(-1)) - 200) < 1);
+  assert.equal(kept.length, 13);
+});
+
+test('a short route trims to nothing', () => {
+  const s = S.newSession(0, { mode: 'walk' });
+  go(s, 6, 50, 40); // 300 m
+  assert.deepEqual(S.trimEnds(s.trail), []);
+});
+
+test('a route that starts and ends at home still loses both ends', () => {
+  const s = S.newSession(0, { mode: 'walk' });
+  go(s, 20, 50, 40);
+  go(s, 20, -50, 40);
+  const kept = S.trimEnds(s.trail);
+  const home = s.trail[0];
+  assert.ok(kept.length > 2);
+  assert.ok(kept.every((p) => S.haversineM(home.lat, home.lng, p.lat, p.lng) >= 199));
+});

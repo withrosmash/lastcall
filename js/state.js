@@ -445,6 +445,26 @@ function excludedTotals(s) {
   return out;
 }
 
+/* ---------- hide start and end ----------
+   A shared card can leave off the first and last stretch, so it doesn't point
+   at a front door. Measured as the crow flies from each end, so a route that
+   dawdles near home before setting off still loses all of it. */
+export const TRIM_M = 200;
+
+/** The trail without its ends: [] when nothing is left to draw. */
+export function trimEnds(trail, m = TRIM_M) {
+  if (trail.length < 2) return [];
+  const from = (p, q) => haversineM(p.lat, p.lng, q.lat, q.lng);
+  // Half a metre of slack: five decimal places can land a fix a hair short.
+  const far = (p, end) => from(p, end) >= m - 0.5;
+  const first = trail[0], last = trail.at(-1);
+  let i = 0;
+  while (i < trail.length && !far(trail[i], first)) i++;
+  let j = trail.length - 1;
+  while (j >= 0 && !far(trail[j], last)) j--;
+  return j - i >= 1 ? trail.slice(i, j + 1) : [];
+}
+
 /** The distance an adventure shows: everything, less transport on a walk. */
 export function countedDistance(s) {
   return Math.max(0, (s.distanceM || 0) - excludedTotals(s).m);

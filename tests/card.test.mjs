@@ -230,3 +230,30 @@ test('with nothing left out the route is one counted run', async () => {
   assert.deepEqual(routeRuns(p, [false, false, false]).map((r) => [r.counted, r.pts.length]), [[true, 3]]);
   assert.deepEqual(routeRuns(p, undefined).map((r) => [r.counted, r.pts.length]), [[true, 3]]);
 });
+
+test('hide start and end starts off, and the card trims only when it is on', async () => {
+  const card = await import('../js/card.js');
+  const S = await import('../js/state.js');
+  const s = S.newSession(0, { mode: 'walk' });
+  for (let i = 0; i <= 20; i++) S.addFix(s, { t: i * 40e3, lat: 51.5 + (i * 50) / 111195, lng: -0.1 });
+  s.endedAt = 20 * 40e3;
+  const ui = card.__initialStateForTest(s);
+  assert.equal(ui.elements.trim.on, false);
+  assert.equal(card.shownRoute(ui).trail.length, 21);
+  ui.elements.trim.on = true;
+  const shown = card.shownRoute(ui);
+  assert.equal(shown.trail.length, 13);
+  assert.equal(shown.excluded.length, 13);
+});
+
+test('hidden ends take the stops near them off the card', async () => {
+  const card = await import('../js/card.js');
+  const S = await import('../js/state.js');
+  const s = S.newSession(0, { mode: 'walk' });
+  for (let i = 0; i <= 20; i++) S.addFix(s, { t: i * 40e3, lat: 51.5 + (i * 50) / 111195, lng: -0.1 });
+  s.pins = [{ t: 0, lat: 51.5, lng: -0.1, name: 'Home' }, { t: 400e3, lat: 51.5 + 500 / 111195, lng: -0.1, name: 'Pub' }];
+  s.endedAt = 20 * 40e3;
+  const ui = card.__initialStateForTest(s);
+  ui.elements.trim.on = true;
+  assert.deepEqual(card.shownRoute(ui).pins.map((p) => p.name), ['Pub']);
+});
