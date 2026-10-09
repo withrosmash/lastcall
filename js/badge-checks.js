@@ -55,7 +55,7 @@ const NIGHT_CHECKS = {
     const a = s.trail[0], b = s.trail[s.trail.length - 1];
     return S.haversineM(a.lat, a.lng, b.lat, b.lng) <= 250;
   },
-  'scenic-route': (s) => s.distanceM > 10_000,
+  'scenic-route': (s) => S.countedDistance(s) > 10_000,
   'early-doors': (s) => new Date(s.startedAt).getHours() < 17,
   'sunrise-service': (s) => crossesHour(s, 5),
   'ghost': (s) => s.drinks.length === 0 && s.waters.length === 0,
@@ -97,13 +97,13 @@ const AGGREGATE_CHECKS = {
     return [...months.values()].some((n) => n >= 4);
   },
   'fifty-stops': (done) => done.reduce((n, s) => n + s.pins.length, 0) >= 50,
-  'century-club': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 100_000,
+  'century-club': (done) => done.reduce((n, s) => n + S.countedDistance(s), 0) >= 100_000,
   'archivist': (done) => done.length >= 25,
   'ringleader': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 25,
   // All-time, not per adventure: 100 in one go would mean running the whole
   // challenge list twice over.
   'chaos-agent': (done) => done.reduce((n, s) => n + (s.challenges || []).length, 0) >= 100,
-  'long-haul': (done) => done.reduce((n, s) => n + s.distanceM, 0) >= 50_000,
+  'long-haul': (done) => done.reduce((n, s) => n + S.countedDistance(s), 0) >= 50_000,
   'just-add-water': (done) => done.reduce((n, s) => n + s.waters.length, 0) >= 50,
   // Checked whenever a night ends, so it lands on the first night out after
   // the date comes round.

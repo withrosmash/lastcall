@@ -114,7 +114,7 @@ export function festivalScreen(ctx, f) {
         el('span', { class: 'listrow__d', text: shortDate(d.startedAt) }),
         el('span', { class: 'listrow__m' },
           el('span', { text: `${(d.sets || []).length} set${(d.sets || []).length === 1 ? '' : 's'}` }),
-          el('span', { text: `${km(d.distanceM)} km` }))))),
+          el('span', { text: `${km(S.countedDistance(d))} km` }))))),
     spacer(),
     foot(
       btn('Make a card', 'btn--pri', () => ctx.go('card', merged), { lg: true }),

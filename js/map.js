@@ -69,7 +69,7 @@ export function mapScreen(ctx) {
           el('div', { class: 'map-foot' },
             checkins ? stat('Stops', String(s.pins.length)) : stat('Sets', String((s.sets || []).length)),
             stat('Drinks', String(s.drinks.length), 'drinks'),
-            stat('Distance', `${km(s.distanceM)} km`),
+            stat('Distance', `${km(S.countedDistance(s))} km`),
           )),
 
     waiting ? el('p', { class: 'cap cap--up', text: 'Waiting for GPS. Everything else still works.' }) : null,
@@ -316,7 +316,7 @@ export function atlasScreen(ctx) {
   const host = el('div', { id: 'map', role: 'application', 'aria-label': 'Every route you have recorded' });
   queueMicrotask(() => initAtlas(host, done));
 
-  const totalKm = km(done.reduce((n, s) => n + s.distanceM, 0));
+  const totalKm = km(done.reduce((n, s) => n + S.countedDistance(s), 0));
 
   return [
     head({ title: 'Everywhere you’ve been', back: () => ctx.back() }),

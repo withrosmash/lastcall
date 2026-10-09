@@ -376,7 +376,7 @@ function liveTiles(ctx, s) {
   const gps = !(ctx.geoStatus === 'denied' || ctx.geoStatus === 'unsupported');
   const make = {
     steps: () => tile('Steps', s.steps.toLocaleString()),
-    distance: () => tile('Distance', km(s.distanceM), { unit: 'km' }),
+    distance: () => tile('Distance', km(S.countedDistance(s)), { unit: 'km' }),
     pace: () => paceTile(S.walkPace(s)),
     water: () => waterTile(ctx, s),
     drinks: () => tile('Drinks', s.drinks.length, { tone: 'drinks' }),
@@ -606,6 +606,7 @@ export function recapScreen(ctx, session) {
     doneTiles(s),
 
     gapNote(s),
+    rideNote(s),
 
     (s.challenges || []).length
       ? el('p', { class: 'cap cap--up', style: 'margin:0',
@@ -654,6 +655,15 @@ function gapNote(s) {
     text: gaps.length === 1
       ? `Tracking dropped for ${total} minutes, so part of the route is missing.`
       : `Tracking dropped ${gaps.length} times, ${total} minutes in total, so parts of the route are missing.` });
+}
+
+// On a walk, transport is left out of distance and pace; say how much, so a
+// shorter number than the trace suggests isn't a mystery.
+function rideNote(s) {
+  const off = (s.distanceM || 0) - S.countedDistance(s);
+  if (off < 100) return null;
+  return el('p', { class: 'cap cap--up', style: 'margin:0',
+    text: `${km(off)} km on transport isn’t counted in your walk.` });
 }
 
 /* ---------- route ----------

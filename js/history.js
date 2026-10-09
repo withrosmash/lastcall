@@ -74,7 +74,7 @@ export function historyScreen(ctx) {
     done.some((s) => s.trail.length > 1)
       ? el('button', { class: 'listrow press', type: 'button', onclick: () => ctx.go('atlas') },
           el('span', { class: 'listrow__d', text: 'Everywhere you’ve been' }),
-          el('span', { class: 'listrow__m' }, el('span', { text: `${km(done.reduce((n, s) => n + s.distanceM, 0))} km` })),
+          el('span', { class: 'listrow__m' }, el('span', { text: `${km(done.reduce((n, s) => n + S.countedDistance(s), 0))} km` })),
         )
       : null,
 

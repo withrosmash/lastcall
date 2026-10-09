@@ -8,6 +8,7 @@ import { el, btn, sheet, words } from './ui.js';
 import { BADGES } from './badges-data.js';
 import { ITEMS, SUNGLASSES_BADGE, normaliseLook, createAvatar } from './avatar.js';
 import { t } from './words.js';
+import { countedDistance } from './state.js';
 
 export const avatarLook = (ctx) => normaliseLook(ctx.state.prefs.avatar);
 
@@ -121,7 +122,7 @@ export function progress(ctx, slug) {
     case 'game-on': case 'no-notes': return nightBest(best((s) => (s.challenges || []).length));
     case 'ringleader': return `${total((s) => (s.challenges || []).length)} so far.`;
     case 'chaos-agent': return 'Keep doing challenges.';
-    case 'long-haul': return `${Math.floor(total((s) => s.distanceM) / 1000)} km so far.`;
+    case 'long-haul': return `${Math.floor(total((s) => countedDistance(s)) / 1000)} km so far.`;
     case 'snack-break': return nightBest(best((s) => (s.meals || []).length));
     case 'pin-cushion': return nightBest(best((s) => s.pins.length));
     case 'big-stomp': case 'ten-k': { const n = best((s) => s.steps || 0); return n ? `Your best so far is ${n.toLocaleString()}.` : 'Not yet.'; }

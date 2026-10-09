@@ -100,8 +100,9 @@ export function modeSpans(s, mode, now = Date.now()) {
 
 /** Pace over the walk part only, so a night out with a walk home reads true. */
 export function walkPace(s, now = Date.now()) {
-  const ms = modeSpans(s, 'walk', now).reduce((n, [a, b]) => n + (b - a), 0);
-  return pace(ms, trailDistance(sliceTo(s, 'walk').trail));
+  const left = s.trail.length > 1 ? excludedTotals(s) : { m: 0, ms: 0 };
+  const ms = modeSpans(s, 'walk', now).reduce((n, [a, b]) => n + (b - a), 0) - left.ms;
+  return pace(ms, trailDistance(sliceTo(s, 'walk').trail) - left.m);
 }
 
 export const onlyMode = (s, mode) => partsOf(s).every((p) => p.mode === mode);
@@ -182,7 +183,7 @@ export function mergeSessions(sessions) {
     drinks: all('drinks'), waters: all('waters'), meals: all('meals'), challenges: all('challenges'),
     pins: all('pins'), trail: all('trail'), sets: all('sets'),
     steps: days.reduce((n, d) => n + (d.steps || 0), 0),
-    distanceM: days.reduce((n, d) => n + (d.distanceM || 0), 0),
+    distanceM: days.reduce((n, d) => n + countedDistance(d), 0),
     place: null,
   };
 }
@@ -371,13 +372,82 @@ export function reopen(state, s) {
 // a straight line drawn across a missing hour is a lie.
 export const GAP_MS = 12 * 60 * 1000;
 
+// GPS doesn't work indoors and fixes only come every 25 m, so hours sat in
+// one place look exactly like a dropped signal. Only a reappearance somewhere
+// else is a gap (owner, 2026-10-09: a day underground read as 388 minutes lost).
+export const GAP_AWAY_M = 250;
+
+const isGap = (a, b, threshold = GAP_MS) =>
+  b.t - a.t > threshold && haversineM(a.lat, a.lng, b.lat, b.lng) > GAP_AWAY_M;
+
 export function trailGaps(s, threshold = GAP_MS) {
   const gaps = [];
   for (let i = 1; i < s.trail.length; i++) {
-    const ms = s.trail[i].t - s.trail[i - 1].t;
-    if (ms > threshold) gaps.push({ from: s.trail[i - 1].t, to: s.trail[i].t, ms });
+    const a = s.trail[i - 1], b = s.trail[i];
+    if (isGap(a, b, threshold)) gaps.push({ from: a.t, to: b.t, ms: b.t - a.t });
   }
   return gaps;
+}
+
+/* ---------- transport on a walk ----------
+   A walk counts the walking. Anything quicker than anyone runs, held for a
+   minute, is a train or a car; a jump across a gap wasn't walked either. Other
+   kinds count every metre: getting the train is part of a night out. */
+export const RIDE_KMH = 20;
+export const RIDE_WINDOW_MS = 60_000;
+
+/** One flag per segment, index i for fix i-1 to fix i (index 0 is always false). */
+export function rideSegments(trail) {
+  const n = trail.length;
+  const out = new Array(n).fill(false);
+  if (n < 2) return out;
+  const along = [0];
+  for (let i = 1; i < n; i++) along.push(along[i - 1] + haversineM(trail[i - 1].lat, trail[i - 1].lng, trail[i].lat, trail[i].lng));
+  const limit = RIDE_KMH / 3.6;
+  for (let k = 1; k < n; k++) {
+    if (isGap(trail[k - 1], trail[k])) { out[k] = true; continue; }
+    // The smallest run of fixes around this segment spanning a minute, so one
+    // stray fix can't make a walker a train.
+    let a = k - 1, b = k, left = true;
+    while (trail[b].t - trail[a].t < RIDE_WINDOW_MS && (a > 0 || b < n - 1)) {
+      if ((left && a > 0) || b === n - 1) a--; else b++;
+      left = !left;
+    }
+    const ms = trail[b].t - trail[a].t;
+    if (ms > 0 && (along[b] - along[a]) / (ms / 1000) > limit) out[k] = true;
+  }
+  return out;
+}
+
+/** The ride segments that fall in a walk part: those leave distance and pace. */
+export function excludedSegments(s, now = Date.now()) {
+  const spans = modeSpans(s, 'walk', now);
+  if (!spans.length) return new Array(s.trail.length).fill(false);
+  return rideSegments(s.trail).map((r, i) => r && spans.some(([a, b]) => s.trail[i].t >= a && s.trail[i].t <= b));
+}
+
+// Metres and milliseconds the excluded segments take up, cached per trail so
+// the live screen's every-second redraw doesn't recount a long walk.
+const excludedCache = new WeakMap();
+function excludedTotals(s) {
+  const key = `${s.trail.length}|${s.parts?.length || 0}|${s.endedAt}|${s.distanceM}`;
+  const hit = excludedCache.get(s);
+  if (hit?.key === key) return hit;
+  let m = 0, ms = 0;
+  excludedSegments(s, s.endedAt ?? Date.now()).forEach((x, i) => {
+    if (!x) return;
+    const a = s.trail[i - 1], b = s.trail[i];
+    m += haversineM(a.lat, a.lng, b.lat, b.lng);
+    ms += b.t - a.t;
+  });
+  const out = { key, m, ms };
+  excludedCache.set(s, out);
+  return out;
+}
+
+/** The distance an adventure shows: everything, less transport on a walk. */
+export function countedDistance(s) {
+  return Math.max(0, (s.distanceM || 0) - excludedTotals(s).m);
 }
 
 export function missingMs(s) {
@@ -393,7 +463,8 @@ export function summarise(s) {
     drinks: s.drinks.length,
     waters: s.waters.length,
     stops: s.pins.length,
-    distanceM: s.distanceM,
+    distanceM: countedDistance(s),
+    rawDistanceM: s.distanceM,
     steps: s.steps,
     kind: drinkOfChoice(s),
   };
