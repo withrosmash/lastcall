@@ -147,7 +147,7 @@ function applyGlow(mode) {
   if (glow) document.documentElement.dataset.glow = mode;
   else delete document.documentElement.dataset.glow;
   // The strip behind the status bar paints the same glow, so it matches.
-  const nodes = [node, document.getElementById('topbar')].filter(Boolean);
+  const nodes = [node, document.getElementById('statusbar-strip')].filter(Boolean);
   if (!glow) {
     for (const n of nodes) { n.style.removeProperty('--bloom-hero'); n.style.removeProperty('--bloom-foot'); }
     return;

@@ -545,12 +545,22 @@ export function stats(sessions) {
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+// The History periods (owner, 2026-10-10).
 export const RANGES = [
-  { key: '8w', label: '8 weeks' },
+  { key: '1m', label: '1 month' },
+  { key: '3m', label: '3 months' },
   { key: '6m', label: '6 months' },
   { key: '1y', label: 'Year' },
   { key: 'all', label: 'All time' },
 ];
+
+/** The saved History period, or 1 month for anything unknown (the old 8 weeks too). */
+export function historyRange(prefs) {
+  const key = prefs?.historyRange;
+  return RANGES.some((r) => r.key === key) ? key : '1m';
+}
+
+const monthsBack = (now, n) => { const d = new Date(now); d.setMonth(d.getMonth() - n); return d.getTime(); };
 
 // Oldest night in the set, or now when there are none.
 function earliest(sessions, now) {
@@ -559,8 +569,9 @@ function earliest(sessions, now) {
 }
 
 export function rangeStart(sessions, range, now = Date.now()) {
-  if (range === '8w') return now - 8 * WEEK_MS;
-  if (range === '6m') return new Date(now).setMonth(new Date(now).getMonth() - 6);
+  if (range === '1m') return monthsBack(now, 1);
+  if (range === '3m') return monthsBack(now, 3);
+  if (range === '6m') return monthsBack(now, 6);
   if (range === '1y') return new Date(now).setFullYear(new Date(now).getFullYear() - 1);
   return earliest(sessions, now);
 }
@@ -574,17 +585,19 @@ export function routesInRange(sessions, range, now = Date.now()) {
   return sessions.filter((s) => s.endedAt && s.trail.length > 1 && inRange(s, sessions, range, now));
 }
 
-// Buckets for the chart, newest last: weekly for the short range, monthly for
+// Buckets for the chart, newest last: weekly for the short ranges, monthly for
 // the longer ones. Returns [{ label, value }] so the axis labels itself.
-export function chartBuckets(sessions, range = '8w', now = Date.now()) {
+export function chartBuckets(sessions, range = '1m', now = Date.now()) {
   const done = sessions.filter((s) => s.endedAt);
 
-  if (range === '8w') {
-    const start = now - 8 * WEEK_MS;
-    const out = Array.from({ length: 8 }, (_, i) => ({ label: String(i + 1), value: 0 }));
+  if (range === '1m' || range === '3m') {
+    // Weeks counted back from now, so the last bar is always this week.
+    const start = rangeStart(sessions, range, now);
+    const n = Math.ceil((now - start) / WEEK_MS);
+    const out = Array.from({ length: n }, (_, i) => ({ label: String(i + 1), value: 0 }));
     for (const s of done) {
-      if (s.startedAt < start) continue;
-      const i = Math.min(7, Math.floor((s.startedAt - start) / WEEK_MS));
+      if (s.startedAt < start || s.startedAt > now) continue;
+      const i = n - 1 - Math.min(n - 1, Math.floor((now - s.startedAt) / WEEK_MS));
       out[i].value += s.drinks.length;
     }
     return out;

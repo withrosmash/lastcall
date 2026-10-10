@@ -62,13 +62,13 @@ input::placeholder{color:var(--placeholder)}
 .bloom[data-bloom="none"]{background:none}
 /* Behind the status bar: the page's ground and glow, painted again above the
    content so a scrolled screen doesn't slide under the clock. */
-.topbar{
+.statusbar-strip{
   position:fixed;top:0;left:0;right:0;height:var(--safe-top);z-index:30;pointer-events:none;
   background-color:var(--bg);background-image:var(--bloom-hero);
   background-size:100% 100vh;background-repeat:no-repeat;
 }
-.topbar[data-bloom="foot"]{background-image:var(--bloom-foot)}
-.topbar[data-bloom="none"]{background-image:none}
+.statusbar-strip[data-bloom="foot"]{background-image:var(--bloom-foot)}
+.statusbar-strip[data-bloom="none"]{background-image:none}
 .grain{background-image:var(--grain);opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .frame{
@@ -450,7 +450,7 @@ canvas.avatar{
 .topbar{display:flex;justify-content:flex-end;gap:6px}
 /* Map labels: token colours, a halo for any tile, long names cut short (the
    full name is in the timeline). */
-.map-label{font:600 11px/1.2 var(--font-sans);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.map-label{flex:none;font:600 11px/1.2 var(--font-sans);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 0 3px var(--map-ground),0 0 3px var(--map-ground),0 0 6px var(--map-ground)}
 .map-label--stop{color:var(--pink)}
 .map-label--set{color:var(--amber)}

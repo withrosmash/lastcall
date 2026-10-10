@@ -95,7 +95,7 @@ const app = () => document.getElementById('app');
 
 export function mount(nodes, { flush = false, bloom = 'hero', chrome = null, focus = false } = {}) {
   document.getElementById('bloom').dataset.bloom = bloom;
-  const bar = document.getElementById('topbar');
+  const bar = document.getElementById('statusbar-strip');
   if (bar) bar.dataset.bloom = bloom;
   const chromeRoot = document.getElementById('chrome');
   chromeRoot.replaceChildren(...(chrome ? [chrome] : []));

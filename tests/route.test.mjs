@@ -152,7 +152,7 @@ test('the History map shows only routes from the chosen period', () => {
   };
   const recent = at(10, true), noRoute = at(12, false), old = at(200, true), open = S.newSession(now);
   const all = [recent, noRoute, old, open];
-  assert.deepEqual(S.routesInRange(all, '8w', now), [recent]);
+  assert.deepEqual(S.routesInRange(all, '1m', now), [recent]);
   assert.deepEqual(S.routesInRange(all, 'all', now), [recent, old]);
 });
 
@@ -180,4 +180,38 @@ test('all the time is optional: it never counts as missing', () => {
   const all = { fineLocation: true, backgroundLocation: false, activity: true, notifications: true, battery: true };
   assert.deepEqual(S.missingPermissions(all), []);
   assert.deepEqual(S.missingPermissions({ ...all, activity: false }), ['activity']);
+});
+
+test('History periods: 1 month, 3 months, 6 months, year, all time', () => {
+  assert.deepEqual(S.RANGES.map((r) => r.label), ['1 month', '3 months', '6 months', 'Year', 'All time']);
+  assert.equal(S.historyRange({ historyRange: '8w' }), '1m', 'the old 8 weeks opens as 1 month');
+  assert.equal(S.historyRange({}), '1m');
+  assert.equal(S.historyRange({ historyRange: '3m' }), '3m');
+});
+
+test('1 month and 3 months chart by week, newest last', () => {
+  const now = new Date(2026, 9, 10, 12).getTime();
+  const s = S.newSession(now - 2 * 86400e3);
+  s.endedAt = s.startedAt + 3600e3;
+  S.addDrink(s, 'Pint', s.startedAt + 1000);
+  const month = S.chartBuckets([s], '1m', now);
+  assert.equal(month.length, 5);
+  assert.equal(month.at(-1).value, 1);
+  const quarter = S.chartBuckets([s], '3m', now);
+  assert.ok(quarter.length >= 13 && quarter.length <= 14, `${quarter.length} weeks`);
+  assert.equal(quarter.at(-1).value, 1);
+  const old = S.newSession(now - 50 * 86400e3);
+  old.endedAt = old.startedAt + 3600e3;
+  assert.ok(!S.inRange(old, [old, s], '1m', now));
+  assert.ok(S.inRange(old, [old, s], '3m', now));
+});
+
+test('the status bar strip has a name of its own, and map labels never squeeze', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../css/style.css', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.equal(css.match(/^\.topbar\{/gm)?.length, 1, '.topbar is the home screen’s icon row only');
+  assert.match(css, /^\.statusbar-strip\{/m);
+  assert.match(html, /class="statusbar-strip"/);
+  assert.match(css, /\.map-label\{[^}]*flex:none/);
 });

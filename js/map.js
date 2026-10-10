@@ -310,10 +310,10 @@ function dropPin(ctx, s) {
    night map, so navigating away tears it down identically. */
 
 export function atlasScreen(ctx) {
-  const range = ctx.state.prefs.historyRange || '8w';
+  const range = S.historyRange(ctx.state.prefs);
   const done = S.routesInRange(ctx.state.sessions, range);
   if (!done.length) { ctx.go('history'); return []; }
-  const label = S.RANGES.find((r) => r.key === range)?.label || '8 weeks';
+  const label = S.RANGES.find((r) => r.key === range).label;
 
   const host = el('div', { id: 'map', role: 'application', 'aria-label': `Your routes, ${label.toLowerCase()}` });
   queueMicrotask(() => initAtlas(host, done));

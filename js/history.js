@@ -23,7 +23,7 @@ export function historyScreen(ctx) {
 
   if (!done.length) {
     return [
-      head({ eyebrow: 'History', title: 'Eight weeks', back }),
+      head({ eyebrow: 'History', title: t('Your {ns}'), back }),
       spacer(),
       el('p', { class: 'body center', text: t('No {ns} yet. Your first one shows up here.') }),
       spacer(),
@@ -36,12 +36,12 @@ export function historyScreen(ctx) {
     ];
   }
 
-  const range = ctx.state.prefs.historyRange || '8w';
+  const range = S.historyRange(ctx.state.prefs);
   const shown = done.filter((s) => S.inRange(s, done, range));
   const totalDrinks = shown.reduce((n, s) => n + s.drinks.length, 0);
   const buckets = S.chartBuckets(done, range);
   const peak = Math.max(...buckets.map((b) => b.value), 1);
-  const rangeLabel = S.RANGES.find((r) => r.key === range)?.label || '8 weeks';
+  const rangeLabel = S.RANGES.find((r) => r.key === range).label;
 
   return [
     head({ eyebrow: 'History', title: rangeLabel, back }),
