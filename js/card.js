@@ -1,7 +1,7 @@
 import { el, btn, foot, head, spacer, toast, icon, hms, hm, km, buzz, sheet } from './ui.js';
 import * as S from './state.js';
 import { fitPoints } from './session.js';
-import { saveImage } from './keepalive.js';
+import { saveImage, shareImage, isNative } from './keepalive.js';
 import { badgeSrc, BADGES } from './badges.js';
 import * as SM from './staticmap.js';
 import { routeRuns } from './routemap.js';
@@ -1329,11 +1329,25 @@ function renderOnce() {
 const filename = () =>
   `sprell-${new Date(ui.session.startedAt).toISOString().slice(0, 10)}.png`;
 
+/** How Share gets the card out: the phone's share sheet, the browser's, or a download. */
+export function shareRoute({ native, canShare }) {
+  if (native) return 'native';
+  return canShare ? 'web' : 'download';
+}
+
 async function shareCard() {
   let blob;
   try { blob = await render(); } catch { toast('The card didn’t render.'); return; }
   const file = new File([blob], filename(), { type: 'image/png' });
-  if (navigator.canShare?.({ files: [file] })) {
+  const route = shareRoute({ native: isNative(), canShare: !!navigator.canShare?.({ files: [file] }) });
+  if (route === 'native') {
+    try {
+      await shareImage(await blobToBase64(blob), filename());
+      window.dispatchEvent(new Event('lc:card-exported'));
+    } catch { toast('Sharing didn’t open. Try Save instead.'); }
+    return;
+  }
+  if (route === 'web') {
     try {
       await navigator.share({ files: [file] });
       window.dispatchEvent(new Event('lc:card-exported'));

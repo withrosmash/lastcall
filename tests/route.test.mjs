@@ -215,3 +215,16 @@ test('the status bar strip has a name of its own, and map labels never squeeze',
   assert.match(html, /class="statusbar-strip"/);
   assert.match(css, /\.map-label\{[^}]*flex:none/);
 });
+
+test('the tracking notice says swiping it away stops tracking', async () => {
+  const { readFileSync } = await import('node:fs');
+  const geo = readFileSync(new URL('../js/geo.js', import.meta.url), 'utf8');
+  assert.match(geo, /backgroundTitle: t\('Sprell is tracking your \{n\}'\)/);
+  assert.match(geo, /backgroundMessage: 'Swiping this away stops tracking\.'/);
+});
+
+test('the History map caption never starts a line with its dot', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../js/history.js', import.meta.url), 'utf8');
+  assert.match(src, /\\u00a0· \$\{km\(total\)\} km/);
+});

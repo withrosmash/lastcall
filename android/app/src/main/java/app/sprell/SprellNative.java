@@ -1,6 +1,7 @@
 package app.sprell;
 
 import android.Manifest;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -39,6 +40,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import org.json.JSONArray;
 
@@ -472,6 +474,58 @@ public class SprellNative extends Plugin implements SensorEventListener {
             call.resolve();
         } catch (Exception e) {
             call.reject("Save failed: " + e.getMessage());
+        }
+    }
+
+    /* ---------- share a card ----------
+       Writes the PNG into the app's cache and opens Android's share sheet,
+       which lists every app that takes an image. The WebView has no
+       navigator.share, so this is the only way Share reaches other apps. The
+       folder is emptied each time, so only the latest card is kept. */
+
+    @PluginMethod
+    public void shareImage(PluginCall call) {
+        String data = call.getString("data");
+        String name = call.getString("name", "sprell.png");
+        String title = call.getString("title", "Share");
+        if (data == null || data.isEmpty()) {
+            call.reject("No image data");
+            return;
+        }
+        try {
+            byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+            File dir = new File(getContext().getCacheDir(), "shared");
+            if (dir.exists()) {
+                File[] old = dir.listFiles();
+                if (old != null) for (File f : old) f.delete();
+            } else if (!dir.mkdirs()) {
+                call.reject("Could not make the share folder");
+                return;
+            }
+            File file = new File(dir, name);
+            try (FileOutputStream out = new FileOutputStream(file)) {
+                out.write(bytes);
+            }
+            Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", file);
+            Intent send = new Intent(Intent.ACTION_SEND)
+                    .setType("image/png")
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            // ClipData too, so the receiving app gets the read grant on every Android version.
+            send.setClipData(ClipData.newRawUri(name, uri));
+            Intent chooser = Intent.createChooser(send, title);
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (getActivity() != null) {
+                getActivity().startActivity(chooser);
+            } else {
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(chooser);
+            }
+            call.resolve();
+        } catch (IllegalArgumentException e) {
+            call.reject("Image data was not valid base64");
+        } catch (Exception e) {
+            call.reject("Share failed: " + e.getMessage());
         }
     }
 }

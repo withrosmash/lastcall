@@ -43,8 +43,11 @@ export async function start({ onFix, onStatus }) {
         {
           // Shown in the permanent Android notification. Not optional: the OS
           // only grants background location to a foreground service.
-          backgroundTitle: 'Sprell',
-          backgroundMessage: t('Sprell is tracking your {n}.'),
+          // On the owner's phone, swiping it away stopped tracking (2026-10-10),
+          // so the notice says so: the title carries the message, which stays
+          // to one line where Android cuts long text short.
+          backgroundTitle: t('Sprell is tracking your {n}'),
+          backgroundMessage: 'Swiping this away stops tracking.',
           requestPermissions: true,
           stale: false,
           distanceFilter: 25,

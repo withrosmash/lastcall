@@ -320,3 +320,11 @@ test('Tidy only shows once something has been moved or resized', async () => {
   ui.elements.time.placed = true;
   assert.equal(card.photoMoved(), true);
 });
+
+test('Share opens the phone’s own share sheet in the app, the web one in a browser', async () => {
+  const { shareRoute } = await import('../js/card.js');
+  assert.equal(shareRoute({ native: true, canShare: false }), 'native');
+  assert.equal(shareRoute({ native: true, canShare: true }), 'native');
+  assert.equal(shareRoute({ native: false, canShare: true }), 'web');
+  assert.equal(shareRoute({ native: false, canShare: false }), 'download');
+});

@@ -56,6 +56,15 @@ export async function saveImage(base64, name) {
   return true;
 }
 
+// Hands a PNG to Android's own share sheet, which lists every app that takes
+// images. navigator.share isn't there inside the WebView, which is why Share
+// used to fall back to a download.
+export async function shareImage(base64, name) {
+  if (!isNative()) return false;
+  await SprellNative.shareImage({ data: base64, name, title: 'Share your card' });
+  return true;
+}
+
 /* ---------- system bars ---------- */
 
 // Dark status and navigation bar icons on the light theme, light icons on the

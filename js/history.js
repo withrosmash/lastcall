@@ -115,7 +115,8 @@ function periodMap(ctx, done, range) {
   return [
     routeMap(routes.map((s) => ({ trail: s.trail })), { height: 200, alpha: 0.8, label: 'Map of your routes from this period' }),
     el('div', { style: 'display:flex;align-items:center;gap:12px' },
-      el('p', { class: 'cap', style: 'margin:0;flex:1', text: `${routes.length} ${routes.length === 1 ? t('{n}') : t('{ns}')} · ${km(total)} km` }),
+      // A no-break space before the dot, so a wrap never starts a line with it.
+      el('p', { class: 'cap', style: 'margin:0;flex:1;min-width:0', text: `${routes.length} ${routes.length === 1 ? t('{n}') : t('{ns}')}\u00a0· ${km(total)} km` }),
       btn('Explore', 'btn--sec', () => ctx.go('atlas'), { iconName: 'map-pin' })),
   ];
 }
