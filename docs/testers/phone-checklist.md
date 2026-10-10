@@ -168,3 +168,10 @@ New in build 70de4cb.
 100. Fresh install (export first): the location step asks once; choose “While using the app”. Settings lists “Location all the time (optional)”, and Start doesn’t say setup needs attention. Also try “Don’t allow” once: the app carries on without a map.
 101. Scroll the recap or History: nothing shows behind the clock and battery icons.
 102. Swipe the tracking notification away, or long-press it and choose Silent. Does tracking carry on? Check the route afterwards.
+
+## Round 10 fixes
+New in build fb1244a. Please don’t swipe the tracking notification away: on your phone that stopped tracking.
+
+103. Badges and Settings are back at the top right of the home screen.
+104. History offers 1 month, 3 months, 6 months, Year and All time, and opens on 1 month. 1 month and 3 months chart by week.
+105. A stop on a History map shows its full name beside the pink dot.
