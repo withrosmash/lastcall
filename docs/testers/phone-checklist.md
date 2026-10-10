@@ -141,7 +141,7 @@ New in build 9b339c5.
 
 82. The home screen icon is the white “sprell” on forest green. Check it reads clearly at its real size, and that with themed icons on it shows in one colour.
 83. The splash is the icon on black, then the app opens with “sprell” and “Track the adventure. Relive it later.”
-84. While tracking, the status bar shows a white “s” and the notification says “Sprell is tracking your adventure.”
+84. While tracking, the status bar shows a white “s” and the notification says “Sprell is tracking your adventure”.
 85. Quick log from the notification still works, including on the lock screen.
 86. A route card and a photo card show “sprell” in the corner, clear of everything else, in Dark, Light and Halo.
 87. Saved cards go to Pictures › Sprell and exports to Downloads › Sprell, named sprell- and the date.
@@ -175,3 +175,10 @@ New in build fb1244a. Please don’t swipe the tracking notification away: on yo
 103. Badges and Settings are back at the top right of the home screen.
 104. History offers 1 month, 3 months, 6 months, Year and All time, and opens on 1 month. 1 month and 3 months chart by week.
 105. A stop on a History map shows its full name beside the pink dot.
+
+## Sharing
+New in build abfd21c.
+
+106. Card › Share opens the phone’s share sheet with your apps (WhatsApp, Instagram, Messages and so on). Share to one and check the card arrives in full.
+107. While tracking, the notification reads “Sprell is tracking your adventure” with “Swiping this away stops tracking.” under it.
+108. On History, the line under the map reads “3 adventures · 23.1 km” with the dot never starting a line.
